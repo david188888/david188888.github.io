@@ -1,0 +1,272 @@
+<hr>
+<p>layout: post<br>title: the notes for visualization<br>date: 2023/3/16<br>comments: true<br>updated: 2023/3/23<br>tags: </p>
+<ul>
+<li></li>
+<li>categories: 文章分类<br>description: 数据可视化</li>
+</ul>
+<hr>
+<h2 id="数据可视化，主要用matplotlib-pandas-numpy-seaborn-pyechartsa"><a href="#数据可视化，主要用matplotlib-pandas-numpy-seaborn-pyechartsa" class="headerlink" title="数据可视化，主要用matplotlib pandas numpy seaborn pyechartsa"></a>数据可视化，主要用matplotlib pandas numpy seaborn pyechartsa<br></h2><h3 id="visualiz-data-by-pandas"><a href="#visualiz-data-by-pandas" class="headerlink" title="visualiz data by pandas"></a>visualiz data by pandas</h3><ul>
+<li>data dealed by pandas</li>
+<li>data cleaning</li>
+<li>data visualization</li>
+<li>data analysis(sklearn)</li>
+</ul>
+<hr>
+<h3 id="it’s-a-specify-example-of-data-visualization-with-5-problems"><a href="#it’s-a-specify-example-of-data-visualization-with-5-problems" class="headerlink" title="it’s a specify example of data visualization with 5 problems"></a>it’s a specify example of data visualization with 5 problems</h3><ul>
+<li><ol>
+<li>what is the most popular level in data science? and what is the average salary for each level?</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>What’s the different salary for different kind of jobs and what’s their average/mean/max salary?</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>What’s the different salary for different kind of employment type and the remote_ratio?</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>What’s the different salary for different kind of company size and the location?</li>
+</ol>
+</li>
+<li><ol start="5">
+<li>What’s the different salary for different kind of company size?</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h4 id="1-deal-with-the-data-basicly"><a href="#1-deal-with-the-data-basicly" class="headerlink" title="1. deal with the data basicly"></a>1. deal with the data basicly</h4><pre><code class="python">df = pd.read_csv(&#39;ds_salaries.csv&#39;)
+
+
+&quot;&quot;&quot; deal with the dataset&quot;&quot;&quot;
+# 1. give some key words to classify the job
+def classify_job(job_title):
+    data_analyst = [&#39;Data Architect&#39;, &#39;Analytics&#39;, &#39;Analyst&#39;]
+    machine_learning = [&#39;Machine&#39;, &#39;ML&#39;, &#39;Machine Learning&#39;]
+    data_scientist = [&#39;Data Scientist&#39;, &#39;Data Engineer&#39;,&#39;BI&#39;]
+    manager = [&#39;Manager&#39;, &#39;Director&#39;, &#39;VP&#39;, &#39;Head&#39;]
+    count = 0
+
+    for i in data_analyst:
+        if i in job_title:
+            return &#39;Data Analyst&#39;
+            count += 1
+    for i in machine_learning:
+        if i in job_title:
+            return &#39;Machine Learning&#39;
+            count += 1
+    for i in data_scientist:
+        if i in job_title:
+            return &#39;Data Scientist&#39;
+            count += 1
+    for i in manager:
+        if i in job_title:
+            return &#39;Manager&#39;
+            count += 1
+    if count == 0:
+        return &#39;Other&#39;
+    else:
+        pass
+df[&#39;job_category&#39;] = df[&#39;job_title&#39;].apply(classify_job)
+
+
+# 2. change the country code to country name
+def change_country(alpha_2):
+    country = pycountry.countries.get(alpha_2=alpha_2)
+    if country is not None:
+        return country.name
+    else:
+        return &#39;Unknown&#39;
+
+df[&#39;company_location&#39;] = df[&#39;company_location&#39;].apply(change_country)
+
+
+# 3. clean the dataset
+if df.isnull().any().any() or df.isna().any().any():
+    df.replace(&quot; &quot;, np.nan)
+    df.fillna(0)
+
+else:
+    print(&quot;the dataset is good&quot;)
+
+
+# 4. rename the column name
+df[&#39;employment_type&#39;] = df[&#39;employment_type&#39;].replace({
+    &#39;FL&#39;: &#39;Freelancer&#39;,
+    &#39;CT&#39;: &#39;Contractor&#39;,
+    &#39;FT&#39;: &#39;Full-time&#39;,
+    &#39;PT&#39;: &#39;Part-time&#39;
+})
+df[&#39;company_size&#39;] = df[&#39;company_size&#39;].replace({
+    &#39;S&#39;: &#39;SMALL&#39;,
+    &#39;M&#39;: &#39;MEDIUM&#39;,
+    &#39;L&#39;: &#39;LARGE&#39;,
+})
+df[&#39;experience_level&#39;] = df[&#39;experience_level&#39;].replace({
+    &#39;SE&#39;: &#39; Senior-level&#39;,
+    &#39;MI&#39;: &#39;Mid-level&#39;,
+    &#39;EN&#39;: &#39;Entry-level&#39;,
+    &#39;EX&#39;: &#39;Executive-level&#39;
+})
+</code></pre>
+<hr>
+<h4 id="2-One-is-a-pie-chart-of-the-proportion-of-different-experience-level-the-other-is-the-average-of-each-experience-level-salaries’-bar"><a href="#2-One-is-a-pie-chart-of-the-proportion-of-different-experience-level-the-other-is-the-average-of-each-experience-level-salaries’-bar" class="headerlink" title="2. One is a pie chart of the proportion of different experience_level, the other is the average of each experience_level salaries’ bar"></a>2. One is a pie chart of the <em>proportion of different experience_level</em>, the other is the average of each experience_level salaries’ bar</h4><pre><code class="python">level = df.groupby(&#39;experience_level&#39;)
+EN_money = level[&#39;salary&#39;].mean()
+print(EN_money)
+
+ax1 = plt.subplot(1,2,1)
+plt.title(&quot;different level for worker&quot;,fontsize=13,color = &#39;brown&#39;)
+labels = [&#39;Entry-level&#39;,&#39;Executive-level &#39;,&#39;Mid-level&#39;,&#39;Senior-level&#39;]
+plt.pie(EN_money,labels=labels , autopct=&#39;%1.1f&#39;,shadow=True,colors=[&#39;C0&#39;, &#39;C1&#39;, &#39;C2&#39;, &#39;C3&#39;])
+
+
+ax2 = plt.subplot(1,2,2)
+plt.title(&quot;different level for worker&quot;,fontsize = 13,color = &#39;brown&#39;)
+plt.xlabel(&quot;level&quot;)
+plt.ylabel(&quot;average salary&quot;,rotation=&quot;vertical&quot;,fontdict={&#39;verticalalignment&#39;:&#39;baseline&#39;})
+plt.xlabel(&quot;level for worker&quot;)
+plt.bar(labels,EN_money,color=[&#39;C5&#39;, &#39;C7&#39;, &#39;C2&#39;, &#39;C1&#39;])
+</code></pre>
+<h2 id=""><a href="#" class="headerlink" title=""></a><img src="level.png" alt="image"></h2><h4 id="3-Firstly-draw-histogram-of-the-proportion-of-different-job-types-heat-map-to-show-the-value-of-the-wages-of-each-job"><a href="#3-Firstly-draw-histogram-of-the-proportion-of-different-job-types-heat-map-to-show-the-value-of-the-wages-of-each-job" class="headerlink" title="3. Firstly draw histogram of the proportion of different job types. heat map to show the value of the wages of each job"></a>3. Firstly draw <em>histogram of the proportion</em> of different job types. heat map to show the value of the <em>wages</em> of each job</h4><pre><code class="python">job = df.groupby(&#39;job_category&#39;)
+values_count = df[&#39;job_category&#39;].value_counts(normalize=True)*100
+
+# the percentage of different job category
+fig , ax = plt.subplots(figsize=(10,7))
+sns.barplot(x=values_count.index,y=values_count,ax=ax)
+plt.title(&quot;Job Category&quot;,fontsize=15,color=&#39;brown&#39;)
+plt.xlabel(&quot;Job Category&quot;,fontsize=13)
+plt.ylabel(&quot;Percentage&quot;,fontsize=13)
+# plt.savefig(&#39;job_category_rate.png&#39;)
+# plt.show()
+
+# the average salary for different job category
+
+list_job = [&#39;Data Analyst&#39;, &#39;Data Scientist&#39;, &#39;Machine Learning&#39;, &#39;Manager&#39;, &#39;Other&#39;]
+list_mean_salary = list(job[&#39;salary&#39;].mean())
+list_min_salary = list(job[&#39;salary&#39;].min())
+list_max_salary = list(job[&#39;salary&#39;].max())
+# 使用imshow()
+color = [&#39;C0&#39;, &#39;C1&#39;, &#39;C2&#39;, &#39;C3&#39;, &#39;C4&#39;]
+fig, ax = plt.subplots(figsize=(10, 7))
+im = ax.imshow([list_mean_salary, list_min_salary,list_max_salary], cmap=&#39;YlGnBu&#39;)
+ax.set_xticks(np.arange(len(list_job)))
+ax.set_yticks(np.arange(3))
+ax.set_xticklabels(list_job)
+ax.set_yticklabels([&#39;mean&#39;, &#39;min&#39;, &#39;max&#39;])
+plt.setp(ax.get_xticklabels(), rotation=45, ha=&quot;right&quot;,
+            rotation_mode=&quot;anchor&quot;)
+for i in range(3):
+    for j in range(len(list_job)):
+        text = ax.text(j, i, [list_mean_salary, list_min_salary,list_max_salary][i][j],
+                       ha=&quot;center&quot;, va=&quot;center&quot;, color=&quot;black&quot;)
+ax.set_title(&quot;The average salary for different job category&quot;,fontsize=15,color=&#39;brown&#39;)
+fig.tight_layout()
+</code></pre>
+<p><img src="job_category_rate.png" alt="image"><br><img src="job_category.png" alt="image"></p>
+<hr>
+<h4 id="4-relationship-between-remote-ratio-employtype-salary"><a href="#4-relationship-between-remote-ratio-employtype-salary" class="headerlink" title="4. relationship between remote_ratio, employtype, salary"></a>4. relationship between <em>remote_ratio, employtype, salary</em></h4><pre><code class="python">grouped = df.groupby(&#39;employment_type&#39;)
+employment = grouped[&#39;salary&#39;].mean().index.tolist()
+average_salary = []
+for i in employment:
+    remote_group = grouped.get_group(i).loc[:, [&#39;salary&#39;, &#39;remote_ratio&#39;]]
+    average_salary.append(remote_group.groupby(&#39;remote_ratio&#39;)[&#39;salary&#39;].mean().tolist())
+
+for i in range(len(average_salary)):
+    if len(average_salary[i]) != 3:
+        average_salary[i].append(0)
+# print(average_salary)
+
+
+
+bar3d = Bar3D()
+xaxis = [0,1,2,3]
+ratio = df.groupby(&#39;remote_ratio&#39;)[&#39;salary&#39;].mean().index.tolist()
+yaxis = [0,1,2]
+data = average_salary
+data = [[xaxis[i], yaxis[j], data[i][j]] for i in range(len(xaxis)) for j in range(len(yaxis))]
+# print(data)
+
+
+(
+bar3d.add(
+    series_name=&quot;&quot;,
+    data=data,
+    xaxis3d_opts=opts.Axis3DOpts(type_=&quot;category&quot;, data=employment, name=&quot;employment_type&quot;, name_gap=30,
+                                 is_show=True,grid_3d_index=0,axislabel_opts=opts.LabelOpts(rotate=-30)),
+    yaxis3d_opts=opts.Axis3DOpts(type_=&quot;category&quot;, data=ratio, name=&quot;remote_ratio&quot;, name_gap=30,is_show=True,grid_3d_index=0,
+                                 axislabel_opts=opts.LabelOpts(rotate=-30)),
+    zaxis3d_opts=opts.Axis3DOpts(type_=&quot;value&quot;, name=&quot;salary&quot;, name_gap=30,is_show=True,grid_3d_index=0,),
+    grid3d_opts=opts.Grid3DOpts(view_control_alpha=60, view_control_beta=10),
+)
+.set_global_opts(
+    
+    title_opts=opts.TitleOpts(title=&quot;the salary of remote_ration and employment_type &quot;),
+    visualmap_opts=opts.VisualMapOpts(
+        max_=800000,
+        range_color=[
+            &quot;#313695&quot;,
+            &quot;#4575b4&quot;,
+            &quot;#74add1&quot;,
+            &quot;#abd9e9&quot;,
+            &quot;#e0f3f8&quot;,
+            &quot;#ffffbf&quot;,
+            &quot;#fee090&quot;,
+            &quot;#fdae61&quot;,
+            &quot;#f46d43&quot;,
+            &quot;#d73027&quot;,
+            &quot;#a50026&quot;,
+        ],
+        
+    )
+)
+)
+</code></pre>
+<h2 id="-1"><a href="#-1" class="headerlink" title=""></a><img src="remote_employtype.png" alt="image"></h2><h4 id="5-represent-the-number-of-companies-and-the-average-salary-in-each-country"><a href="#5-represent-the-number-of-companies-and-the-average-salary-in-each-country" class="headerlink" title="5. represent the number of companies and the average salary in each country"></a>5. represent the <em>number of companies</em> and the <em>average salary</em> in each country</h4><pre><code class="python">group_country = df.groupby(&#39;company_location&#39;)
+countries_mean = group_country[&#39;salary&#39;].mean()
+country_money = []
+for i in countries_mean.index.tolist():
+    country_money.append([i, countries_mean[i]])
+
+group_country = df.groupby(&#39;company_location&#39;)
+countries_mean = group_country[&#39;salary&#39;].mean()
+country_money = []
+for i in countries_mean.index.tolist():
+    country_money.append([i, countries_mean[i]])
+
+size = group_country[&#39;company_size&#39;].value_counts()
+
+size = size.unstack() # unstack the data
+size = size.fillna(0)
+size = size.astype(int) # change the data type
+size = size.reset_index() # reset the index
+size = size.values.tolist()
+
+
+for i in range(len(size)):
+        arr = size[i][1:]
+        company_size = [size[i][0], arr]
+        size[i] = company_size
+
+    
+
+c = (
+    Map()
+    .add(&quot;salary&quot;, country_money, &quot;world&quot;)
+    .add(&quot;company_size&quot;, size, &quot;world&quot;)
+    .set_series_opts(label_opts=opts.LabelOpts(is_show=False))
+    .set_global_opts(
+        title_opts=opts.TitleOpts(title=&quot;Map-different salary for different kind of company size and the location&quot;,pos_left=&#39;center&#39;,pos_top=&#39;top&#39;,padding=20),
+        visualmap_opts=opts.VisualMapOpts(max_=300),
+)
+# .render(&quot;map_world.html&quot;)
+)
+</code></pre>
+<h2 id="-2"><a href="#-2" class="headerlink" title=""></a><img src="map_world.png" alt="image"></h2><h4 id="6-reflect-the-average-salary-of-the-three-sizes"><a href="#6-reflect-the-average-salary-of-the-three-sizes" class="headerlink" title="6. reflect the average salary of the three sizes"></a>6. reflect the <em>average salary</em> of the three sizes</h4><pre><code class="python">jobs_money = df.loc[:, [&#39;job_category&#39;, &#39;salary&#39;,&#39;company_size&#39;]]
+plt,ax = plt.subplots(figsize=(10,7))
+sns.barplot(x=&#39;job_category&#39;, y=&#39;salary&#39;, hue=&#39;company_size&#39;, data=jobs_money)
+ax.set_title(&quot;The salary for different company size&quot;,fontsize=15,color=&#39;brown&#39;)
+ax.set_xlabel(&quot;job category&quot;,fontsize=13)
+ax.set_ylabel(&quot;salary&quot;,fontsize=13)
+ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: &#39;${:,.0f}&#39;.format(y)))
+</code></pre>
+<p><img src="salary_company_size.png" alt="image"><br>```</p>
