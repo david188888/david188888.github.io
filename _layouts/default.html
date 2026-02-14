@@ -11,19 +11,23 @@ layout: compress
     {% include head/custom.html %}
   </head>
 
-  <body>
+  <body{% if page.body_class or page.url == "/" %} class="{% if page.body_class %}{{ page.body_class }}{% endif %}{% if page.url == "/" %}{% if page.body_class %} {% endif %}home-root{% endif %}"{% endif %}>
 
     {% include browser-upgrade.html %}
-    {% include masthead.html %}
+    {% unless page.hide_masthead %}
+      {% include masthead.html %}
+    {% endunless %}
 
     {{ content }}
 
-    <div class="page__footer">
-      <footer>
-        {% include footer/custom.html %}
-        {% include footer.html %}
-      </footer>
-    </div>
+    {% unless page.hide_page_footer %}
+      <div class="page__footer">
+        <footer>
+          {% include footer/custom.html %}
+          {% include footer.html %}
+        </footer>
+      </div>
+    {% endunless %}
 
     {% include scripts.html %}
 
