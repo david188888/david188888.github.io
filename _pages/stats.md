@@ -428,7 +428,7 @@ analytics: false  # Disable tracking on this page to avoid skewing data
       <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
     </div>
 
-    <button onclick="checkLogin()" class="login-btn">Sign In</button>
+    <button type="button" onclick="window.checkLogin(); return false;" class="login-btn">Sign In</button>
 
     <p id="error-msg" class="error-msg">Invalid username or password</p>
   </div>
@@ -485,14 +485,17 @@ analytics: false  # Disable tracking on this page to avoid skewing data
     </div>
 
     <div class="dashboard-card" style="text-align: center;">
-      <button onclick="logout()" class="btn-secondary">Logout</button>
+      <button type="button" onclick="window.logout()" class="btn-secondary">Logout</button>
     </div>
   </div>
 </div>
 
 <script>
-  // Simple authentication (client-side only - provides basic visual protection)
-  async function checkLogin() {
+(function() {
+  'use strict';
+
+  // Make functions globally available for onclick handlers
+  window.checkLogin = function() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const errorMsg = document.getElementById('error-msg');
@@ -501,12 +504,23 @@ analytics: false  # Disable tracking on this page to avoid skewing data
     if (!username || !password) {
       errorMsg.textContent = 'Please enter both username and password';
       errorMsg.style.display = 'block';
-      return;
+      return false;
     }
 
     // Simple base64 obfuscation for credentials
     // username: davidliu, password: Lhy040619
-    if (username === atob('ZGF2aWRsaXU=') && password === atob('TGh5MDQwNjE5')) {
+    var expectedUser = '';
+    var expectedPass = '';
+    try {
+      expectedUser = atob('ZGF2aWRsaXU=');
+      expectedPass = atob('TGh5MDQwNjE5');
+    } catch (e) {
+      errorMsg.textContent = 'Authentication error. Please try again.';
+      errorMsg.style.display = 'block';
+      return false;
+    }
+
+    if (username === expectedUser && password === expectedPass) {
       // Store session in sessionStorage
       sessionStorage.setItem('stats_authenticated', 'true');
       showStatsPanel();
@@ -516,15 +530,16 @@ analytics: false  # Disable tracking on this page to avoid skewing data
       // Clear password field
       document.getElementById('password').value = '';
     }
-  }
+    return false;
+  };
 
-  function showStatsPanel() {
+  window.showStatsPanel = function() {
     document.getElementById('login-panel').style.display = 'none';
     document.getElementById('stats-panel').style.display = 'block';
     document.title = 'Statistics Dashboard';
-  }
+  };
 
-  function logout() {
+  window.logout = function() {
     sessionStorage.removeItem('stats_authenticated');
     document.getElementById('login-panel').style.display = 'flex';
     document.getElementById('stats-panel').style.display = 'none';
@@ -532,26 +547,44 @@ analytics: false  # Disable tracking on this page to avoid skewing data
     document.getElementById('password').value = '';
     document.getElementById('error-msg').style.display = 'none';
     document.title = 'Site Statistics';
+  };
+
+  // Initialize when DOM is ready
+  function init() {
+    // Check if already authenticated on page load
+    if (sessionStorage.getItem('stats_authenticated') === 'true') {
+      showStatsPanel();
+    }
+
+    // Allow Enter key to submit
+    var passwordField = document.getElementById('password');
+    var usernameField = document.getElementById('username');
+
+    if (passwordField) {
+      passwordField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          window.checkLogin();
+        }
+      });
+    }
+
+    if (usernameField) {
+      usernameField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          var passField = document.getElementById('password');
+          if (passField) passField.focus();
+        }
+      });
+    }
   }
 
-  // Check if already authenticated on page load
-  if (sessionStorage.getItem('stats_authenticated') === 'true') {
-    showStatsPanel();
+  // Run initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
-
-  // Allow Enter key to submit
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('password').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        checkLogin();
-      }
-    });
-
-    // Also allow Enter in username field
-    document.getElementById('username').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        document.getElementById('password').focus();
-      }
-    });
-  });
+})();
 </script>
