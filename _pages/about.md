@@ -76,7 +76,7 @@ redirect_from:
       <div class="timeline-grid">
         <article class="timeline-card reveal">
           <p class="timeline-card__time">Feb 2026 - Present</p>
-          <h3>Arashi Vision Inc. · Speech Algorithm Intern</h3>
+          <h3>Insta360 · Speech Algorithm Intern</h3>
           <p class="timeline-card__meta">Shenzhen, China</p>
           <p>Developing production-grade speech algorithms and optimizing low-latency model inference for voice applications.</p>
         </article>
