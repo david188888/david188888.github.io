@@ -24,7 +24,7 @@ const educationData = [
 const internshipData = [
   {
     time: "Feb 2026 - Jun 2026",
-    title: "Insta360 (影石) · Speech Algorithm Intern",
+    title: "Insta360 · Speech Algorithm Intern",
     meta: "Shenzhen, China",
     description:
       "Developing production-grade speech algorithms and optimizing low-latency model inference for voice applications.",
