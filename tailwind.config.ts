@@ -69,6 +69,8 @@ export default {
         "hero-aurora": "hero-aurora 12s ease-in-out infinite alternate",
         reveal: "reveal 460ms ease forwards",
         "avatar-glow": "avatar-glow 6s ease-in-out infinite",
+        "reveal-stagger": "reveal-stagger 500ms ease-out both",
+        "reveal-fallback": "reveal-fallback 500ms ease-out 3s both",
       },
       keyframes: {
         "typed-caret": {
@@ -83,6 +85,14 @@ export default {
         reveal: {
           from: { opacity: "0", transform: "translateY(18px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "reveal-stagger": {
+          from: { opacity: "0", transform: "translateY(18px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "reveal-fallback": {
+          "0%, 90%": { opacity: "0", transform: "translateY(18px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "avatar-glow": {
           "0%, 100%": {

@@ -13,9 +13,12 @@ export function Reveal({ children }: RevealProps) {
   return (
     <div
       ref={ref}
-      className={`transition-all duration-[460ms] ease-in-out ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[18px]"
-      }`}
+      className="animate-reveal-fallback"
+      style={
+        isVisible
+          ? { opacity: 1, transform: "translateY(0)" }
+          : undefined
+      }
     >
       {children}
     </div>
