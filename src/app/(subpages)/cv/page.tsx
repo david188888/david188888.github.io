@@ -90,7 +90,7 @@ export default function CVPage() {
         </h2>
         <div className="mb-4">
           <h3 className="font-bold text-[var(--global-text-color)]">
-            Insta360 (影石) · Speech Algorithm Intern
+            Insta360 · Speech Algorithm Intern
           </h3>
           <p className="text-sm text-[var(--global-text-color-light)]">
             Shenzhen, China · Feb 2026 - Jun 2026
