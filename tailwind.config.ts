@@ -70,7 +70,7 @@ export default {
         reveal: "reveal 460ms ease forwards",
         "avatar-glow": "avatar-glow 6s ease-in-out infinite",
         "reveal-stagger": "reveal-stagger 500ms ease-out both",
-        "reveal-fallback": "reveal-fallback 500ms ease-out 3s both",
+        "reveal-fallback": "reveal-fallback 420ms ease-out both",
       },
       keyframes: {
         "typed-caret": {
@@ -91,8 +91,8 @@ export default {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "reveal-fallback": {
-          "0%, 90%": { opacity: "0", transform: "translateY(18px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
+          from: { opacity: "0", transform: "translateY(14px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
         },
         "avatar-glow": {
           "0%, 100%": {

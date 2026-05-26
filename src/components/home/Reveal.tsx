@@ -17,7 +17,7 @@ export function Reveal({ children }: RevealProps) {
       style={
         isVisible
           ? { opacity: 1, transform: "translateY(0)" }
-          : undefined
+          : { opacity: 1 }
       }
     >
       {children}

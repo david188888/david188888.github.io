@@ -96,12 +96,20 @@ html[data-theme="dark"] {
 @layer components {
   .page-container {
     @apply max-w-[1280px] mx-auto px-4 mt-8;
-    animation: intro 0.3s both;
-    animation-delay: 0.35s;
+    animation: intro 0.25s ease-out both;
   }
 
   @keyframes intro {
     0% { opacity: 0; }
     100% { opacity: 1; }
+  }
+}
+
+/* ── Accessibility: disable animations for reduced-motion preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
