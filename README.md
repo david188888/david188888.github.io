@@ -1,6 +1,7 @@
 # HongYu Liu Homepage
 
-This repository contains the source code for my personal academic website, built with Jekyll and deployed on GitHub Pages.
+Personal academic homepage for HongYu Liu, built with Next.js, React,
+TypeScript, and Tailwind CSS.
 
 ## Website
 
@@ -9,31 +10,80 @@ This repository contains the source code for my personal academic website, built
 
 ## Tech Stack
 
-- Jekyll
-- Academic Pages (customized)
-- SCSS + JavaScript
-- GitHub Actions (automatic Pages deployment)
+- Next.js App Router with static export
+- React and TypeScript
+- Tailwind CSS for layout, typography, and responsive styling
+- MDX content directories prepared through Velite configuration
+- GitHub Pages compatible static output
+
+## Current Structure
+
+- `src/app/page.tsx` - main homepage
+- `src/app/[locale]/` - static English and Chinese route variants
+- `src/app/(subpages)/` - secondary pages such as CV, publications, and insights
+- `src/components/` - shared React components
+- `src/i18n/` - locale routing helpers and bilingual UI messages
+- `src/config/` - author, site, navigation, and content configuration
+- `content/` - MDX content source folders for future content-backed pages
+- `content/generated/translations/` - reviewable generated translation cache
+- `public/` - static files, images, PDFs, and favicons
 
 ## Local Development
 
-1. Install dependencies:
+Install dependencies:
 
 ```bash
-bundle install
+npm install
 ```
 
-2. Run the site locally:
+Run the development server:
 
 ```bash
-bundle exec jekyll serve -l -H localhost
+npm run dev
 ```
 
-3. Open:
+Build the static site:
 
-```text
-http://localhost:4000
+```bash
+npm run build
 ```
 
-## Deployment
+## Bilingual Content
 
-Deployment is automatic. Any push to `master` triggers GitHub Pages build and deployment through `.github/workflows/pages.yml`.
+The site supports static English and Chinese routes:
+
+- `/` and `/en/` for English
+- `/zh/` for Chinese
+
+Short UI copy lives in `src/i18n/messages.ts`.
+
+### Writing a New Blog Post
+
+Write one MDX file in `content/posts/` in either English or Chinese. Then run:
+
+```bash
+npm run translate:content
+```
+
+The script detects the source language. Chinese posts generate English cache
+files; English posts generate Chinese cache files. If the text is ambiguous,
+add `language: zh` or `language: en` to the post frontmatter.
+
+Translation uses MiMo through environment variables:
+
+```env
+MIMO_API_KEY=
+MIMO_BASE_URL=https://token-plan-sgp.xiaomimimo.com/v1
+MIMO_MODEL=mimo-v2.5-pro
+```
+
+Generated translations are cached under
+`content/generated/translations/posts/` and should be reviewed and committed
+with the source MDX. The production build reads only local source/cache files;
+it does not call the translation API or expose API keys in the browser.
+
+## Notes
+
+This site was previously documented as a Jekyll / Academic Pages project. The
+current codebase uses the Next.js stack above, so Ruby, Bundler, and Jekyll
+commands are no longer part of the development workflow.
