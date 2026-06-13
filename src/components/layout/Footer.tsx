@@ -1,20 +1,29 @@
 import Link from "next/link";
+import { defaultLocale, type Locale } from "@/i18n/locales";
+import { localizedHref } from "@/i18n/links";
+import { getMessages } from "@/i18n/messages";
 
-export function Footer() {
+interface FooterProps {
+  locale?: Locale;
+}
+
+export function Footer({ locale = defaultLocale }: FooterProps) {
+  const { footer } = getMessages(locale);
+
   return (
     <div className="page__footer w-full mt-8 bg-[var(--global-footer-bg-color)] text-[var(--global-text-color-light)] border-t border-[var(--global-dark-border-color)] text-xs">
       <footer className="max-w-[1280px] mx-auto px-4 py-4">
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex flex-wrap gap-3 text-xs uppercase tracking-wider">
-            <Link href="/sitemap/" className="text-inherit no-underline hover:underline">
-              Sitemap
+            <Link href={localizedHref("/sitemap/", locale)} className="text-inherit no-underline hover:underline">
+              {footer.sitemap}
             </Link>
-            <Link href="/terms/" className="text-inherit no-underline hover:underline">
-              Terms &amp; Privacy
+            <Link href={localizedHref("/terms/", locale)} className="text-inherit no-underline hover:underline">
+              {footer.terms}
             </Link>
           </div>
           <div className="text-xs text-[var(--global-text-color-light)]">
-            &copy; {new Date().getFullYear()} HongYu Liu. Powered by{" "}
+            &copy; {new Date().getFullYear()} HongYu Liu. {footer.poweredBy}{" "}
             <a
               href="https://nextjs.org"
               target="_blank"

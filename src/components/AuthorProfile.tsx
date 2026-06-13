@@ -3,8 +3,16 @@ import { FiGithub, FiMail } from "react-icons/fi";
 import { FaOrcid } from "react-icons/fa";
 import { SiGooglescholar } from "react-icons/si";
 import Image from "next/image";
+import { defaultLocale, type Locale } from "@/i18n/locales";
+import { getMessages } from "@/i18n/messages";
 
-export function AuthorProfile() {
+interface AuthorProfileProps {
+  locale?: Locale;
+}
+
+export function AuthorProfile({ locale = defaultLocale }: AuthorProfileProps) {
+  const { author } = getMessages(locale);
+
   return (
     <div className="author-profile flex items-center gap-3 p-3">
       <Image
@@ -20,7 +28,7 @@ export function AuthorProfile() {
           {authorConfig.name}
         </h3>
         <p className="text-xs text-[var(--global-text-color-light)] mt-1 mb-2">
-          {authorConfig.bio}
+          {author.bio}
         </p>
         <div className="flex flex-wrap gap-2">
           {authorConfig.github && (

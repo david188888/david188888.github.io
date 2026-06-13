@@ -3,9 +3,25 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { homeNavigation } from "@/config/navigation";
+import { defaultLocale, type Locale } from "@/i18n/locales";
+import { localizedHref } from "@/i18n/links";
+import { getMessages } from "@/i18n/messages";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
-export function HomeNav() {
+interface HomeNavProps {
+  locale?: Locale;
+}
+
+const homeNavMessageKeys = {
+  Insights: "insights",
+  CV: "cv",
+  Contact: "contact",
+  GitHub: "github",
+} as const;
+
+export function HomeNav({ locale = defaultLocale }: HomeNavProps) {
   const [scrolled, setScrolled] = useState(false);
+  const { nav } = getMessages(locale);
 
   useEffect(() => {
     function handleScroll() {
@@ -26,24 +42,30 @@ export function HomeNav() {
     >
       <div className="flex items-center justify-between max-w-[1280px] mx-auto h-14 md:h-[3.2rem]">
         <Link
-          href="/"
+          href={localizedHref("/", locale)}
           className="font-serif text-lg font-semibold text-[#eef3fc] no-underline hover:text-[#f2f6ff] tracking-wide"
         >
           HongYu Liu
         </Link>
         <ul className="flex items-center gap-5 md:gap-6 m-0 p-0 list-none">
-          {homeNavigation.map((link) => (
-            <li key={link.title}>
-              <a
-                href={link.url}
-                target={link.url.startsWith("http") || link.url.startsWith("mailto") ? "_blank" : undefined}
-                rel={link.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                className="font-sans text-[0.82rem] font-medium text-[rgba(202,212,228,0.88)] no-underline tracking-wider transition-colors duration-200 hover:text-[#eef3fc]"
-              >
-                {link.title}
-              </a>
-            </li>
-          ))}
+          {homeNavigation.map((link) => {
+            const messageKey = homeNavMessageKeys[link.title as keyof typeof homeNavMessageKeys];
+            return (
+              <li key={link.title}>
+                <a
+                  href={localizedHref(link.url, locale)}
+                  target={link.url.startsWith("http") || link.url.startsWith("mailto") ? "_blank" : undefined}
+                  rel={link.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                  className="font-sans text-[0.82rem] font-medium text-[rgba(202,212,228,0.88)] no-underline tracking-wider transition-colors duration-200 hover:text-[#eef3fc]"
+                >
+                  {messageKey ? nav[messageKey] : link.title}
+                </a>
+              </li>
+            );
+          })}
+          <li className="m-0">
+            <LanguageSwitcher variant="home" />
+          </li>
         </ul>
       </div>
     </nav>
