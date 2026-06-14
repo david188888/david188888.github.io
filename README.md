@@ -48,14 +48,17 @@ Build the static site:
 npm run build
 ```
 
-## Bilingual Content
+## Bilingual Site
 
-The site supports static English and Chinese routes:
+The site supports static English and Chinese routes for pages, navigation, and
+blog content:
 
 - `/` and `/en/` for English
 - `/zh/` for Chinese
+- `/stats/` and `/zh/stats/` for the private statistics page
 
-Short UI copy lives in `src/i18n/messages.ts`.
+Short UI copy lives in `src/i18n/messages.ts`. Locale-specific page data lives
+alongside the components or in `src/config/`.
 
 ### Writing a New Blog Post
 

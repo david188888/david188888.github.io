@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Locale } from "@/i18n/locales";
 
 interface ArchiveItemProps {
   title: string;
@@ -10,6 +11,8 @@ interface ArchiveItemProps {
   location?: string;
   paperUrl?: string;
   citation?: string;
+  locale?: Locale;
+  paperLabel?: string;
 }
 
 export function ArchiveItem({
@@ -21,9 +24,11 @@ export function ArchiveItem({
   type,
   location,
   paperUrl,
+  locale = "en",
+  paperLabel = "Paper",
 }: ArchiveItemProps) {
   const formattedDate = date
-    ? new Date(date).toLocaleDateString("en-US", {
+    ? new Date(date).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -63,7 +68,7 @@ export function ArchiveItem({
             rel="noopener noreferrer"
             className="text-[var(--global-link-color)] underline"
           >
-            Paper
+            {paperLabel}
           </a>
         </p>
       )}

@@ -2,17 +2,20 @@
 
 import { useTypeWriter } from "@/hooks/useTypeWriter";
 import { authorConfig } from "@/config/author";
+import { defaultLocale, type Locale } from "@/i18n/locales";
+import { localizedHref } from "@/i18n/links";
+import { getMessages } from "@/i18n/messages";
 import Image from "next/image";
+import Link from "next/link";
 
-const roles = [
-  "SLM Trustworthiness",
-  "RL for Proactive Dialogue",
-  "Agentic Speech Intelligence",
-  "End-to-End Spoken Dialogue Systems",
-];
+interface HeroSectionProps {
+  locale?: Locale;
+}
 
-export function HeroSection() {
-  const displayText = useTypeWriter({ roles });
+export function HeroSection({ locale = defaultLocale }: HeroSectionProps) {
+  const messages = getMessages(locale);
+  const { home } = messages.pages;
+  const displayText = useTypeWriter({ roles: home.roles });
 
   return (
     <section
@@ -55,7 +58,7 @@ export function HeroSection() {
           className="m-0 text-[0.82rem] tracking-[0.08em] uppercase text-[rgba(199,208,223,0.82)] animate-reveal-stagger"
           style={{ animationDelay: "150ms" }}
         >
-          {authorConfig.bio}
+          {messages.author.bio}
         </p>
 
         {/* Name */}
@@ -71,8 +74,7 @@ export function HeroSection() {
           className="mt-4 max-w-[64ch] text-base text-[rgba(202,212,228,0.88)] animate-reveal-stagger"
           style={{ animationDelay: "450ms" }}
         >
-          I build trustworthy speech and language systems, with research spanning proactive interaction, privacy
-          evaluation, and end-to-end spoken dialogue intelligence.
+          {home.lead}
         </p>
 
         {/* Typed */}
@@ -80,11 +82,29 @@ export function HeroSection() {
           className="mt-4 text-[0.95rem] text-[rgba(194,206,224,0.9)] animate-reveal-stagger"
           style={{ animationDelay: "600ms" }}
         >
-          Current Focus:{" "}
+          {home.currentFocusLabel}{" "}
           <span className="font-semibold text-[#cad8ee] border-r-2 border-[rgba(202,216,238,0.72)] pr-1 animate-typed-caret">
             {displayText}
           </span>
         </p>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href={localizedHref("/insights/", locale)}
+            className="inline-flex min-h-10 items-center border border-[rgba(221,229,243,0.72)] px-4 text-[0.86rem] font-semibold text-[#0e1521] no-underline shadow-[0_10px_24px_rgba(0,0,0,0.2)] transition-transform duration-200 hover:-translate-y-0.5 hover:text-[#0e1521]"
+            style={{
+              background: "linear-gradient(140deg, #dde6f5, #bfccdf)",
+            }}
+          >
+            {home.readInsights}
+          </Link>
+          <Link
+            href="/files/Resume_en.pdf"
+            className="inline-flex min-h-10 items-center border border-[rgba(161,176,201,0.34)] bg-[rgba(17,24,36,0.72)] px-4 text-[0.86rem] font-medium text-[rgba(222,232,247,0.92)] no-underline transition-colors duration-200 hover:border-[rgba(221,229,243,0.5)] hover:text-[#f3f7ff]"
+          >
+            {home.downloadCv}
+          </Link>
+        </div>
       </div>
     </section>
   );

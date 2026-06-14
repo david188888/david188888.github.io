@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FluidBackground } from "@/components/home/FluidBackground";
 import { HomeNav } from "@/components/navigation/HomeNav";
-import { insightEntries } from "@/config/insights";
+import { getInsightContent } from "@/config/insights";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
 import { getMessages } from "@/i18n/messages";
@@ -14,6 +14,7 @@ interface InsightsPageViewProps {
 export function InsightsPageView({ locale = defaultLocale }: InsightsPageViewProps) {
   const { insights } = getMessages(locale).pages;
   const posts = getLocalizedPosts(locale);
+  const { entries: insightEntries } = getInsightContent(locale);
 
   return (
     <>

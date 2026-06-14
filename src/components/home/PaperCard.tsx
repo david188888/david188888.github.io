@@ -3,9 +3,16 @@ interface PaperCardProps {
   title: string;
   description: string;
   paperUrl: string;
+  paperLabel: string;
 }
 
-export function PaperCard({ venue, title, description, paperUrl }: PaperCardProps) {
+export function PaperCard({
+  venue,
+  title,
+  description,
+  paperUrl,
+  paperLabel,
+}: PaperCardProps) {
   return (
     <article
       className="border border-[rgba(166,182,206,0.08)] rounded-[0.85rem] p-4 backdrop-blur-[8px] shadow-[0_8px_18px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(166,182,206,0.22)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.28),0_0_20px_rgba(100,120,160,0.08)]"
@@ -23,7 +30,7 @@ export function PaperCard({ venue, title, description, paperUrl }: PaperCardProp
           rel="noopener noreferrer"
           className="text-inherit underline underline-offset-2"
         >
-          Paper
+          {paperLabel}
         </a>
       </p>
     </article>

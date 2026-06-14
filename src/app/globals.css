@@ -26,22 +26,22 @@
 }
 
 html[data-theme="dark"] {
-  --global-base-color: #0ea1c5;
-  --global-bg-color: #474747;
-  --global-footer-bg-color: #3a3a3a;
-  --global-border-color: #5a5a5a;
-  --global-dark-border-color: #4a4a4a;
-  --global-code-background-color: #3a3a3a;
-  --global-code-text-color: #ffffff;
-  --global-fig-caption-color: #cccccc;
-  --global-link-color: #0ea1c5;
-  --global-link-color-hover: #0ea1c5;
-  --global-link-color-visited: #6bb7d6;
-  --global-masthead-link-color: #ffffff;
-  --global-masthead-link-color-hover: #0ea1c5;
-  --global-text-color: #ffffff;
-  --global-text-color-light: #cccccc;
-  --global-thead-color: #3a3a3a;
+  --global-base-color: #9db4d7;
+  --global-bg-color: #0a0f17;
+  --global-footer-bg-color: #080c12;
+  --global-border-color: rgba(166, 182, 206, 0.14);
+  --global-dark-border-color: rgba(166, 182, 206, 0.18);
+  --global-code-background-color: rgba(221, 231, 246, 0.08);
+  --global-code-text-color: #edf3ff;
+  --global-fig-caption-color: rgba(202, 212, 228, 0.72);
+  --global-link-color: #abc2e6;
+  --global-link-color-hover: #edf3ff;
+  --global-link-color-visited: #8ea8cf;
+  --global-masthead-link-color: #e7edf8;
+  --global-masthead-link-color-hover: #ffffff;
+  --global-text-color: #e7edf8;
+  --global-text-color-light: rgba(202, 212, 228, 0.76);
+  --global-thead-color: rgba(221, 231, 246, 0.08);
 }
 
 /* ── Base styles ── */

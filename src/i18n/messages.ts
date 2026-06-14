@@ -23,6 +23,11 @@ export interface Messages {
   };
   pages: {
     home: {
+      lead: string;
+      currentFocusLabel: string;
+      readInsights: string;
+      downloadCv: string;
+      roles: string[];
       insightsTitle: string;
       insightsCta: string;
       educationTitle: string;
@@ -72,6 +77,18 @@ export interface Messages {
       title: string;
       pages: Record<string, string>;
     };
+    stats: {
+      title: string;
+      dashboardTitle: string;
+      username: string;
+      password: string;
+      signIn: string;
+      signOut: string;
+      invalidCredentials: string;
+      analyticsFor: string;
+      trackingId: string;
+      fullDashboard: string;
+    };
     talks: {
       title: string;
       description: string;
@@ -120,6 +137,16 @@ export const messages: Record<Locale, Messages> = {
     },
     pages: {
       home: {
+        lead: "I build trustworthy speech and language systems, with research spanning proactive interaction, privacy evaluation, and end-to-end spoken dialogue intelligence.",
+        currentFocusLabel: "Current Focus:",
+        readInsights: "Read Insights",
+        downloadCv: "Download CV",
+        roles: [
+          "SLM Trustworthiness",
+          "RL for Proactive Dialogue",
+          "Agentic Speech Intelligence",
+          "End-to-End Spoken Dialogue Systems",
+        ],
         insightsTitle: "Insights",
         insightsCta: "Open Blog & Ideas",
         educationTitle: "Education",
@@ -197,6 +224,18 @@ export const messages: Record<Locale, Messages> = {
           terms: "Terms & Privacy",
         },
       },
+      stats: {
+        title: "Site Statistics",
+        dashboardTitle: "Site Statistics Dashboard",
+        username: "Username",
+        password: "Password",
+        signIn: "Sign In",
+        signOut: "Sign Out",
+        invalidCredentials: "Invalid credentials. Please try again.",
+        analyticsFor: "Google Analytics data for david188888.github.io",
+        trackingId: "Tracking ID",
+        fullDashboard: "Full analytics dashboard available at",
+      },
       talks: {
         title: "Talks and Presentations",
         description: "Talks and presentations coming soon.",
@@ -246,21 +285,31 @@ export const messages: Record<Locale, Messages> = {
     },
     pages: {
       home: {
+        lead: "我专注于构建可信的语音与语言系统，研究方向涵盖主动交互、隐私评估，以及端到端语音对话智能。",
+        currentFocusLabel: "当前关注：",
+        readInsights: "阅读随笔",
+        downloadCv: "下载简历",
+        roles: [
+          "语音语言模型可信性",
+          "面向主动对话的强化学习",
+          "智能体语音智能",
+          "端到端语音对话系统",
+        ],
         insightsTitle: "随笔洞察",
-        insightsCta: "打开 Blog & Ideas",
+        insightsCta: "打开随笔与想法",
         educationTitle: "教育经历",
         internshipTitle: "实习经历",
         researchTitle: "研究成果",
       },
       insights: {
-        metadataTitle: "Blog & Ideas",
+        metadataTitle: "随笔与想法",
         metadataDescription:
           "HongYu Liu 关于行业、公司和重要报道的随笔与观察。",
         eyebrow: "随笔洞察",
-        title: "Blog & Ideas",
+        title: "随笔与想法",
         subtitle: "关于行业、公司与重要报道的观察笔记。",
         aside:
-          "这里记录不适合放进 CV 的分析：市场结构、公司战略、产品变化，以及对重要报道的回应。",
+          "这里记录不适合放进简历的分析：市场结构、公司战略、产品变化，以及对重要报道的回应。",
         streamsEyebrow: "写作线索",
         streamsTitle: "我把公开信号整理成笔记的三种方式。",
         publishedEyebrow: "已发布文章",
@@ -269,7 +318,7 @@ export const messages: Record<Locale, Messages> = {
         queueTitle: "草稿会在这里变成文章。",
         futureNote: "未来发布的文章可以接入 MDX，而无需改变这个页面结构。",
         backHome: "返回首页",
-        footerLabel: "Blog & Ideas",
+        footerLabel: "随笔与想法",
         noteQueue: [
           {
             label: "下一篇文章",
@@ -321,6 +370,18 @@ export const messages: Record<Locale, Messages> = {
           sitemap: "站点地图",
           terms: "条款与隐私",
         },
+      },
+      stats: {
+        title: "站点统计",
+        dashboardTitle: "站点统计仪表盘",
+        username: "用户名",
+        password: "密码",
+        signIn: "登录",
+        signOut: "退出登录",
+        invalidCredentials: "用户名或密码无效，请重试。",
+        analyticsFor: "david188888.github.io 的 Google Analytics 数据",
+        trackingId: "跟踪 ID",
+        fullDashboard: "完整分析仪表盘可在此查看：",
       },
       talks: {
         title: "演讲与报告",
