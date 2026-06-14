@@ -91,21 +91,21 @@ const papersData = {
       paperUrl: "https://arxiv.org/abs/2604.14548",
     },
     {
-      venue: "ICLR 2026 · 海报",
+      venue: "ICLR 2026 · Poster",
       title: "VoxPrivacy: A Benchmark for Evaluating Interactional Privacy of Speech Language Models",
       description:
         "Introduced a multi-user benchmark for measuring interactional privacy risks in speech-language models; second author.",
       paperUrl: "https://arxiv.org/abs/2601.19956",
     },
     {
-      venue: "ECAI 2025 · 口头报告",
+      venue: "ECAI 2025 · Oral",
       title: "DialogGraph-LLM: Graph-Informed LLMs for End-to-End Audio Dialogue Intent Recognition",
       description:
         "Proposed a graph-informed framework for end-to-end intent recognition in spoken dialogue; first author.",
       paperUrl: "https://arxiv.org/abs/2511.11000",
     },
     {
-      venue: "ADMA 2025 · 海报",
+      venue: "ADMA 2025 · Poster",
       title: "Multi-segment Multitask Fusion Network for Marketing Audio Classification",
       description:
         "Proposed MSMT-FN for marketing-call attitude classification, achieving stronger results than prior baselines; first author.",

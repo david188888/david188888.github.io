@@ -75,7 +75,7 @@ const cvPublications = {
     {
       title: "VoxPrivacy: A Benchmark for Evaluating Interactional Privacy of Speech Language Models",
       permalink: "https://arxiv.org/abs/2601.19956",
-      venue: "ICLR 2026 · 海报",
+      venue: "ICLR 2026 · Poster",
       date: "2026-01-01",
       excerpt: "Second author.",
       paperUrl: "https://arxiv.org/abs/2601.19956",
@@ -83,7 +83,7 @@ const cvPublications = {
     {
       title: "DialogGraph-LLM: Graph-Informed LLMs for End-to-End Audio Dialogue Intent Recognition",
       permalink: "https://arxiv.org/abs/2511.11000",
-      venue: "ECAI 2025 · 口头报告",
+      venue: "ECAI 2025 · Oral",
       date: "2025-06-01",
       excerpt: "First author.",
       paperUrl: "https://arxiv.org/abs/2511.11000",
@@ -91,7 +91,7 @@ const cvPublications = {
     {
       title: "Multi-segment Multitask Fusion Network for Marketing Audio Classification",
       permalink: "https://arxiv.org/abs/2511.11006",
-      venue: "ADMA 2025 · 海报",
+      venue: "ADMA 2025 · Poster",
       date: "2025-01-01",
       excerpt: "First author.",
       paperUrl: "https://arxiv.org/abs/2511.11006",
@@ -155,7 +155,7 @@ const publications = {
     {
       title: "VoxPrivacy: A Benchmark for Evaluating Interactional Privacy of Speech Language Models",
       permalink: "https://arxiv.org/abs/2601.19956",
-      venue: "ICLR 2026 · 海报",
+      venue: "ICLR 2026 · Poster",
       date: "2026-01-01",
       excerpt:
         "Introduced a multi-user benchmark for measuring interactional privacy risks in speech-language models; second author.",
@@ -165,7 +165,7 @@ const publications = {
     {
       title: "DialogGraph-LLM: Graph-Informed LLMs for End-to-End Audio Dialogue Intent Recognition",
       permalink: "https://arxiv.org/abs/2511.11000",
-      venue: "ECAI 2025 · 口头报告",
+      venue: "ECAI 2025 · Oral",
       date: "2025-06-01",
       excerpt:
         "Proposed a graph-informed framework for end-to-end intent recognition in spoken dialogue; first author.",
@@ -175,7 +175,7 @@ const publications = {
     {
       title: "Multi-segment Multitask Fusion Network for Marketing Audio Classification",
       permalink: "https://arxiv.org/abs/2511.11006",
-      venue: "ADMA 2025 · 海报",
+      venue: "ADMA 2025 · Poster",
       date: "2025-01-01",
       excerpt:
         "Proposed MSMT-FN for marketing-call attitude classification, achieving stronger results than prior baselines; first author.",
