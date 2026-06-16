@@ -56,7 +56,7 @@ export function HomeNav({ locale = defaultLocale }: HomeNavProps) {
                   href={localizedHref(link.url, locale)}
                   target={link.url.startsWith("http") || link.url.startsWith("mailto") ? "_blank" : undefined}
                   rel={link.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                  className="font-sans text-[0.82rem] font-medium text-[rgba(202,212,228,0.88)] no-underline tracking-wider transition-colors duration-200 hover:text-[#eef3fc]"
+                  className="home-nav-link font-sans text-[0.82rem] font-medium text-[rgba(202,212,228,0.88)] no-underline tracking-wider transition-colors duration-200 hover:text-[#eef3fc]"
                 >
                   {messageKey ? nav[messageKey] : link.title}
                 </a>

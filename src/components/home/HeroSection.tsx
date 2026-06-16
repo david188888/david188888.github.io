@@ -19,19 +19,16 @@ export function HeroSection({ locale = defaultLocale }: HeroSectionProps) {
 
   return (
     <section
-      className="home-hero grid grid-cols-1 gap-4 items-stretch p-[clamp(1.2rem,2.4vw,2rem)] border border-[rgba(166,182,206,0.08)] rounded-[0.95rem] backdrop-blur-[8px] shadow-[0_10px_26px_rgba(0,0,0,0.2)]"
-      style={{
-        background:
-          "linear-gradient(145deg, rgba(8,13,21,0.42) 0%, rgba(10,16,26,0.32) 58%, rgba(11,18,29,0.24) 100%)",
-      }}
+      className="home-hero home-hero-panel grid grid-cols-1 gap-4 items-stretch p-[clamp(1.2rem,2.4vw,2rem)] border border-[rgba(166,182,206,0.08)] backdrop-blur-[8px] shadow-[0_10px_26px_rgba(0,0,0,0.2)]"
     >
+      <div className="home-highlight-line" aria-hidden="true" />
       <div className="min-w-0 max-w-[920px]">
         {/* Avatar — pure CSS stagger, no JS needed */}
         <div
           className="inline-block mb-4 animate-reveal-stagger"
           style={{ animationDelay: "0ms" }}
         >
-          <div className="relative inline-block">
+          <div className="home-avatar-motion relative inline-block">
             <div className="absolute inset-0 rounded-full animate-avatar-glow" />
             <Image
               className="relative block rounded-full object-cover border border-[rgba(180,193,214,0.58)] shadow-[0_14px_28px_rgba(0,0,0,0.34),0_0_24px_rgba(85,101,126,0.14)]"

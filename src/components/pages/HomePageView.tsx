@@ -154,7 +154,7 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
     <>
       <HomeNav locale={locale} />
       <PointerGlow>
-        <main className="hero-intro relative min-h-screen pt-[calc(3.2rem+clamp(0.55rem,2vw,1.4rem))] pb-[clamp(2rem,5vw,3.4rem)] bg-gradient-to-br from-[#06080d] via-[#0a0f17] to-[#0f1620] text-[#e7edf8]">
+        <main className="hero-intro home-motion-shell relative min-h-screen pt-[calc(3.2rem+clamp(0.55rem,2vw,1.4rem))] pb-[clamp(2rem,5vw,3.4rem)] bg-gradient-to-br from-[#06080d] via-[#0a0f17] to-[#0f1620] text-[#e7edf8]">
           <FluidBackground />
           <div className="home-shell relative z-10 mx-auto w-[min(1280px,calc(100vw-1rem))] px-[clamp(0.3rem,1.2vw,0.8rem)] text-[#e7edf8] font-sans">
             <Reveal>
@@ -180,12 +180,12 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                     {home.insightsCta}
                   </Link>
                 </div>
-                <div className="grid gap-0 overflow-hidden rounded-[0.85rem] border border-[rgba(166,182,206,0.08)] bg-[rgba(10,15,24,0.32)] backdrop-blur-[8px]">
+                <div className="home-insight-list grid gap-0">
                   {insightEntries.map((entry) => (
                     <Link
                       key={entry.title}
                       href={insightsHref}
-                      className="group grid gap-2 border-b border-[rgba(166,182,206,0.08)] px-4 py-3 text-inherit no-underline transition-colors duration-200 last:border-b-0 hover:bg-[rgba(220,231,246,0.04)] md:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1.8fr)]"
+                      className="home-insight-row group grid gap-2 border-b border-[rgba(166,182,206,0.08)] px-4 py-3 text-inherit no-underline transition-all duration-200 last:border-b-0 hover:translate-x-[3px] hover:bg-[rgba(220,231,246,0.035)] md:grid-cols-[minmax(8rem,0.7fr)_minmax(0,1.8fr)]"
                     >
                       <div>
                         <p className="m-0 text-[0.72rem] uppercase tracking-[0.08em] text-[rgba(167,180,201,0.88)]">

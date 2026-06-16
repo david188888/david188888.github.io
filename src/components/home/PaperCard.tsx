@@ -15,7 +15,7 @@ export function PaperCard({
 }: PaperCardProps) {
   return (
     <article
-      className="border border-[rgba(166,182,206,0.08)] rounded-[0.85rem] p-4 backdrop-blur-[8px] shadow-[0_8px_18px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(166,182,206,0.22)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.28),0_0_20px_rgba(100,120,160,0.08)]"
+      className="home-support-card border border-[rgba(166,182,206,0.08)] p-4 backdrop-blur-[8px] shadow-[0_8px_18px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[rgba(166,182,206,0.22)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.24),0_0_20px_rgba(100,120,160,0.08)]"
       style={{ background: "rgba(10,15,24,0.42)" }}
     >
       <p className="m-0 text-[0.74rem] tracking-[0.05em] uppercase text-[rgba(167,180,201,0.88)]">

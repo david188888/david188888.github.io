@@ -33,6 +33,7 @@ CLAUDE.md
 photo.jpg
 local/
 .context/
+.superpowers/
 
 # Local translation diagnostics
 local/translation-diagnostics/

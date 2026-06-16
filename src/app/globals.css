@@ -99,9 +99,180 @@ html[data-theme="dark"] {
     animation: intro 0.25s ease-out both;
   }
 
+  .home-motion-shell {
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .home-motion-shell::before {
+    content: "";
+    position: fixed;
+    inset: -30%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 18% 10%, rgba(221, 230, 245, 0.09), transparent 28%),
+      radial-gradient(circle at 82% 18%, rgba(47, 127, 147, 0.1), transparent 32%),
+      radial-gradient(circle at 52% 72%, rgba(140, 160, 200, 0.08), transparent 30%);
+    filter: blur(34px);
+    animation: home-ambient-drift 22s ease-in-out infinite alternate;
+  }
+
+  .home-motion-shell::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.14;
+    background-image:
+      linear-gradient(rgba(221, 230, 245, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(221, 230, 245, 0.026) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: linear-gradient(to bottom, black 0%, black 42%, transparent 92%);
+  }
+
+  .home-hero-panel {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(8, 13, 21, 0.4), rgba(10, 16, 26, 0.2));
+  }
+
+  .home-highlight-line {
+    position: absolute;
+    top: 0;
+    left: clamp(1.3rem, 3vw, 2.4rem);
+    right: clamp(1.3rem, 3vw, 2.4rem);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(221, 230, 245, 0.58), transparent);
+    animation: home-line-breathe 5.8s ease-in-out infinite;
+  }
+
+  .home-avatar-motion::after {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border: 1px solid rgba(221, 230, 245, 0.08);
+    border-radius: 999px;
+    animation: home-avatar-breathe 5.5s ease-in-out infinite;
+  }
+
+  .home-nav-link {
+    position: relative;
+  }
+
+  .home-nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.4rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 180ms ease;
+  }
+
+  .home-nav-link:hover::after,
+  .home-nav-link:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  .home-insight-list {
+    overflow: hidden;
+    border: 1px solid rgba(166, 182, 206, 0.08);
+    background: rgba(10, 15, 24, 0.3);
+    backdrop-filter: blur(8px);
+  }
+
+  .home-insight-row {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-insight-row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, rgba(221, 230, 245, 0.72), transparent);
+    transform: scaleY(0);
+    transition: transform 200ms ease;
+  }
+
+  .home-insight-row::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 82% 50%, rgba(221, 230, 245, 0.08), transparent 28%),
+      linear-gradient(90deg, transparent, rgba(221, 230, 245, 0.04), transparent);
+    opacity: 0;
+    transform: translateX(-7%);
+    transition: opacity 180ms ease, transform 260ms ease;
+  }
+
+  .home-insight-row:hover::before,
+  .home-insight-row:focus-visible::before {
+    transform: scaleY(1);
+  }
+
+  .home-insight-row:hover::after,
+  .home-insight-row:focus-visible::after {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .home-insight-row > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .home-support-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-support-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 82% 18%, rgba(221, 230, 245, 0.09), transparent 34%),
+      linear-gradient(110deg, transparent 24%, rgba(221, 230, 245, 0.04), transparent 68%);
+    opacity: 0;
+    transform: translateX(-8%);
+    transition: opacity 200ms ease, transform 260ms ease;
+  }
+
+  .home-support-card:hover::after,
+  .home-support-card:focus-within::after {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
   @keyframes intro {
     0% { opacity: 0; }
     100% { opacity: 1; }
+  }
+
+  @keyframes home-ambient-drift {
+    0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+    100% { transform: translate3d(2%, 1%, 0) scale(1.05); }
+  }
+
+  @keyframes home-line-breathe {
+    0%, 100% { opacity: 0.28; transform: translateX(-8%); }
+    50% { opacity: 0.9; transform: translateX(8%); }
+  }
+
+  @keyframes home-avatar-breathe {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50% { opacity: 0.75; transform: scale(1.08); }
   }
 }
 
