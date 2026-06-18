@@ -21,7 +21,7 @@ Repair the production homepage regressions found after the latest visual refresh
 - Keep every primary navigation destination available on mobile.
 - Respect `prefers-reduced-motion`.
 - The user confirmed that language switching may perform a short full-page refresh and replace the current history entry.
-- Keep all profile controls visible at 1024x720 and larger desktop viewports. Below 700px viewport height, disable sticky positioning so normal document scrolling remains the fallback.
+- Keep all profile controls visible at 1024x720 and larger desktop viewports. Below 720px viewport height, disable sticky positioning so normal document scrolling remains the fallback.
 
 ## Approaches Considered
 
@@ -54,8 +54,8 @@ Reorganize the app into locale-specific root layouts and introduce a hamburger m
 
 - Replace the homepage shell's two-axis `overflow: hidden` with `overflow-x: clip` and `overflow-y: visible`; do not use `overflow-x: hidden`, which can still create a scroll container through axis-value computation.
 - Preserve the two-column grid at `lg` widths.
-- Add a 700px-to-800px short-viewport desktop rule that reduces the profile name, summary, section-navigation, and social-link vertical gaps enough for all controls to remain visible at 1024x720 and 1280x720.
-- Below 700px viewport height, disable sticky positioning and let the profile rail move with document scrolling.
+- Add a 720px-to-800px short-viewport desktop rule that reduces the profile name, summary, section-navigation, and social-link vertical gaps enough for all controls to remain visible at 1024x720 and 1280x720.
+- Below 720px viewport height, disable sticky positioning and let the profile rail move with document scrolling.
 - Keep the rail sticky below the fixed masthead and allow the document, not the rail, to own vertical scrolling.
 
 ### Mobile Masthead
@@ -81,7 +81,7 @@ Reorganize the app into locale-specific root layouts and introduce a hamburger m
 - At 1024x720 and 1280x720, assert that the sticky profile top remains within one pixel after scrolling 1200px and that the final social link bottom is inside the viewport.
 - At 390x844, assert that brand, primary navigation, and language labels each render on one line without horizontal page overflow.
 - For `/#profile`, assert that the target top is at or below the fixed masthead bottom after navigation.
-- On `/zh/`, assert that `document.documentElement.lang === "zh"` before hydration completes; on `/`, assert `en`.
+- In the exported HTML, assert that the locale script is inside `<head>` and precedes the first Next client chunk. Extract and execute that script in an isolated document/location test to assert `/zh/` produces `lang="zh"` and `/` produces `lang="en"`; then confirm the same values in the loaded browser DOM.
 - Re-run the production sequence: English, Chinese switch, browser back/history behavior, reduced motion, and console errors.
 
 ## Documentation
