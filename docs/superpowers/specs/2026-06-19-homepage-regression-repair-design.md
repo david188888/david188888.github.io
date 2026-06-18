@@ -21,6 +21,7 @@ Repair the production homepage regressions found after the latest visual refresh
 - Keep every primary navigation destination available on mobile.
 - Respect `prefers-reduced-motion`.
 - The user confirmed that language switching may perform a short full-page refresh and replace the current history entry.
+- Keep all profile controls visible at 1024x720 and larger desktop viewports. Below 700px viewport height, disable sticky positioning so normal document scrolling remains the fallback.
 
 ## Approaches Considered
 
@@ -44,15 +45,17 @@ Reorganize the app into locale-specific root layouts and introduce a hamburger m
 
 - Keep the current locale-path mapping from `switchLocalePathname()`.
 - Render language options as ordinary anchors so direct URLs and no-JavaScript navigation remain valid.
-- On an actual language change, persist `preferredLocale`, prevent client-router navigation, and call `window.location.replace(targetHref)`.
-- Ignore clicks on the already-active locale so the current page does not reload.
-- Add unit coverage for storage success, unavailable storage, active-locale clicks, and location replacement.
+- For an unmodified primary-button click on an actual language change, persist `preferredLocale`, prevent client-router navigation, and call `window.location.replace(targetHref)`.
+- For an unmodified primary-button click on the already-active locale, call `preventDefault()` so the current page does not reload.
+- Preserve ordinary anchor behavior for Cmd, Ctrl, Shift, or Alt clicks so users can open locale URLs in a new tab or window.
+- Add unit coverage for storage success, unavailable storage, active-locale clicks, modified clicks, and location replacement.
 
 ### Desktop Profile Rail
 
-- Replace the homepage shell's two-axis `overflow: hidden` with horizontal clipping that does not create a vertical scroll container.
+- Replace the homepage shell's two-axis `overflow: hidden` with `overflow-x: clip` and `overflow-y: visible`; do not use `overflow-x: hidden`, which can still create a scroll container through axis-value computation.
 - Preserve the two-column grid at `lg` widths.
-- Add a short-viewport desktop rule that reduces the profile name, summary, section-navigation, and social-link vertical gaps enough for all controls to remain visible.
+- Add a 700px-to-800px short-viewport desktop rule that reduces the profile name, summary, section-navigation, and social-link vertical gaps enough for all controls to remain visible at 1024x720 and 1280x720.
+- Below 700px viewport height, disable sticky positioning and let the profile rail move with document scrolling.
 - Keep the rail sticky below the fixed masthead and allow the document, not the rail, to own vertical scrolling.
 
 ### Mobile Masthead
@@ -65,17 +68,21 @@ Reorganize the app into locale-specific root layouts and introduce a hamburger m
 ### Anchor And Document Language
 
 - Give `#profile` the same fixed-header scroll offset used by content sections.
-- Add a small locale document-language component that synchronizes `document.documentElement.lang` for locale-prefixed routes and restores English when leaving them.
-- Retain `lang="en"` as the static-export fallback for unprefixed routes.
+- Add a small inline script in the root document head that derives the locale from `window.location.pathname` and sets `document.documentElement.lang` before page content is parsed and before React hydration.
+- Retain `lang="en"` in exported markup as the no-JavaScript fallback for unprefixed routes. The Chinese acceptance criterion is the pre-hydration browser DOM, because a single static root layout cannot emit route-specific `<html>` attributes without reorganizing every route into multiple root layouts.
 
 ## Testing
 
 - Unit-test the locale replacement helper before implementing it.
-- Add contract tests for the homepage CSS and responsive classes that caused the regressions.
+- Add contract tests for the homepage CSS and responsive classes that caused the regressions, while treating browser geometry checks as the authoritative layout verification.
 - Run the complete Vitest suite and TypeScript check.
 - Build a clean production static export.
-- Verify the generated English and Chinese pages and run Chrome checks at desktop, short-desktop, 768px, and 390px widths.
-- Re-run the production sequence: English, Chinese switch, browser back/history behavior, sticky scrolling, mobile masthead, anchors, reduced motion, and console errors.
+- Verify the generated English and Chinese pages and run Chrome checks at 1512x900, 1280x720, 1024x720, 768x1024, and 390x844.
+- At 1024x720 and 1280x720, assert that the sticky profile top remains within one pixel after scrolling 1200px and that the final social link bottom is inside the viewport.
+- At 390x844, assert that brand, primary navigation, and language labels each render on one line without horizontal page overflow.
+- For `/#profile`, assert that the target top is at or below the fixed masthead bottom after navigation.
+- On `/zh/`, assert that `document.documentElement.lang === "zh"` before hydration completes; on `/`, assert `en`.
+- Re-run the production sequence: English, Chinese switch, browser back/history behavior, reduced motion, and console errors.
 
 ## Documentation
 
