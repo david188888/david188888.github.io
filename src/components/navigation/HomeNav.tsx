@@ -40,14 +40,19 @@ export function HomeNav({ locale = defaultLocale }: HomeNavProps) {
       }`}
       aria-label="Home navigation"
     >
-      <div className="flex items-center justify-between max-w-[1280px] mx-auto h-14 md:h-[3.2rem]">
-        <Link
-          href={localizedHref("/", locale)}
-          className="font-serif text-lg font-semibold text-[#eef3fc] no-underline hover:text-[#f2f6ff] tracking-wide"
-        >
-          HongYu Liu
-        </Link>
-        <ul className="flex items-center gap-5 md:gap-6 m-0 p-0 list-none">
+      <div className="home-nav-inner mx-auto flex h-[3.2rem] max-w-[1280px] items-center justify-between">
+        <div className="home-nav-brand-row">
+          <Link
+            href={localizedHref("/", locale)}
+            className="font-serif text-lg font-semibold text-[#eef3fc] no-underline hover:text-[#f2f6ff] tracking-wide"
+          >
+            HongYu Liu
+          </Link>
+          <div className="home-nav-mobile-language">
+            <LanguageSwitcher variant="home" />
+          </div>
+        </div>
+        <ul className="home-nav-links flex items-center gap-5 md:gap-6 m-0 p-0 list-none">
           {homeNavigation.map((link) => {
             const messageKey = homeNavMessageKeys[link.title as keyof typeof homeNavMessageKeys];
             return (
@@ -63,7 +68,7 @@ export function HomeNav({ locale = defaultLocale }: HomeNavProps) {
               </li>
             );
           })}
-          <li className="m-0">
+          <li className="home-nav-desktop-language m-0">
             <LanguageSwitcher variant="home" />
           </li>
         </ul>
