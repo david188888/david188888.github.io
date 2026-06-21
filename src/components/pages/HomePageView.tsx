@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { PointerGlow } from "@/components/home/PointerGlow";
-import { HomeNav } from "@/components/navigation/HomeNav";
+import {
+  AlignedPageShell,
+  type AlignedPageSection,
+} from "@/components/layout/AlignedPageShell";
 import { authorConfig } from "@/config/author";
 import { getInsightContent } from "@/config/insights";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
 import { getMessages } from "@/i18n/messages";
+import { getPublishedPosts, type LocalizedPost } from "@/lib/content/posts";
 
 interface HomePageViewProps {
   locale?: Locale;
@@ -178,15 +181,17 @@ const homeDesignCopy = {
       notes: "Notes",
       background: "Background",
     },
-    workTitle: "Work",
-    workDescription:
-      "Research papers and production experience around speech language models, privacy, and spoken dialogue intelligence.",
-    notesTitle: "Notes",
-    notesDescription:
-      "A public notebook for industry structure, company strategy, and signals worth tracking.",
-    backgroundTitle: "Background",
-    viewWork: "View Work",
-    readNotes: "Read Notes",
+    researchTitle: "Research",
+    researchDescription:
+      "Complete research papers in speech language models, privacy, and spoken dialogue intelligence.",
+    experienceTitle: "Experience",
+    experienceDescription:
+      "Production work on speech algorithms, model inference, voice cloning, and video translation.",
+    educationTitle: "Education",
+    educationDescription: "Academic training in software engineering and data science.",
+    insightsTitle: "Insights",
+    insightsDescription: "The latest note from my public notebook.",
+    openInsights: "Open Insights",
     researchLabel: "Research",
     experienceLabel: "Experience",
     educationLabel: "Education",
@@ -210,15 +215,17 @@ const homeDesignCopy = {
       notes: "记录",
       background: "背景",
     },
-    workTitle: "Work",
-    workDescription:
-      "围绕语音语言模型、隐私评估与语音对话智能的研究论文和生产实践。",
-    notesTitle: "Notes",
-    notesDescription:
-      "公开记录行业结构、公司战略，以及值得持续追踪的关键信号。",
-    backgroundTitle: "Background",
-    viewWork: "查看 Work",
-    readNotes: "阅读 Notes",
+    researchTitle: "研究成果",
+    researchDescription:
+      "完整记录我在语音语言模型、隐私评估与语音对话智能方向的研究论文。",
+    experienceTitle: "实习经历",
+    experienceDescription:
+      "完整记录语音算法、模型推理、语音克隆与视频翻译相关的生产实践。",
+    educationTitle: "教育经历",
+    educationDescription: "软件工程与数据科学方向的学习经历。",
+    insightsTitle: "随笔洞察",
+    insightsDescription: "公开笔记中最近发布的一篇。",
+    openInsights: "打开随笔洞察",
     researchLabel: "研究",
     experienceLabel: "经历",
     educationLabel: "教育",
@@ -238,26 +245,21 @@ const homeDesignCopy = {
     headline: string;
     summary: string;
     nav: Record<"profile" | "work" | "notes" | "background", string>;
-    workTitle: string;
-    workDescription: string;
-    notesTitle: string;
-    notesDescription: string;
-    backgroundTitle: string;
-    viewWork: string;
-    readNotes: string;
+    researchTitle: string;
+    researchDescription: string;
+    experienceTitle: string;
+    experienceDescription: string;
+    educationTitle: string;
+    educationDescription: string;
+    insightsTitle: string;
+    insightsDescription: string;
+    openInsights: string;
     researchLabel: string;
     experienceLabel: string;
     educationLabel: string;
     links: Record<"github" | "scholar" | "cv" | "email", string>;
   }
 >;
-
-const sectionNavItems = [
-  ["profile", "profile"],
-  ["work", "work"],
-  ["notes", "notes"],
-  ["background", "background"],
-] as const satisfies Array<readonly [keyof typeof homeDesignCopy.en.nav, string]>;
 
 function SectionHeading({ title, description }: { title: string; description?: string }) {
   return (
@@ -314,140 +316,159 @@ function EvidenceRow({
   );
 }
 
-export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
+export function buildHomeSections(
+  locale: Locale,
+  publishedPosts: readonly LocalizedPost[]
+): AlignedPageSection[] {
   const { common } = getMessages(locale);
   const copy = homeDesignCopy[locale];
-  const { featuredInsight, entries: insightEntries } = getInsightContent(locale);
+  const { featuredInsight } = getInsightContent(locale);
   const insightsHref = localizedHref("/insights/", locale);
+  const latestPost = publishedPosts[0];
   const cvHref = "/files/Resume_en.pdf";
 
-  return (
-    <>
-      <HomeNav locale={locale} />
-      <PointerGlow>
-        <main className="home-motion-shell relative min-h-screen bg-[#050608] text-[#e8edf7]" data-locale={locale}>
-          <div className="home-layout relative z-10 mx-auto grid min-h-screen w-[min(1280px,calc(100vw-2rem))] gap-[clamp(2.5rem,7vw,7rem)] px-[clamp(0.25rem,1vw,0.5rem)] pt-[calc(3.2rem+clamp(2rem,5vw,4.2rem))] pb-[clamp(3rem,7vw,5rem)] lg:grid-cols-[minmax(18rem,0.86fr)_minmax(0,1.5fr)]">
-            <aside id="profile" className="home-profile lg:sticky lg:top-[calc(3.2rem+clamp(2rem,5vw,4.2rem))] lg:flex lg:max-h-[calc(100svh-7rem)] lg:flex-col">
-              <div className="home-reveal" style={{ animationDelay: "80ms" }}>
-                <p className="home-profile-mark">
-                  {authorConfig.name}
-                </p>
-                <h1 className="home-profile-name">
-                  {authorConfig.name}
-                </h1>
-                <p className="home-profile-role">
-                  {copy.role}
-                </p>
-                <p className="home-profile-summary">
-                  {copy.profileSummary}
-                </p>
-              </div>
-
-              <nav className="home-section-nav home-reveal mt-[clamp(3.2rem,7vw,5.8rem)] grid gap-7" style={{ animationDelay: "260ms" }} aria-label="Homepage sections">
-                {sectionNavItems.map(([key, id]) => (
-                  <a key={id} href={`#${id}`} data-hover-reactive className="home-section-nav-item">
-                    {copy.nav[key]}
-                  </a>
-                ))}
-              </nav>
-
-              <div className="home-social-links home-reveal mt-12 flex flex-wrap gap-x-8 gap-y-3 text-[0.86rem] text-[#8993a3] lg:mt-auto" style={{ animationDelay: "420ms" }}>
-                <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener noreferrer">
-                  {copy.links.github}
-                </a>
-                <a href={authorConfig.googlescholar} target="_blank" rel="noopener noreferrer">
-                  {copy.links.scholar}
-                </a>
-                <a href={cvHref}>{copy.links.cv}</a>
-                <a href={`mailto:${authorConfig.email}`}>{copy.links.email}</a>
-              </div>
-            </aside>
-
-            <div className="home-stream min-w-0">
-              <section className="home-reveal" style={{ animationDelay: "160ms" }}>
-                <p className="home-kicker">
-                  {copy.eyebrow}
-                </p>
-                <h2 className="home-hero-title">
-                  {copy.headline}
-                </h2>
-                <p className="home-hero-summary">
-                  {copy.summary}
-                </p>
-                <div className="mt-10 flex flex-wrap gap-4">
-                  <a href="#work" data-hover-reactive className="home-action-primary">
-                    <span>{copy.viewWork}</span>
-                  </a>
-                  <Link href={insightsHref} data-hover-reactive className="home-action-secondary">
-                    <span>{copy.readNotes}</span>
-                  </Link>
-                </div>
-              </section>
-
-              <section id="work" className="home-section home-reveal" style={{ animationDelay: "300ms" }}>
-                <SectionHeading title={copy.workTitle} description={copy.workDescription} />
-                <div className="home-evidence-list">
-                  {papersData[locale].map((paper) => (
-                    <EvidenceRow
-                      key={paper.title}
-                      label={copy.researchLabel}
-                      meta={paper.venue}
-                      title={paper.title}
-                      description={paper.description}
-                      detail={common.paper}
-                      href={paper.paperUrl}
-                      external
-                    />
-                  ))}
-                  {internshipData[locale].map((item) => (
-                    <EvidenceRow
-                      key={item.title}
-                      label={copy.experienceLabel}
-                      meta={item.time}
-                      title={item.title}
-                      description={item.description}
-                      detail={item.meta}
-                    />
-                  ))}
-                </div>
-              </section>
-
-              <section id="notes" className="home-section home-reveal" style={{ animationDelay: "380ms" }}>
-                <SectionHeading title={copy.notesTitle} description={featuredInsight.description || copy.notesDescription} />
-                <div className="home-evidence-list">
-                  {insightEntries.map((entry) => (
-                    <EvidenceRow
-                      key={entry.title}
-                      label={entry.category}
-                      meta={entry.cadence}
-                      title={entry.title}
-                      description={entry.description}
-                      detail={entry.tags.join(" / ")}
-                      href={entry.href ? localizedHref(entry.href, locale) : insightsHref}
-                    />
-                  ))}
-                </div>
-              </section>
-
-              <section id="background" className="home-section home-reveal" style={{ animationDelay: "460ms" }}>
-                <SectionHeading title={copy.backgroundTitle} />
-                <div className="home-evidence-list">
-                  {educationData[locale].map((item) => (
-                    <EvidenceRow
-                      key={item.title}
-                      label={copy.educationLabel}
-                      meta={item.time}
-                      title={item.title}
-                      description={item.description}
-                      detail={item.meta}
-                    />
-                  ))}
-                </div>
-              </section>
-            </div>
+  return [
+    {
+      id: "profile",
+      label: copy.nav.profile,
+      content: (
+        <div className="home-reveal">
+          <p className="home-kicker">{copy.eyebrow}</p>
+          <p className="home-profile-mark">{authorConfig.name}</p>
+          <h1 className="home-hero-title">{copy.headline}</h1>
+          <p className="home-profile-role">{copy.role}</p>
+          <p className="home-profile-summary">{copy.profileSummary}</p>
+          <p className="home-hero-summary">{copy.summary}</p>
+          <div className="home-social-links mt-8 flex flex-wrap gap-x-8 gap-y-3 text-[0.86rem] text-[#8993a3]">
+            <a
+              href={`https://github.com/${authorConfig.github}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {copy.links.github}
+            </a>
+            <a
+              href={authorConfig.googlescholar}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {copy.links.scholar}
+            </a>
+            <a href={cvHref}>{copy.links.cv}</a>
+            <a href={`mailto:${authorConfig.email}`}>{copy.links.email}</a>
           </div>
-        </main>
-      </PointerGlow>
-    </>
+        </div>
+      ),
+    },
+    {
+      id: "research",
+      label: copy.researchTitle,
+      content: (
+        <>
+          <SectionHeading
+            title={copy.researchTitle}
+            description={copy.researchDescription}
+          />
+          <div className="home-evidence-list">
+            {papersData[locale].map((paper) => (
+              <EvidenceRow
+                key={paper.title}
+                label={copy.researchLabel}
+                meta={paper.venue}
+                title={paper.title}
+                description={paper.description}
+                detail={common.paper}
+                href={paper.paperUrl}
+                external
+              />
+            ))}
+          </div>
+        </>
+      ),
+    },
+    {
+      id: "experience",
+      label: copy.experienceTitle,
+      content: (
+        <>
+          <SectionHeading
+            title={copy.experienceTitle}
+            description={copy.experienceDescription}
+          />
+          <div className="home-evidence-list">
+            {internshipData[locale].map((item) => (
+              <EvidenceRow
+                key={item.title}
+                label={copy.experienceLabel}
+                meta={item.time}
+                title={item.title}
+                description={item.description}
+                detail={item.meta}
+              />
+            ))}
+          </div>
+        </>
+      ),
+    },
+    {
+      id: "education",
+      label: copy.educationTitle,
+      content: (
+        <>
+          <SectionHeading
+            title={copy.educationTitle}
+            description={copy.educationDescription}
+          />
+          <div className="home-evidence-list">
+            {educationData[locale].map((item) => (
+              <EvidenceRow
+                key={item.title}
+                label={copy.educationLabel}
+                meta={item.time}
+                title={item.title}
+                description={item.description}
+                detail={item.meta}
+              />
+            ))}
+          </div>
+        </>
+      ),
+    },
+    {
+      id: "insights",
+      label: copy.insightsTitle,
+      content: (
+        <>
+          <SectionHeading
+            title={copy.insightsTitle}
+            description={copy.insightsDescription}
+          />
+          {latestPost ? (
+            <Link
+              href={localizedHref(`/insights/${latestPost.slug}/`, locale)}
+              className="home-latest-insight"
+            >
+              {latestPost.date ? <span>{latestPost.date}</span> : null}
+              <h3>{latestPost.title}</h3>
+              {latestPost.excerpt ? <p>{latestPost.excerpt}</p> : null}
+            </Link>
+          ) : (
+            <p className="home-hero-summary">{featuredInsight.description}</p>
+          )}
+          <Link href={insightsHref} className="home-action-secondary mt-6">
+            <span>{copy.openInsights}</span>
+          </Link>
+        </>
+      ),
+    },
+  ];
+}
+
+export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
+  return (
+    <AlignedPageShell
+      locale={locale}
+      sections={buildHomeSections(locale, getPublishedPosts(locale))}
+    />
   );
 }

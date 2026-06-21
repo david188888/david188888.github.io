@@ -34,6 +34,7 @@ photo.jpg
 local/
 .context/
 .superpowers/
+.worktrees/
 
 # Local translation diagnostics
 local/translation-diagnostics/
