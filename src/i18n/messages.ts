@@ -50,6 +50,9 @@ export interface Messages {
       futureNote: string;
       backHome: string;
       footerLabel: string;
+      articleLabel: string;
+      readingLabel: string;
+      backToInsights: string;
       noteQueue: {
         label: string;
         title: string;
@@ -172,6 +175,9 @@ export const messages: Record<Locale, Messages> = {
           "Future published essays can be wired to MDX without changing this page structure.",
         backHome: "Back to homepage",
         footerLabel: "Blog & Ideas",
+        articleLabel: "Article",
+        readingLabel: "Reading",
+        backToInsights: "Back to Insights",
         noteQueue: [
           {
             label: "Next essay",
@@ -319,6 +325,9 @@ export const messages: Record<Locale, Messages> = {
         futureNote: "未来发布的文章可以接入 MDX，而无需改变这个页面结构。",
         backHome: "返回首页",
         footerLabel: "随笔与想法",
+        articleLabel: "文章",
+        readingLabel: "正文",
+        backToInsights: "返回随笔洞察",
         noteQueue: [
           {
             label: "下一篇文章",

@@ -1,5 +1,7 @@
 # Minimal Motion Homepage Implementation Plan
 
+> **Superseded layout note (2026-06-20):** The sticky profile rail and right-side evidence stream were replaced by the approved aligned chapter grid shared by the homepage, Insights index, and Insights articles. The dark palette, restrained pointer treatment, evidence rows, focus states, and reduced-motion requirements remain active.
+
 **Goal:** Refine the homepage into a dark, restrained personal site that keeps the visitor focused on HongYu Liu, then quickly exposes research work, public notes, and background evidence.
 
 **Accepted direction:** Use the Brittany Chiang-style two-column structure as the main layout, preserve the existing dark palette, remove decorative blobs/circles/waves, and add subtle pointer-reactive motion only around the visitor's active hover area.
