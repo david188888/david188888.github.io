@@ -1,5 +1,7 @@
 # Aligned Home And Insights Shell Design
 
+> **Homepage supersession (2026-06-21):** The homepage portion of this document was replaced by `2026-06-21-balanced-card-homepage-design.md`. The Insights index and article ideas remain separate future work; do not reintroduce the wide aligned-chapter rail on the homepage.
+
 ## Goal
 
 Restructure the homepage, Insights index, and individual Insights articles around one shared editorial shell: navigation remains in the left column, page content remains in the right column, and every left-side navigation label begins on the same horizontal line as its corresponding right-side section.

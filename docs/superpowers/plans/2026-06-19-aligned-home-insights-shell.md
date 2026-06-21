@@ -1,5 +1,7 @@
 # Aligned Home And Insights Shell Implementation Plan
 
+> **Homepage supersession (2026-06-21):** The homepage portion of this document was replaced by `2026-06-21-balanced-card-homepage-design.md`. The Insights index and article ideas remain separate future work; do not reintroduce the wide aligned-chapter rail on the homepage.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build one aligned editorial shell for the homepage, Insights index, and Insights articles, with left-side chapter navigation and right-side content that remain visually connected through the full document.

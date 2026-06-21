@@ -48,6 +48,33 @@ export function getLocalizedPosts(locale: Locale = defaultLocale): LocalizedPost
     .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 }
 
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export function selectPublishedPosts(
+  posts: readonly LocalizedPost[],
+  today: Date = new Date()
+): LocalizedPost[] {
+  const cutoff = today.toISOString().slice(0, 10);
+
+  return [...posts]
+    .filter((post) => {
+      if (!post.date || !DATE_ONLY_PATTERN.test(post.date)) return true;
+      return post.date <= cutoff;
+    })
+    .sort((a, b) => {
+      const aDate = DATE_ONLY_PATTERN.test(a.date ?? "") ? a.date ?? "" : "";
+      const bDate = DATE_ONLY_PATTERN.test(b.date ?? "") ? b.date ?? "" : "";
+      return bDate.localeCompare(aDate);
+    });
+}
+
+export function getPublishedPosts(
+  locale: Locale = defaultLocale,
+  today: Date = new Date()
+): LocalizedPost[] {
+  return selectPublishedPosts(getLocalizedPosts(locale), today);
+}
+
 export function getLocalizedPost(slug: string, locale: Locale = defaultLocale): LocalizedPost {
   const postPath = join(POSTS_DIR, `${slug}.mdx`);
   const source = readFileSync(postPath, "utf8");

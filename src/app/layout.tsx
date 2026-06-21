@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   },
 };
 
+const documentLanguageScript = `(function () {
+  var locale = window.location.pathname.split("/")[1];
+  document.documentElement.lang = locale === "zh" ? "zh" : "en";
+})();`;
+
 export default function RootLayout({
   children,
 }: {
@@ -21,6 +26,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: documentLanguageScript }} />
+      </head>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
           {children}
