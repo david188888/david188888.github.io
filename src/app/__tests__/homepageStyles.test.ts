@@ -26,6 +26,18 @@ describe("balanced academic homepage styles", () => {
     expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   });
 
+  it("defines approved homepage motion hooks", () => {
+    expect(css).toContain("--home-motion-fast");
+    expect(css).toContain("--home-motion-reveal");
+    expect(css).toContain("--home-tilt-glare-opacity: 0.32");
+    expect(css).toMatch(/\.home-stagger-line\s*\{[\s\S]*?filter:\s*blur\(var\(--home-motion-blur\)\)/);
+    expect(css).toMatch(/\.home-stagger-group\.is-shown\s+\.home-stagger-line/);
+    expect(css).toMatch(/\.home-card-tilt\s*\{[\s\S]*?perspective:\s*var\(--home-tilt-perspective\)/);
+    expect(css).toMatch(/\.home-card-tilt-glare\s*\{[\s\S]*?radial-gradient/);
+    expect(css).toMatch(/\.home-section-nav-indicator\s*\{[\s\S]*?transition:[\s\S]*?transform/);
+    expect(css).toMatch(/\.home-section-nav-link\[aria-current="true"\]/);
+  });
+
   it("uses a two-row mobile masthead with scrollable navigation", () => {
     expect(css).toMatch(
       /@media\s*\(max-width:\s*767px\)[\s\S]*\.home-nav-inner\s*\{[\s\S]*?grid-template-columns:\s*1fr/

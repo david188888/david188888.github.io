@@ -256,11 +256,13 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
         <main className="academic-home home-motion-shell" data-locale={locale}>
           <div className="academic-home-container">
             <section id="profile" className="academic-home-hero home-reveal">
-              <div>
-                <p className="academic-home-kicker">{copy.role}</p>
-                <h1>{authorConfig.name}</h1>
-                <p className="academic-home-intro">{copy.introduction}</p>
-                <div className="academic-home-links">
+              <div className="home-stagger-group is-shown">
+                <p className="academic-home-kicker home-stagger-line home-stagger-line--1">{copy.role}</p>
+                <h1 className="home-stagger-line home-stagger-line--2">{authorConfig.name}</h1>
+                <p className="academic-home-intro home-stagger-line home-stagger-line--3">
+                  {copy.introduction}
+                </p>
+                <div className="academic-home-links home-stagger-line home-stagger-line--4">
                   <a href={authorConfig.googlescholar} target="_blank" rel="noopener noreferrer">
                     {copy.links.scholar}
                   </a>
@@ -271,12 +273,12 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                   <a href={`mailto:${authorConfig.email}`}>{copy.links.email}</a>
                 </div>
               </div>
-              <aside className="academic-home-facts">
-                <div>
+              <aside className="academic-home-facts home-stagger-group is-shown">
+                <div className="home-stagger-line home-stagger-line--3">
                   <span>{copy.focusLabel}</span>
                   <p>{copy.focusValue}</p>
                 </div>
-                <div>
+                <div className="home-stagger-line home-stagger-line--4">
                   <span>{copy.incomingLabel}</span>
                   <p>{copy.incomingValue}</p>
                 </div>

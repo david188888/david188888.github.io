@@ -1,35 +1,85 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent,
+  type MouseEvent,
+} from "react";
 import Link from "next/link";
-import { homeNavigation } from "@/config/navigation";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
-import { getMessages } from "@/i18n/messages";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface HomeNavProps {
   locale?: Locale;
 }
 
-const homeNavMessageKeys = {
-  Insights: "insights",
-  CV: "cv",
-  Contact: "contact",
-  GitHub: "github",
-} as const;
+const homeSectionNavigation = [
+  { id: "profile", labels: { en: "Profile", zh: "主页" } },
+  { id: "education", labels: { en: "Education", zh: "教育" } },
+  { id: "research", labels: { en: "Research", zh: "研究" } },
+  { id: "experience", labels: { en: "Experience", zh: "经历" } },
+  { id: "insights", labels: { en: "Insights", zh: "随笔" } },
+] as const;
 
 export function HomeNav({ locale = defaultLocale }: HomeNavProps) {
+  const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
   const [scrolled, setScrolled] = useState(false);
-  const { nav } = getMessages(locale);
+  const [activeSection, setActiveSection] = useState<(typeof homeSectionNavigation)[number]["id"]>("profile");
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, isVisible: false });
+
+  const moveIndicator = useCallback((sectionId: string, isVisible = true) => {
+    const item = itemRefs.current[sectionId];
+    if (!item) return;
+
+    setIndicator({
+      left: item.offsetLeft,
+      width: item.offsetWidth,
+      isVisible,
+    });
+  }, []);
 
   useEffect(() => {
     function handleScroll() {
       setScrolled(window.scrollY > 50);
+
+      let currentSection: typeof activeSection = "profile";
+      for (const item of homeSectionNavigation) {
+        const section = document.getElementById(item.id);
+        if (section && section.getBoundingClientRect().top <= 140) {
+          currentSection = item.id;
+        }
+      }
+      setActiveSection(currentSection);
     }
+
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, []);
+
+  useEffect(() => {
+    moveIndicator(activeSection);
+  }, [activeSection, moveIndicator]);
+
+  function previewIndicator(event: MouseEvent<HTMLElement> | FocusEvent<HTMLElement>) {
+    moveIndicator(event.currentTarget.dataset.sectionId ?? activeSection);
+  }
+
+  const indicatorStyle: CSSProperties = {
+    transform: `translateX(${indicator.left}px)`,
+    width: `${indicator.width}px`,
+    opacity: indicator.isVisible ? 1 : 0,
+  };
 
   return (
     <nav
@@ -47,18 +97,28 @@ export function HomeNav({ locale = defaultLocale }: HomeNavProps) {
         >
           HongYu Liu
         </Link>
-        <ul className="home-nav-items flex items-center m-0 p-0 list-none">
-          {homeNavigation.map((link) => {
-            const messageKey = homeNavMessageKeys[link.title as keyof typeof homeNavMessageKeys];
+        <ul className="home-nav-items home-section-nav flex items-center m-0 p-0 list-none" onMouseLeave={() => moveIndicator(activeSection)}>
+          <li className="home-section-nav-indicator" aria-hidden="true" style={indicatorStyle} />
+          {homeSectionNavigation.map((item) => {
+            const isActive = item.id === activeSection;
             return (
-              <li key={link.title}>
+              <li
+                key={item.id}
+                ref={(node) => {
+                  itemRefs.current[item.id] = node;
+                }}
+                className="home-nav-item home-section-nav-item"
+                data-section-id={item.id}
+                onMouseEnter={previewIndicator}
+                onFocus={previewIndicator}
+                onBlur={() => moveIndicator(activeSection)}
+              >
                 <a
-                  href={localizedHref(link.url, locale)}
-                  target={link.url.startsWith("http") || link.url.startsWith("mailto") ? "_blank" : undefined}
-                  rel={link.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                  className="home-nav-link font-sans text-[0.82rem] font-medium text-[rgba(202,212,228,0.88)] no-underline tracking-wider transition-colors duration-200 hover:text-[#eef3fc]"
+                  href={localizedHref(`/#${item.id}`, locale)}
+                  aria-current={isActive ? "true" : undefined}
+                  className="home-nav-link home-section-nav-link font-sans text-[0.82rem] font-medium text-[rgba(202,212,228,0.88)] no-underline tracking-wider transition-colors duration-200 hover:text-[#eef3fc]"
                 >
-                  {messageKey ? nav[messageKey] : link.title}
+                  {item.labels[locale]}
                 </a>
               </li>
             );
