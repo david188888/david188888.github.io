@@ -20,6 +20,10 @@ vi.mock("@/components/home/HomeScrollProgress", () => ({
   HomeScrollProgress: () => <div className="home-reading-progress" />,
 }));
 
+vi.mock("@/components/home/HomeSectionRail", () => ({
+  HomeSectionRail: () => <nav className="home-section-rail">Section rail</nav>,
+}));
+
 import { HomePageView } from "../HomePageView";
 
 describe("HomePageView", () => {
@@ -32,6 +36,7 @@ describe("HomePageView", () => {
       expect(html.indexOf(`id="${ids[index]}"`)).toBeLessThan(html.indexOf(`id="${id}"`));
     });
     expect(html).toContain("HongYu Liu");
+    expect(html).toContain("home-section-rail");
     expect(html).toContain("South China Normal University");
     expect(html).toContain("Insta360");
     expect(html).not.toContain("Current Direction");

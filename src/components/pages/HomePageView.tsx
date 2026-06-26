@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AcademicRecordCard } from "@/components/home/AcademicRecordCard";
+import { HomeSectionRail } from "@/components/home/HomeSectionRail";
 import { HomeScrollProgress } from "@/components/home/HomeScrollProgress";
 import { PointerGlow } from "@/components/home/PointerGlow";
 import { HomeNav } from "@/components/navigation/HomeNav";
@@ -252,6 +253,7 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
     <>
       <HomeNav locale={locale} />
       <HomeScrollProgress />
+      <HomeSectionRail locale={locale} />
       <PointerGlow>
         <main className="academic-home home-motion-shell" data-locale={locale}>
           <div className="academic-home-container">

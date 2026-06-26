@@ -34,8 +34,10 @@ describe("balanced academic homepage styles", () => {
     expect(css).toMatch(/\.home-stagger-group\.is-shown\s+\.home-stagger-line/);
     expect(css).toMatch(/\.home-card-tilt\s*\{[\s\S]*?perspective:\s*var\(--home-tilt-perspective\)/);
     expect(css).toMatch(/\.home-card-tilt-glare\s*\{[\s\S]*?radial-gradient/);
-    expect(css).toMatch(/\.home-section-nav-indicator\s*\{[\s\S]*?transition:[\s\S]*?transform/);
+    expect(css).toMatch(/\.home-section-rail-pill\s*\{[\s\S]*?transition:[\s\S]*?transform/);
+    expect(css).toMatch(/\.home-section-rail-item\s*\{[\s\S]*?top:\s*var\(--rail-item-y\)/);
     expect(css).toMatch(/\.home-section-nav-link\[aria-current="true"\]/);
+    expect(css).not.toMatch(/\.home-nav-link::after/);
   });
 
   it("uses a two-row mobile masthead with scrollable navigation", () => {
