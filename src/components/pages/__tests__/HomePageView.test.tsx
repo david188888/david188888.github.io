@@ -1,6 +1,15 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import {
+  educationRecords,
+  internshipRecords,
+  publicationRecords,
+} from "@/config/profile";
+
+function escapeHtml(value: string) {
+  return value.replaceAll("&", "&amp;");
+}
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -48,5 +57,16 @@ describe("HomePageView", () => {
     const html = renderToStaticMarkup(<HomePageView locale="en" />);
 
     expect(html).not.toContain("future-post");
+  });
+
+  it.each(["en", "zh"] as const)("renders every configured profile record for %s", (locale) => {
+    const html = renderToStaticMarkup(<HomePageView locale={locale} />);
+
+    educationRecords.forEach((record) => expect(html).toContain(record.institution[locale]));
+    internshipRecords.forEach((record) => {
+      expect(html).toContain(escapeHtml(record.company[locale]));
+      expect(html).toContain(escapeHtml(record.role[locale]));
+    });
+    publicationRecords.forEach((record) => expect(html).toContain(escapeHtml(record.title[locale])));
   });
 });
