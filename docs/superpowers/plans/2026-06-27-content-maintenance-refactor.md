@@ -416,7 +416,7 @@ Run:
 rtk npm run test:run -- src/config/__tests__/profile.test.ts
 ```
 
-Expected: PASS, 4 tests.
+Expected: PASS, 5 tests because the locale parameterization runs once for English and once for Chinese.
 
 - [ ] **Step 5: Commit the profile source**
 
@@ -867,7 +867,7 @@ Delete `.github/workflows/scrape_talks.yml`. Do not modify the active deployment
 Run:
 
 ```bash
-rtk rg -n "academicpages|Jekyll|talkmap|_talks|/#internships" README.md CONTRIBUTING.md .github src/config
+rtk rg -n "academicpages|talkmap|_talks|/#internships" README.md CONTRIBUTING.md .github src/config
 rtk git diff --check
 ```
 
@@ -919,7 +919,7 @@ Expected: no whitespace errors. Only the user's pre-existing untracked `.claude/
 - [ ] **Step 4: Review the final commit sequence**
 
 ```bash
-rtk git log -7 --oneline
+rtk git log -8 --oneline
 ```
 
 Expected: the two design commits, one plan commit, and focused implementation commits for profile content, page migration, Blog hash, navigation, and documentation.
