@@ -49,10 +49,10 @@ Create `src/config/profile.ts` with exported interfaces and three ordered arrays
 
 Each record has a stable `id`. Facts shared across locales, such as publication dates and URLs, are stored once. Visible text that differs by locale is stored as `Record<Locale, string>` fields on the same record.
 
-Education records contain localized `period`, `institution`, `degree`, `description`, and an optional `cvSupplement`. The incoming degree also owns one optional atomic `incomingSummary: { label: LocalizedText; value: LocalizedText }` object used by the homepage hero. This removes `incomingLabel` and `incomingValue` from `homeCopy`, prevents a half-configured summary, and preserves the current short `CUHK-Shenzhen` hero wording. Selectors produce:
+Education records contain localized `period`, `institution`, `degree`, `description`, and optional `cvDegree` and `cvSupplement` fields. `cvDegree` preserves an existing compact CV label when it intentionally differs from the homepage degree text. The incoming degree also owns one optional atomic `incomingSummary: { label: LocalizedText; value: LocalizedText }` object used by the homepage hero. This removes `incomingLabel` and `incomingValue` from `homeCopy`, prevents a half-configured summary, and preserves the current short `CUHK-Shenzhen` hero wording. Selectors produce:
 
 - Homepage: `{ id, time: period, title: institution, meta: degree, description }`.
-- CV: `{ id, school: institution, detail: degree + " · " + (cvSupplement ?? period) }`.
+- CV: `{ id, school: institution, detail: (cvDegree ?? degree) + " · " + (cvSupplement ?? period) }`.
 - Homepage incoming summary: the localized `{ label, value }` from the one record that defines `incomingSummary`.
 
 Internship records contain localized `period`, `company`, `role`, `location`, and `description`. Selectors produce:
