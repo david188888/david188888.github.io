@@ -11,6 +11,7 @@ export interface EducationRecord {
   degree: LocalizedText;
   description: LocalizedText;
   cvSupplement?: LocalizedText;
+  cvDegree?: LocalizedText;
   incomingSummary?: { label: LocalizedText; value: LocalizedText };
 }
 
@@ -57,6 +58,7 @@ export const educationRecords: readonly EducationRecord[] = [
       zh: "香港中文大学（深圳）",
     },
     degree: { en: "Master of Science in Data Science", zh: "数据科学理学硕士" },
+    cvDegree: { en: "M.Sc. in Data Science", zh: "数据科学理学硕士" },
     description: {
       en: "Enrollment scheduled for September 2026.",
       zh: "预计于 2026 年 9 月开始硕士阶段学习。",
@@ -189,7 +191,7 @@ export function getCvEducation(locale: Locale) {
   return educationRecords.map((record) => ({
     id: record.id,
     school: localized(record.institution, locale),
-    detail: `${localized(record.degree, locale)} · ${localized(record.cvSupplement ?? record.period, locale)}`,
+    detail: `${localized(record.cvDegree ?? record.degree, locale)} · ${localized(record.cvSupplement ?? record.period, locale)}`,
   }));
 }
 
