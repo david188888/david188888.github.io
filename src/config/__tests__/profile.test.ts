@@ -56,6 +56,7 @@ describe("profile content", () => {
       description: "Overall GPA: 4.06.",
     });
     expect(getCvEducation("en")[0].detail).toBe("B.Eng. in Software Engineering · GPA: 4.06");
+    expect(getCvEducation("en")[1].detail).toBe("M.Sc. in Data Science · Matriculation: Sep 2026");
     expect(getIncomingEducation("en")).toEqual({
       label: "Incoming 2026",
       value: "CUHK-Shenzhen · M.Sc. Data Science",
