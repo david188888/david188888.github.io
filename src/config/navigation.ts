@@ -6,7 +6,7 @@ export interface NavLink {
 export const mainNavigation: NavLink[] = [
   { title: "Publications", url: "/publications/" },
   { title: "Insights", url: "/insights/" },
-  { title: "Internships", url: "/#internships" },
+  { title: "Internships", url: "/#experience" },
   { title: "CV", url: "/cv/" },
 ];
 
