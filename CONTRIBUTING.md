@@ -1,8 +1,18 @@
-Contributions are welcome! 
+# Contributing
 
-Please add issues and make pull requests. There are no stupid questions. All ideas are welcome. This is a volunteer project. Be excellent to each other.
+This repository is HongYu Liu's personal Next.js website. Keep changes focused
+and preserve the static GitHub Pages export.
 
-Bug reports and feature requests to the template  should be [submitted via GitHub](https://github.com/academicpages/academicpages.github.io/issues/new/choose). For questions concerning how to style the template, please feel free to start a [new discussion on GitHub](https://github.com/academicpages/academicpages.github.io/discussions).
+## Development
 
-Fork from master and go from there. Remember that this repository is intended to remain a generic, ready-to-fork template that demonstrates the features of academicpages.
+1. Install dependencies with `npm install`.
+2. Run the site with `npm run dev`.
+3. Run `npm run test:run` and `npm run build` before opening a pull request.
 
+Profile content belongs in `src/config/profile.ts`. Blog source belongs in
+`content/posts/`, with reviewed translation caches committed under
+`content/generated/translations/posts/`. See `README.md` for the authoring
+workflow.
+
+Do not commit API keys, `.env.local` files, build output, or local diagnostic
+files.
