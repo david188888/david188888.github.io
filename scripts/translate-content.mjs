@@ -30,14 +30,10 @@ export function parseFrontmatter(source) {
   };
 }
 
-export function createSourceHash(input) {
-  const source =
-    typeof input === "string"
-      ? input
-      : JSON.stringify({
-          frontmatter: input.frontmatter ?? {},
-          body: input.body ?? "",
-        });
+export function createSourceHash(source) {
+  if (typeof source !== "string") {
+    throw new TypeError("createSourceHash expects a raw source string.");
+  }
 
   return crypto.createHash("sha256").update(source).digest("hex");
 }
@@ -140,7 +136,7 @@ async function main() {
     }
 
     const targetLanguage = getTargetLanguage(sourceLanguage);
-    const sourceHash = createSourceHash({ frontmatter: parsed.frontmatter, body });
+    const sourceHash = createSourceHash(source);
     const cachePath = toCachePath(sourcePath);
 
     if (await isFreshCache(cachePath, { sourceHash, targetLanguage })) {
