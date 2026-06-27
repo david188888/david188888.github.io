@@ -57,8 +57,8 @@ stay synchronized.
 
 ### Update Education Or Internship Dates
 
-Find the record in `educationRecords` or `internshipRecords` and update its
-localized fields. For an internship date change, update both `period.en` and
+Dates are stored in each record's `period` field. Find the entry in
+`educationRecords` or `internshipRecords` and update both `period.en` and
 `period.zh`; every page reads the same record.
 
 ### Add A Publication
