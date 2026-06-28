@@ -93,6 +93,7 @@ describe("profile content", () => {
       description: "Overall GPA: 4.06.",
     });
     expect(getCvEducation("en")[0].detail).toBe("B.Eng. in Software Engineering · GPA: 4.06");
+    expect(getCvEducation("en")[1].detail).toBe("M.Sc. in Data Science · Matriculation: Sep 2026");
     expect(getIncomingEducation("en")).toEqual({
       label: "Incoming 2026",
       value: "CUHK-Shenzhen · M.Sc. Data Science",
@@ -142,6 +143,7 @@ export interface EducationRecord {
   institution: LocalizedText;
   degree: LocalizedText;
   description: LocalizedText;
+  cvDegree?: LocalizedText;
   cvSupplement?: LocalizedText;
   incomingSummary?: { label: LocalizedText; value: LocalizedText };
 }
@@ -193,6 +195,7 @@ export const educationRecords: readonly EducationRecord[] = [
       zh: "香港中文大学（深圳）",
     },
     degree: { en: "Master of Science in Data Science", zh: "数据科学理学硕士" },
+    cvDegree: { en: "M.Sc. in Data Science", zh: "数据科学理学硕士" },
     description: {
       en: "Enrollment scheduled for September 2026.",
       zh: "预计于 2026 年 9 月开始硕士阶段学习。",
@@ -333,7 +336,7 @@ export function getCvEducation(locale: Locale) {
   return educationRecords.map((record) => ({
     id: record.id,
     school: localized(record.institution, locale),
-    detail: `${localized(record.degree, locale)} · ${localized(record.cvSupplement ?? record.period, locale)}`,
+    detail: `${localized(record.cvDegree ?? record.degree, locale)} · ${localized(record.cvSupplement ?? record.period, locale)}`,
   }));
 }
 
@@ -416,7 +419,7 @@ Run:
 rtk npm run test:run -- src/config/__tests__/profile.test.ts
 ```
 
-Expected: PASS, 4 tests.
+Expected: PASS, 5 tests because the locale parameterization runs once for English and once for Chinese.
 
 - [ ] **Step 5: Commit the profile source**
 
@@ -867,7 +870,7 @@ Delete `.github/workflows/scrape_talks.yml`. Do not modify the active deployment
 Run:
 
 ```bash
-rtk rg -n "academicpages|Jekyll|talkmap|_talks|/#internships" README.md CONTRIBUTING.md .github src/config
+rtk rg -n "academicpages|talkmap|_talks|/#internships" README.md CONTRIBUTING.md .github src/config
 rtk git diff --check
 ```
 
@@ -919,7 +922,7 @@ Expected: no whitespace errors. Only the user's pre-existing untracked `.claude/
 - [ ] **Step 4: Review the final commit sequence**
 
 ```bash
-rtk git log -7 --oneline
+rtk git log -8 --oneline
 ```
 
 Expected: the two design commits, one plan commit, and focused implementation commits for profile content, page migration, Blog hash, navigation, and documentation.
