@@ -196,8 +196,12 @@ export function getCvEducation(locale: Locale) {
 }
 
 export function getIncomingEducation(locale: Locale) {
-  const summary = educationRecords.find((record) => record.incomingSummary)?.incomingSummary;
-  if (!summary) throw new Error("Missing incoming education summary.");
+  const summaries = educationRecords.flatMap((record) =>
+    record.incomingSummary ? [record.incomingSummary] : []
+  );
+  if (summaries.length === 0) throw new Error("Missing incoming education summary.");
+  if (summaries.length > 1) throw new Error("Expected exactly one incoming education summary.");
+  const [summary] = summaries;
   return { label: localized(summary.label, locale), value: localized(summary.value, locale) };
 }
 
