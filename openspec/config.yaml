@@ -1,0 +1,21 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js 15 App Router, React 19, TypeScript, Tailwind CSS, Vitest.
+  The site is statically exported and deployed to GitHub Pages from master.
+  Preserve established English and Chinese visible copy unless a change explicitly targets content.
+  Derive technical and visual decisions from objectives, constraints, invariants, and failure conditions.
+  Treat patterns and best practices as context-dependent tools that require justification.
+
+rules:
+  proposal:
+    - State the user-visible problem and explicit non-goals.
+    - Identify affected capabilities without mixing in implementation steps.
+  design:
+    - Explain decisions from first principles and document rejected alternatives.
+    - Preserve static-export, bilingual, accessibility, and responsive constraints.
+  specs:
+    - Express requirements as observable behavior with concrete boundary scenarios.
+  tasks:
+    - Order work by implementation dependency and include proportionate verification.
+    - Do not mandate test-first sequencing unless the user explicitly requests TDD.
