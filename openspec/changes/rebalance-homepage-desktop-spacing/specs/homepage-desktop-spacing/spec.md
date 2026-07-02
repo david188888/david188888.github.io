@@ -1,15 +1,19 @@
 ## ADDED Requirements
 
 ### Requirement: Desktop rail provides readable spatial separation
-At viewport widths of `1320px` and above, the homepage SHALL display the section rail with a height of `clamp(18rem, 48vh, 24rem)` and SHALL position it so its labels do not overlap the main content.
+At viewport widths of `1320px` and above, the homepage SHALL display the section rail with a height of `clamp(20rem, 56vh, 28rem)`, SHALL keep the rail at least `2rem` from the viewport edge when the computed content-relative position would be smaller, and SHALL position it so its labels do not overlap the main content.
 
 #### Scenario: Rail at the desktop activation boundary
 - **WHEN** the English or Chinese homepage is rendered at `1320px` viewport width
-- **THEN** all five rail labels are readable, the rail is vertically centered, and no label overlaps the main content
+- **THEN** all five rail labels are readable, the rail is vertically centered, the track has at least a `2rem` left inset, and no label overlaps the main content
 
 #### Scenario: Rail represents document progress
 - **WHEN** the user scrolls through homepage sections on a desktop viewport
-- **THEN** rail stops remain proportional to measured section positions and the active pill travels along the longer rendered track
+- **THEN** rail stops remain proportional to reachable section positions and the active pill travels along the longer rendered track
+
+#### Scenario: Final section is reachable at document bottom
+- **WHEN** the user reaches the maximum scroll position and the final section's theoretical trigger point is below that position
+- **THEN** the final section becomes active and the pill reaches the end of the track
 
 ### Requirement: Desktop content consumes recovered right-side whitespace
 At viewport widths of `1320px` and above, the homepage SHALL allow the main content surface to grow to `70rem`, SHALL preserve the existing `64rem`-centered left reference when viewport space permits, and SHALL allocate the added width primarily toward the right.

@@ -26,6 +26,31 @@ describe("balanced academic homepage styles", () => {
     expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   });
 
+  it("redistributes desktop whitespace without changing the centered fallback", () => {
+    const baseRailStyles = css.match(/\n  \.home-section-rail \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    const baseContainerStyles = css.match(/\n  \.academic-home-container \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    const desktopHomepageStyles =
+      css.match(/@media \(min-width: 1320px\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+
+    expect(baseRailStyles).toContain("display: none");
+    expect(baseContainerStyles).toContain("width: min(64rem, calc(100vw - 2rem))");
+    expect(baseContainerStyles).toContain("margin: 0 auto");
+    expect(desktopHomepageStyles).toContain(
+      "--home-rail-height: clamp(20rem, 56vh, 28rem)"
+    );
+    expect(desktopHomepageStyles).toContain(
+      "left: max(2rem, calc((100vw - 64rem) / 2 - 10rem))"
+    );
+    expect(desktopHomepageStyles).toContain(
+      "width: min(70rem, calc(100vw - 12.5rem))"
+    );
+    expect(desktopHomepageStyles).toContain(
+      "margin-left: max(11rem, calc((100vw - 64rem) / 2))"
+    );
+    expect(desktopHomepageStyles).toContain("margin-right: auto");
+    expect(desktopHomepageStyles).toContain("gap: clamp(3rem, 5vw, 4rem)");
+  });
+
   it("defines approved homepage motion hooks", () => {
     expect(css).toContain("--home-motion-fast");
     expect(css).toContain("--home-motion-reveal");

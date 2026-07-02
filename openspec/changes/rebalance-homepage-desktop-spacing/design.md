@@ -8,6 +8,7 @@ The design starts from four first-principles constraints:
 2. The main content must remain dominant; the rail is a locator, not a competing content column.
 3. Wider cards must not create excessively long prose lines or change their internal information hierarchy.
 4. The layout must remain safe at the existing desktop breakpoint and preserve the established tablet/mobile fallback.
+5. A progress indicator must represent positions the user can actually reach, not theoretical section offsets beyond the document's maximum scroll position.
 
 ## Goals / Non-Goals
 
@@ -15,14 +16,16 @@ The design starts from four first-principles constraints:
 
 - Redistribute desktop whitespace from the page's right edge into the main content surface.
 - Increase practical separation between rail labels and the main content.
+- Give the rail a deliberate viewport-edge breathing zone instead of pinning it near the screen edge.
 - Improve rail scanability by giving five section stops more vertical travel.
+- Ensure the final section activates and the pill reaches the track end when the document reaches its maximum scroll position.
 - Keep hero introduction and research facts perceptually grouped.
 - Preserve stable behavior in English, Chinese, reduced-motion mode, and viewports below `1320px`.
 
 **Non-Goals:**
 
 - Redesign card internals, typography, colors, motion timing, navigation labels, or visible copy.
-- Change React component structure or the rail's measured section-stop algorithm.
+- Change React component structure, event listeners, navigation markup, or animation timing.
 - Change subpage layouts, routes, content models, or deployment behavior.
 - Introduce a universal spacing scale beyond the relationships required for this layout correction.
 
@@ -53,13 +56,23 @@ Symmetrically recentering a `70rem` container was rejected because it would move
 At desktop widths, the rail will use:
 
 ```css
---home-rail-height: clamp(18rem, 48vh, 24rem);
-left: max(1.15rem, calc((100vw - 64rem) / 2 - 10rem));
+--home-rail-height: clamp(20rem, 56vh, 28rem);
+left: max(2rem, calc((100vw - 64rem) / 2 - 10rem));
 ```
 
-The longer track improves scanning and section differentiation while preserving the existing label typography. The `10rem` reference offset creates practical space after the widest label. The viewport-edge clamp preserves a minimum left safety inset.
+The longer track increases vertical travel by roughly 17% at common desktop heights, improving scanning and section differentiation while preserving the existing label typography. The `10rem` reference offset creates practical space after the widest label. The `2rem` viewport-edge clamp moves the complete rail group right at constrained desktop widths, creating a deliberate breathing zone instead of leaving the track visually pinned to the screen edge.
 
 Equal visual spacing between labels will not be introduced. Label stops remain proportional to measured section positions because the rail represents document progress rather than a generic menu list.
+
+### Normalize section stops to the reachable scroll domain
+
+The page can only produce scroll positions in `[0, maxScrollY]`, where `maxScrollY = scrollHeight - innerHeight`. A section whose theoretical trigger point exceeds `maxScrollY` can never become active. Before normalizing stops to rail positions, `buildSectionStops` will clamp every measured start to this reachable domain:
+
+```ts
+buildSectionStops(measurements, maxScrollY)
+```
+
+The runtime will pass the current document maximum; the helper keeps an unbounded default for isolated callers. At the bottom of the page, the final stop therefore has `start === maxScrollY`, becomes active, and maps to rail position `1`. This is preferred over adding a special “if bottom” branch because one consistent coordinate system governs item positions, active state, and pill travel.
 
 ### Tighten only the hero's page-level grouping gap
 
@@ -73,9 +86,9 @@ Browser verification will cover `/` and `/zh/` at `1320px`, `1440px`, `1536px`, 
 
 ## Risks / Trade-offs
 
-- **Risk: the `1320px` boundary becomes too dense** → Keep a minimum `11rem` left inset and `1.5rem` right safety edge; verify no horizontal overflow at exactly `1320px`.
+- **Risk: the `1320px` boundary becomes too dense** → Keep a minimum `2rem` rail inset, `11rem` content inset, and `1.5rem` right safety edge; verify no overlap or horizontal overflow at exactly `1320px`.
 - **Risk: wider cards create long lines** → Preserve the existing copy `max-width` constraints and inspect both locales.
-- **Risk: longer rail changes pill behavior** → Preserve the JavaScript calculations and verify full-track travel while scrolling.
+- **Risk: clamping creates duplicate late stops on unusually short documents** → Keep stable source ordering and verify the current homepage produces one distinct final stop at `maxScrollY`.
 - **Risk: asymmetric alignment feels unintended at intermediate widths** → Check the transition at `1319px`, `1320px`, and `1376px`, where the original left reference becomes naturally available.
 - **Trade-off: the desktop breakpoint has a deliberate layout transition** → Accept the transition because the rail itself appears at that breakpoint and requires a different spatial composition.
 
@@ -91,4 +104,4 @@ Rollback requires reverting the CSS/test implementation commit; no data, schema,
 
 ## Open Questions
 
-None. The user approved the refined asymmetric layout direction and clarified that the target is page-level right-side whitespace rather than card-internal spacing.
+None. The user approved the refined asymmetric layout direction, clarified that the target is page-level whitespace rather than card-internal spacing, and selected moving the complete rail group right when the first implementation still felt crowded at the viewport edge.

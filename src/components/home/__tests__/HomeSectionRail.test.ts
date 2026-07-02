@@ -33,4 +33,26 @@ describe("HomeSectionRail", () => {
     expect(deeperInResearch.progress).toBeGreaterThan(nearResearchStart.progress);
     expect(deeperInResearch.progress).toBeLessThan(stops[3].position);
   });
+
+  it("makes the final section reachable at the document scroll limit", () => {
+    const maxScrollY = 2100;
+    const stops = buildSectionStops(
+      [
+        { id: "profile", start: 0 },
+        { id: "education", start: 500 },
+        { id: "research", start: 700 },
+        { id: "experience", start: 1900 },
+        { id: "insights", start: 2300 },
+      ],
+      maxScrollY,
+    );
+
+    const finalStop = stops[stops.length - 1];
+    const atDocumentBottom = resolveSectionRailProgress(stops, maxScrollY);
+
+    expect(finalStop.start).toBe(maxScrollY);
+    expect(finalStop.position).toBe(1);
+    expect(atDocumentBottom.activeId).toBe("insights");
+    expect(atDocumentBottom.progress).toBe(1);
+  });
 });

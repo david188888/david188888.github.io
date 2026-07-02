@@ -886,12 +886,6 @@ html[data-theme="dark"] {
     transform: translateX(0.18rem);
   }
 
-  @media (min-width: 1320px) {
-    .home-section-rail {
-      display: block;
-    }
-  }
-
   .academic-home {
     min-height: 100vh;
     background: #080a0e;
@@ -1258,6 +1252,24 @@ html[data-theme="dark"] {
   .home-motion-shell[data-locale="zh"] .academic-card--research .academic-card-copy h3 {
     font-family: var(--home-font-cjk-display);
     letter-spacing: 0;
+  }
+
+  @media (min-width: 1320px) {
+    .home-section-rail {
+      --home-rail-height: clamp(20rem, 56vh, 28rem);
+      left: max(2rem, calc((100vw - 64rem) / 2 - 10rem));
+      display: block;
+    }
+
+    .academic-home-container {
+      width: min(70rem, calc(100vw - 12.5rem));
+      margin-left: max(11rem, calc((100vw - 64rem) / 2));
+      margin-right: auto;
+    }
+
+    .academic-home-hero {
+      gap: clamp(3rem, 5vw, 4rem);
+    }
   }
 
 

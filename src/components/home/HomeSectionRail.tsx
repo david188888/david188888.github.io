@@ -49,10 +49,19 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-export function buildSectionStops(measurements: readonly SectionMeasurement[]): SectionStop[] {
+export function buildSectionStops(
+  measurements: readonly SectionMeasurement[],
+  maxScrollY = Number.POSITIVE_INFINITY,
+): SectionStop[] {
   if (measurements.length === 0) return [];
 
-  const sorted = [...measurements].sort((a, b) => a.start - b.start);
+  const reachableMax = Math.max(0, maxScrollY);
+  const sorted = measurements
+    .map((measurement) => ({
+      ...measurement,
+      start: clamp(measurement.start, 0, reachableMax),
+    }))
+    .sort((a, b) => a.start - b.start);
   const firstStart = sorted[0]?.start ?? 0;
   const lastStart = sorted[sorted.length - 1]?.start ?? firstStart;
   const span = Math.max(1, lastStart - firstStart);
@@ -108,6 +117,7 @@ export function HomeSectionRail({ locale = defaultLocale }: HomeSectionRailProps
 
     const trackHeight = trackRef.current?.getBoundingClientRect().height ?? 0;
     const navOffset = 140;
+    const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     const measurements = homeSectionNavigation
       .map((section) => {
         const element = document.getElementById(section.id);
@@ -120,7 +130,7 @@ export function HomeSectionRail({ locale = defaultLocale }: HomeSectionRailProps
       })
       .filter((measurement): measurement is SectionMeasurement => Boolean(measurement));
 
-    const stops = buildSectionStops(measurements);
+    const stops = buildSectionStops(measurements, maxScrollY);
     const progress = resolveSectionRailProgress(stops, window.scrollY);
     const itemPositions = stops.reduce<Record<HomeSectionId, number>>((positions, stop) => {
       positions[stop.id] = stop.position;
