@@ -29,4 +29,4 @@
 ## 5. Delivery
 
 - [x] 5.1 Commit the scoped CSS and regression coverage after verification succeeds.
-- [ ] 5.2 Push the verified `master` branch and confirm the GitHub Pages workflow succeeds before declaring the live layout updated.
+- [x] 5.2 Push the verified `master` branch and confirm the GitHub Pages workflow succeeds before declaring the live layout updated.
