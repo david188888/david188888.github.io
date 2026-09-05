@@ -12,6 +12,7 @@ _site/
 .sass-cache/
 
 # Env files
+.env
 .env*.local
 
 # IDE

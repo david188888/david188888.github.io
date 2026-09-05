@@ -1,0 +1,20 @@
+{
+  "sourcePath": "content/posts/2013-08-14-blog-post-2.mdx",
+  "sourceHash": "9c6a567c3c557a6f85fb3de280e4be8d6a5c1a542c2cd6d2a3ef2458dee9961f",
+  "sourceLanguage": "en",
+  "targetLanguage": "zh",
+  "model": "z-ai/glm-5.2:free",
+  "mode": "normal",
+  "style": [
+    "business",
+    "formal"
+  ],
+  "title": "第二篇博客文章",
+  "excerpt": "",
+  "tags": [
+    "优质文章",
+    "类别1",
+    "类别2"
+  ],
+  "body": "\n这是一篇示例博客文章。Lorem ipsum，我不记得 lorem ipsum 的剩余部分了，而且我现在没有网络连接。测试测试测试这篇博客文章。博客文章很精彩。\n\n标题很精彩\n======\n\n您可以拥有多个标题\n======\n\n标题难道不精彩吗？\n------"
+}

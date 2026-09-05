@@ -20,7 +20,7 @@ const post: LocalizedPost = {
   excerpt: "Short summary.",
   date: "2026-06-18",
   tags: ["AI"],
-  body: "Body",
+  body: "## Section\n\nBody",
   bodyHtml: "<h2>Section</h2><p>Body</p>",
   locale: "en",
 };
@@ -39,7 +39,9 @@ describe("Insights section builders", () => {
     const sections = buildInsightArticleSections("en", post);
     expect(sections.map(({ id }) => id)).toEqual(["article", "reading"]);
 
-    const html = renderToStaticMarkup(<>{sections.map(({ content }) => content)}</>);
+    const html = renderToStaticMarkup(
+      <>{sections.map(({ id, content }) => <React.Fragment key={id}>{content}</React.Fragment>)}</>
+    );
     expect(html).toContain("A published note");
     expect(html).toContain("Short summary.");
     expect(html).toContain('class="aligned-article-prose');

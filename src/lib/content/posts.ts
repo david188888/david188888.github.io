@@ -3,6 +3,7 @@ import { basename, join } from "node:path";
 import type { Locale } from "@/i18n/locales";
 import { defaultLocale } from "@/i18n/locales";
 import { createSourceHash } from "./cache";
+import { splitMarkdownSegments } from "./markdown-segments.mjs";
 import { detectSourceLanguage, getTargetLanguage } from "./language";
 
 const POSTS_DIR = "content/posts";
@@ -240,20 +241,68 @@ function createPost({
   };
 }
 
-function renderMarkdownToHtml(markdown: string): string {
+export function renderMarkdownToHtml(markdown: string): string {
+  return splitMarkdownSegments(markdown)
+    .map((segment) =>
+      segment.type === "html"
+        ? sanitizeEmbeddedHtml(segment.content)
+        : renderMarkdownBlocks(segment.content)
+    )
+    .filter((part) => part.length > 0)
+    .join("\n");
+}
+
+function renderMarkdownBlocks(markdown: string): string {
   const blocks = markdown.trim().split(/\n{2,}/);
   return blocks
     .map((block) => {
       const trimmed = block.trim();
       if (!trimmed) return "";
-      if (trimmed.startsWith("### ")) return `<h3>${escapeHtml(trimmed.slice(4))}</h3>`;
-      if (trimmed.startsWith("## ")) return `<h2>${escapeHtml(trimmed.slice(3))}</h2>`;
-      if (trimmed.startsWith("# ")) return `<h1>${escapeHtml(trimmed.slice(2))}</h1>`;
-      return `<p>${escapeHtml(trimmed).replace(/\n/g, "<br />")}</p>`;
+      if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
+        const code = trimmed.replace(/^```[^\n]*\n?/, "").replace(/\n?```$/, "");
+        return `<pre><code>${escapeHtml(code)}</code></pre>`;
+      }
+      if (trimmed.startsWith("### ")) return `<h3>${renderInlineMarkdown(trimmed.slice(4))}</h3>`;
+      if (trimmed.startsWith("## ")) return `<h2>${renderInlineMarkdown(trimmed.slice(3))}</h2>`;
+      if (trimmed.startsWith("# ")) return `<h1>${renderInlineMarkdown(trimmed.slice(2))}</h1>`;
+
+      const lines = trimmed.split(/\r?\n/);
+      if (lines.every((line) => line.startsWith("- "))) {
+        return `<ul>${lines.map((line) => `<li>${renderInlineMarkdown(line.slice(2))}</li>`).join("")}</ul>`;
+      }
+
+      return `<p>${renderInlineMarkdown(trimmed).replace(/\n/g, "<br />")}</p>`;
     })
+    .filter((part) => part.length > 0)
     .join("\n");
 }
 
+/**
+ * Author-authored block HTML is rendered verbatim, but executable content is
+ * stripped first: <script> blocks, inline event handler attributes, and
+ * javascript: URLs. Everything else (svg, figure, div, class/style attrs) is
+ * preserved so embedded diagrams keep working with the site stylesheet.
+ */
+function sanitizeEmbeddedHtml(html: string): string {
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "")
+    .replace(/<script\b[^>]*\/>/gi, "")
+    .replace(/<script\b[^>]*>/gi, "")
+    .replace(/<\/script\s*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(
+      /\s(href|src|xlink:href)\s*=\s*(?:"\s*javascript:[^"]*"|'\s*javascript:[^']*'|javascript:[^\s>]*)/gi,
+      ""
+    );
+}
+
+
+function renderInlineMarkdown(value: string): string {
+  return escapeHtml(value).replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)<]+)\)/g,
+    '<a href="$2" rel="noreferrer" target="_blank">$1</a>'
+  );
+}
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")

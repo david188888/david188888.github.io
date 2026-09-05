@@ -634,6 +634,128 @@ html[data-theme="dark"] {
     max-width: 48rem;
   }
 
+  .insight-body > :first-child {
+    margin-top: 0;
+  }
+
+  .supply-chain-diagram {
+    margin: 2.8rem 0 3.2rem;
+    max-width: 70rem;
+  }
+
+  .supply-chain-diagram-scroll {
+    overflow-x: auto;
+    padding: 1rem 0 0.75rem;
+    scrollbar-color: rgba(176, 196, 224, 0.34) transparent;
+    scrollbar-width: thin;
+  }
+
+  .supply-chain-diagram-svg {
+    display: block;
+    min-width: 56rem;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .supply-chain-heading {
+    fill: #edf3fc;
+    font-family: var(--home-font-cjk-display);
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .supply-chain-subheading,
+  .supply-chain-node-small {
+    fill: #96a4b7;
+    font-family: var(--home-font-body);
+    font-size: 14px;
+  }
+
+  .supply-chain-node text:not(.supply-chain-node-small),
+  .supply-chain-scene-node text:not(.supply-chain-node-small),
+  .supply-chain-risk-node text:not(.supply-chain-node-small) {
+    fill: #edf3fc;
+    font-family: var(--home-font-cjk-display);
+    font-size: 17px;
+    font-weight: 600;
+    text-anchor: middle;
+  }
+
+  .supply-chain-node rect,
+  .supply-chain-scene-node rect {
+    fill: rgba(132, 162, 204, 0.08);
+    stroke: rgba(164, 190, 226, 0.38);
+    stroke-width: 1.5;
+  }
+
+  .supply-chain-node-demand rect {
+    fill: rgba(92, 154, 192, 0.13);
+    stroke: rgba(128, 194, 230, 0.62);
+  }
+
+  .supply-chain-node-bottleneck rect {
+    fill: rgba(224, 179, 92, 0.1);
+    stroke: rgba(224, 190, 111, 0.62);
+  }
+
+  .supply-chain-flow,
+  .supply-chain-scene-flow {
+    fill: none;
+    stroke: rgba(174, 200, 232, 0.58);
+    stroke-width: 2;
+    marker-start: none;
+  }
+
+  .supply-chain-arrow {
+    fill: rgba(174, 200, 232, 0.78);
+  }
+
+  .supply-chain-risk-heading {
+    fill: #f0c979;
+  }
+
+  .supply-chain-risk-node rect {
+    fill: rgba(188, 83, 81, 0.1);
+    stroke: rgba(230, 129, 120, 0.65);
+    stroke-width: 1.5;
+  }
+
+  .supply-chain-risk-flow {
+    fill: none;
+    stroke: rgba(230, 129, 120, 0.75);
+    stroke-dasharray: 8 7;
+    stroke-width: 2;
+  }
+
+  .supply-chain-risk-arrow {
+    fill: rgba(230, 129, 120, 0.82);
+  }
+
+  .supply-chain-diagram figcaption {
+    max-width: 62rem;
+    margin-top: 0.9rem;
+    color: #9ba8ba;
+    font-family: var(--home-font-body);
+    font-size: 0.78rem;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 767px) {
+    .supply-chain-diagram {
+      margin: 2rem -0.2rem 2.4rem;
+    }
+
+    .supply-chain-diagram-scroll {
+      padding-right: 0.2rem;
+    }
+
+    .supply-chain-diagram figcaption {
+      padding: 0 0.2rem;
+      font-size: 0.74rem;
+    }
+  }
+
   .aligned-content-title {
     margin: 0;
     color: #e8edf7;

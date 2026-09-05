@@ -6,6 +6,7 @@ import {
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
 import { getMessages } from "@/i18n/messages";
+import { InsightBody } from "@/components/insights/InsightBody";
 import type { LocalizedPost } from "@/lib/content/posts";
 
 interface InsightArticlePageViewProps {
@@ -39,7 +40,7 @@ export function buildInsightArticleSections(
       content: (
         <article className="aligned-article-prose prose prose-invert max-w-none prose-headings:font-serif prose-a:text-[#c8d8f2]">
           <h2 className="sr-only">{insights.readingLabel}</h2>
-          <div dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
+          <InsightBody body={post.body} />
         </article>
       ),
     },

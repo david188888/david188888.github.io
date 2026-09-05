@@ -107,6 +107,41 @@ tags:
 Post body in Markdown.
 ```
 
+### Embedding HTML Visualizations (Diagrams, Flowcharts)
+
+The body renderer supports author-authored block-level HTML inside the
+markdown, so you can embed an SVG diagram, a flowchart, or any other
+visualization directly in a post:
+
+- A block-level HTML element starts on its own line with a tag (for example
+  `<figure …>`, `<div …>`) and extends to its matching closing tag. Blank
+  lines inside the element are allowed.
+- Embedded blocks are rendered verbatim and can use the site stylesheet
+  classes (for example the `.supply-chain-*` diagram styles in
+  `src/app/globals.css`).
+- For safety the renderer strips `<script>` blocks, `on*` event-handler
+  attributes, and `javascript:` URLs from embedded blocks before rendering.
+- Inline HTML typed inside a normal paragraph is still escaped as plain text,
+  and HTML-looking lines inside code fences are never promoted to live HTML.
+
+Example:
+
+```mdx
+Some paragraph text.
+
+<figure class="supply-chain-diagram">
+  <div class="supply-chain-diagram-scroll">
+    <svg viewBox="0 0 1120 760">…</svg>
+  </div>
+  <figcaption>Caption text.</figcaption>
+</figure>
+```
+
+During translation the script replaces each embedded block with a
+`[[html-block-N]]` placeholder, translates the block's visible text nodes
+(`element > text <` content) separately, and stitches the translated text back
+into the original markup, so diagrams never get mangled by the model.
+
 Write the source in either English or Chinese, then run:
 
 ```bash
@@ -117,13 +152,18 @@ Review `content/generated/translations/posts/<YYYY-MM-DD>-<slug>.json`. Commit
 the source MDX and generated JSON together, then run `npm run test:run` and
 `npm run build`. A post without a fresh translation cache is not listed.
 
-Translation uses MiMo through environment variables:
+Translation uses OpenRouter through environment variables:
 
 ```env
-MIMO_API_KEY=
-MIMO_BASE_URL=https://token-plan-sgp.xiaomimimo.com/v1
-MIMO_MODEL=mimo-v2.5-pro
+OPENROUTER_API_KEY=
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=z-ai/glm-5.2:free
 ```
+
+The free `z-ai/glm-5.2:free` variant is rate limited (roughly 50 requests per
+day on accounts with less than $10 of credit, 1000 otherwise), which is fine
+for the handful of posts this site publishes. Put the real key in a local
+`.env` file; `.env` is gitignored and never committed.
 
 Generated translations are cached under
 `content/generated/translations/posts/` and should be reviewed and committed
