@@ -157,16 +157,17 @@ Translation uses OpenRouter through environment variables:
 ```env
 OPENROUTER_API_KEY=
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-OPENROUTER_MODEL=z-ai/glm-5.2:free
+OPENROUTER_MODEL=minimax/minimax-m3:free
 ```
 
-The free `z-ai/glm-5.2:free` variant is rate limited (roughly 50 requests per
-day on accounts with less than $10 of credit, 1000 otherwise). Every free
-variant on OpenRouter is served by a single provider whose shared pool can
-saturate intermittently (HTTP 429). If 429s persist, switch `OPENROUTER_MODEL`
-in `.env` to another free id (for example `minimax/minimax-m3:free`) and rerun
-— no code changes needed. Put the real key in a local
-`.env` file; `.env` is gitignored and never committed.
+Every free variant on OpenRouter is served by a single provider whose shared
+pool can saturate intermittently (HTTP 429). `minimax/minimax-m3:free` is the
+current default because its pool has been the most reliable; if 429s persist,
+switch `OPENROUTER_MODEL` in `.env` to another free id (for example
+`z-ai/glm-5.2:free`) and rerun — no code changes needed. Free variants are
+rate limited to roughly 50 requests per day on accounts with less than $10 of
+credit. Put the real key in a local `.env` file; `.env` is gitignored and
+never committed.
 
 Generated translations are cached under
 `content/generated/translations/posts/` and should be reviewed and committed

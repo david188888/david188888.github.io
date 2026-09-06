@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { splitMarkdownSegments } from "../src/lib/content/markdown-segments.mjs";
 
 const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
-const DEFAULT_MODEL = "z-ai/glm-5.2:free";
+const DEFAULT_MODEL = "minimax/minimax-m3:free";
 const SITE_URL = "https://david188888.github.io";
 const POSTS_DIR = "content/posts";
 const TRANSLATION_DIR = "content/generated/translations/posts";
