@@ -470,7 +470,7 @@ const REQUEST_MAX_ATTEMPTS = 6;
 const REQUEST_BASE_RETRY_DELAY_MS = 5_000;
 const REQUEST_MAX_RETRY_DELAY_MS = 60_000;
 
-async function requestTranslation({ baseUrl, apiKey, request }) {
+export async function requestTranslation({ baseUrl, apiKey, request }) {
   const endpoint = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
 
   let rawResponse = "";

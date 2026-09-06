@@ -56,6 +56,169 @@ Google 在 Ironwood TPU 的官方介绍中把推理、内存访问和芯片间�
 
 台积电在 2025 年第一季度业绩电话会上称 CoWoS 需求处于满载状态，并计划扩大产能。Micron 在 2025 年 6 月的业绩材料中把数据中心 DRAM 收入增长与 HBM 需求和扩产投资联系起来。需求增长与产能扩张正在同一时间发生。
 
+<figure class="supply-chain-diagram">
+  <div class="supply-chain-diagram-scroll">
+    <svg
+      aria-labelledby="supply-chain-diagram-title supply-chain-diagram-description"
+      class="supply-chain-diagram-svg"
+      role="img"
+      viewBox="0 0 1120 760"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title id="supply-chain-diagram-title">AI 基础设施的实物供应链与金融放大链</title>
+      <desc id="supply-chain-diagram-description">
+        上半部分展示用户请求如何传导到模型服务、GPU、内存、封装、服务器、网络和电力液冷。下半部分展示长期合同和融资如何在需求低于预期时放大库存与资产残值压力。
+      </desc>
+      <defs>
+        <marker
+          id="supply-chain-arrow"
+          markerHeight="8"
+          markerWidth="8"
+          orient="auto-start-reverse"
+          refX="7"
+          refY="4"
+          viewBox="0 0 8 8"
+        >
+          <path class="supply-chain-arrow" d="M 0 0 L 8 4 L 0 8 z" />
+        </marker>
+        <marker
+          id="supply-chain-risk-arrow"
+          markerHeight="8"
+          markerWidth="8"
+          orient="auto-start-reverse"
+          refX="7"
+          refY="4"
+          viewBox="0 0 8 8"
+        >
+          <path class="supply-chain-risk-arrow" d="M 0 0 L 8 4 L 0 8 z" />
+        </marker>
+      </defs>
+
+      <text class="supply-chain-heading" x="50" y="48">
+        实物需求链
+      </text>
+      <text class="supply-chain-subheading" x="50" y="75">
+        实线代表已经可观察的部署与采购传导
+      </text>
+
+      <path class="supply-chain-flow" d="M 184 159 H 230" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 394 159 H 440" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 604 159 H 650" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 814 159 H 860" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 920 214 V 281" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 860 336 H 814" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 650 336 H 604" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 440 336 H 394" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 230 336 H 184" marker-end="url(#supply-chain-arrow)" />
+
+      <g class="supply-chain-node supply-chain-node-demand">
+        <rect height="110" rx="16" width="134" x="50" y="104" />
+        <text x="117" y="145">用户请求</text>
+        <text class="supply-chain-node-small" x="117" y="172">有效 Token</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-demand">
+        <rect height="110" rx="16" width="164" x="230" y="104" />
+        <text x="312" y="143">模型与 Agent</text>
+        <text class="supply-chain-node-small" x="312" y="170">规划、工具、推理</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-system">
+        <rect height="110" rx="16" width="164" x="440" y="104" />
+        <text x="522" y="143">GPU / ASIC</text>
+        <text class="supply-chain-node-small" x="522" y="170">Prefill 与 Decode</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-bottleneck">
+        <rect height="110" rx="16" width="164" x="650" y="104" />
+        <text x="732" y="143">HBM / DRAM</text>
+        <text class="supply-chain-node-small" x="732" y="170">KV Cache 与容量</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-bottleneck">
+        <rect height="110" rx="16" width="164" x="860" y="104" />
+        <text x="942" y="143">先进封装</text>
+        <text class="supply-chain-node-small" x="942" y="170">晶圆与 CoWoS</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-system">
+        <rect height="110" rx="16" width="164" x="860" y="281" />
+        <text x="942" y="320">服务器与机架</text>
+        <text class="supply-chain-node-small" x="942" y="347">可部署算力</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-system">
+        <rect height="110" rx="16" width="164" x="650" y="281" />
+        <text x="732" y="320">网络互连</text>
+        <text class="supply-chain-node-small" x="732" y="347">NVLink、交换、光</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-bottleneck">
+        <rect height="110" rx="16" width="164" x="440" y="281" />
+        <text x="522" y="320">电力与液冷</text>
+        <text class="supply-chain-node-small" x="522" y="347">并网、配电、散热</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-system">
+        <rect height="110" rx="16" width="164" x="230" y="281" />
+        <text x="312" y="320">KV Cache / 调度</text>
+        <text class="supply-chain-node-small" x="312" y="347">路由、复用、迁移</text>
+      </g>
+      <g class="supply-chain-node supply-chain-node-demand">
+        <rect height="110" rx="16" width="134" x="50" y="281" />
+        <text x="117" y="320">可计费服务</text>
+        <text class="supply-chain-node-small" x="117" y="347">质量、延迟、成本</text>
+      </g>
+
+      <text class="supply-chain-heading" x="50" y="477">
+        场景把需求带回不同芯片与系统
+      </text>
+      <path class="supply-chain-scene-flow" d="M 260 555 H 334" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-scene-flow" d="M 552 555 H 626" marker-end="url(#supply-chain-arrow)" />
+      <g class="supply-chain-scene-node">
+        <rect height="84" rx="14" width="210" x="50" y="513" />
+        <text x="155" y="550">云推理与 Agent</text>
+        <text class="supply-chain-node-small" x="155" y="575">复杂任务与多模型编排</text>
+      </g>
+      <g class="supply-chain-scene-node">
+        <rect height="84" rx="14" width="218" x="334" y="513" />
+        <text x="443" y="550">汽车个人助手</text>
+        <text class="supply-chain-node-small" x="443" y="575">车控、导航、端云协同</text>
+      </g>
+      <g class="supply-chain-scene-node">
+        <rect height="84" rx="14" width="244" x="626" y="513" />
+        <text x="748" y="550">家庭控制中枢</text>
+        <text class="supply-chain-node-small" x="748" y="575">传感器、工具、权限与记忆</text>
+      </g>
+
+      <text class="supply-chain-heading supply-chain-risk-heading" x="50" y="665">
+        金融放大链
+      </text>
+      <text class="supply-chain-subheading" x="50" y="692">
+        虚线是条件性风险，只有 Token 需求、利用率或续约低于采购假设时才会展开
+      </text>
+      <path class="supply-chain-risk-flow" d="M 370 647 H 442" marker-end="url(#supply-chain-risk-arrow)" />
+      <path class="supply-chain-risk-flow" d="M 656 647 H 728" marker-end="url(#supply-chain-risk-arrow)" />
+      <path class="supply-chain-risk-flow" d="M 948 647 H 1000" marker-end="url(#supply-chain-risk-arrow)" />
+      <g class="supply-chain-risk-node">
+        <rect height="76" rx="14" width="320" x="50" y="610" />
+        <text x="210" y="641">长期合同、预付款、租赁与 SPV</text>
+        <text class="supply-chain-node-small" x="210" y="665">采购约束下降</text>
+      </g>
+      <g class="supply-chain-risk-node">
+        <rect height="76" rx="14" width="214" x="442" y="610" />
+        <text x="549" y="641">提前采购与扩产</text>
+        <text class="supply-chain-node-small" x="549" y="665">GPU、内存、机房</text>
+      </g>
+      <g class="supply-chain-risk-node">
+        <rect height="76" rx="14" width="220" x="728" y="610" />
+        <text x="838" y="641">低利用率或订单放缓</text>
+        <text class="supply-chain-node-small" x="838" y="665">情景触发条件</text>
+      </g>
+      <g class="supply-chain-risk-node">
+        <rect height="76" rx="14" width="70" x="1000" y="610" />
+        <text class="supply-chain-node-small" x="1035" y="638">库存</text>
+        <text class="supply-chain-node-small" x="1035" y="661">残值</text>
+      </g>
+    </svg>
+  </div>
+  <figcaption>
+    AI 基础设施先由可售 Token 和系统部署拉动。融资、合同和扩产会加快采购，供给反转仍须由利用率、续约、价格和库存共同确认。
+  </figcaption>
+</figure>
+
 云厂商会据此设计自有加速器，也会提前锁定服务器、内存和机房容量。专用芯片的条件是负载足够稳定，软件迁移成本可控，长期利用率能覆盖研发、部署和维护投入。AWS 的 Trainium、Inferentia 和 Neuron 软件栈，Google 的 TPU，都是围绕特定云端工作负载建立系统能力的例子。
 
 问题在于，供应链看到的需求信号通常比最终用户的付费行为更早。云厂商看到客户询价，会增加采购计划。GPU 云服务商看到长期租赁合同，会建设新的数据中心。服务器厂商看到订单，会增加库存。内存和封装厂商看到扩产计划，会继续投入资本。融资机构又会把这些合同和设备当成未来现金流的依据。

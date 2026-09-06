@@ -161,8 +161,11 @@ OPENROUTER_MODEL=z-ai/glm-5.2:free
 ```
 
 The free `z-ai/glm-5.2:free` variant is rate limited (roughly 50 requests per
-day on accounts with less than $10 of credit, 1000 otherwise), which is fine
-for the handful of posts this site publishes. Put the real key in a local
+day on accounts with less than $10 of credit, 1000 otherwise). Every free
+variant on OpenRouter is served by a single provider whose shared pool can
+saturate intermittently (HTTP 429). If 429s persist, switch `OPENROUTER_MODEL`
+in `.env` to another free id (for example `minimax/minimax-m3:free`) and rerun
+— no code changes needed. Put the real key in a local
 `.env` file; `.env` is gitignored and never committed.
 
 Generated translations are cached under
