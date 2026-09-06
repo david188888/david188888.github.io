@@ -30,8 +30,6 @@ describe("Insights section builders", () => {
     expect(buildInsightsSections("en", [post]).map(({ id }) => id)).toEqual([
       "insights",
       "published",
-      "streams",
-      "notebook",
     ]);
   });
 
@@ -46,20 +44,6 @@ describe("Insights section builders", () => {
     expect(html).toContain("Short summary.");
     expect(html).toContain('class="aligned-article-prose');
     expect(html).toContain("<h2>Section</h2>");
-  });
-
-  it("omits notebook items whose title is already published", () => {
-    const duplicate = {
-      ...post,
-      title: "What changes when speech models become social agents?",
-    };
-    const notebook = buildInsightsSections("en", [duplicate]).find(
-      ({ id }) => id === "notebook"
-    );
-    const html = renderToStaticMarkup(<>{notebook?.content}</>);
-
-    expect(html).not.toContain("What changes when speech models become social agents?");
-    expect(html).toContain("How AI product strategy shows up before earnings do");
   });
 
   it("keeps a localized return link when no article table of contents exists", () => {

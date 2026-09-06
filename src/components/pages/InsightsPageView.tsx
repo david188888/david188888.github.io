@@ -3,9 +3,8 @@ import {
   AlignedPageShell,
   type AlignedPageSection,
 } from "@/components/layout/AlignedPageShell";
-import { getInsightContent } from "@/config/insights";
-import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
+import { defaultLocale, type Locale } from "@/i18n/locales";
 import { getMessages } from "@/i18n/messages";
 import { getPublishedPosts, type LocalizedPost } from "@/lib/content/posts";
 
@@ -18,13 +17,6 @@ export function buildInsightsSections(
   posts: readonly LocalizedPost[]
 ): AlignedPageSection[] {
   const { insights } = getMessages(locale).pages;
-  const { entries } = getInsightContent(locale);
-  const publishedTitles = new Set(
-    posts.map(({ title }) => title.trim().toLocaleLowerCase(locale))
-  );
-  const queuedNotes = insights.noteQueue.filter(
-    ({ title }) => !publishedTitles.has(title.trim().toLocaleLowerCase(locale))
-  );
 
   const sections: AlignedPageSection[] = [
     {
@@ -35,7 +27,6 @@ export function buildInsightsSections(
           <p className="home-kicker">{insights.eyebrow}</p>
           <h1 className="home-hero-title">{insights.title}</h1>
           <p className="home-hero-summary">{insights.subtitle}</p>
-          <p className="home-profile-summary">{insights.aside}</p>
         </header>
       ),
     },
@@ -65,55 +56,7 @@ export function buildInsightsSections(
         </>
       ),
     },
-    {
-      id: "streams",
-      label: insights.streamsEyebrow,
-      content: (
-        <>
-          <h2 className="aligned-content-title">{insights.streamsTitle}</h2>
-          <div className="home-evidence-list">
-            {entries.map((entry) => (
-              <article key={entry.title} data-hover-reactive className="home-evidence-row">
-                <div className="home-evidence-label">
-                  <span>{entry.category}</span>
-                  <span>{entry.cadence}</span>
-                </div>
-                <div>
-                  <h3>{entry.title}</h3>
-                  <p>{entry.description}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </>
-      ),
-    },
   ];
-
-  if (queuedNotes.length > 0) {
-    sections.push({
-      id: "notebook",
-      label: insights.queueEyebrow,
-      content: (
-        <>
-          <h2 className="aligned-content-title">{insights.queueTitle}</h2>
-          <div className="home-evidence-list">
-            {queuedNotes.map((note) => (
-              <article key={note.title} data-hover-reactive className="home-evidence-row">
-                <div className="home-evidence-label">
-                  <span>{note.label}</span>
-                </div>
-                <div>
-                  <h3>{note.title}</h3>
-                  <p>{note.description}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </>
-      ),
-    });
-  }
 
   return sections;
 }

@@ -672,6 +672,10 @@ html[data-theme="dark"] {
     font-size: 14px;
   }
 
+  .supply-chain-node-small {
+    text-anchor: middle;
+  }
+
   .supply-chain-node text:not(.supply-chain-node-small),
   .supply-chain-scene-node text:not(.supply-chain-node-small),
   .supply-chain-risk-node text:not(.supply-chain-node-small) {
@@ -1362,6 +1366,18 @@ html[data-theme="dark"] {
     margin: 0 0 1rem;
     color: #9aa4b2;
     line-height: 1.7;
+  }
+
+  .academic-home-insights-card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 1rem;
+    outline: none;
+  }
+
+  .academic-home-insights-card-link:focus-visible {
+    box-shadow: 0 0 0 2px rgba(128, 194, 230, 0.55);
   }
 
   .academic-home-archive-link {

@@ -40,24 +40,14 @@ export interface Messages {
       eyebrow: string;
       title: string;
       subtitle: string;
-      aside: string;
-      streamsEyebrow: string;
-      streamsTitle: string;
       publishedEyebrow: string;
       publishedTitle: string;
-      queueEyebrow: string;
-      queueTitle: string;
       futureNote: string;
       backHome: string;
       footerLabel: string;
       articleLabel: string;
       readingLabel: string;
       backToInsights: string;
-      noteQueue: {
-        label: string;
-        title: string;
-        description: string;
-      }[];
     };
     cv: {
       title: string;
@@ -162,15 +152,9 @@ export const messages: Record<Locale, Messages> = {
           "Blog and idea notes by HongYu Liu on industries, companies, and notable reporting.",
         eyebrow: "Insights",
         title: "Blog & Ideas",
-        subtitle: "Notes on industries, companies, and the reports that move them.",
-        aside:
-          "This is the place for analysis that does not belong in a CV: market structure, company strategy, product shifts, and reactions to important reporting.",
-        streamsEyebrow: "Writing streams",
-        streamsTitle: "Three ways I turn public signals into notes.",
+        subtitle: "This is where I regularly write analysis and judgment pieces about industries.",
         publishedEyebrow: "Published essays",
         publishedTitle: "Recent notes and essays.",
-        queueEyebrow: "Notebook queue",
-        queueTitle: "Drafts become essays here.",
         futureNote:
           "Future published essays can be wired to MDX without changing this page structure.",
         backHome: "Back to homepage",
@@ -178,20 +162,6 @@ export const messages: Record<Locale, Messages> = {
         articleLabel: "Article",
         readingLabel: "Reading",
         backToInsights: "Back to Insights",
-        noteQueue: [
-          {
-            label: "Next essay",
-            title: "What changes when speech models become social agents?",
-            description:
-              "A working thread on interactional privacy, proactive dialogue, and product risk in speech-first systems.",
-          },
-          {
-            label: "Company note",
-            title: "How AI product strategy shows up before earnings do",
-            description:
-              "A template for reading product cadence, hiring signals, and distribution choices before the numbers arrive.",
-          },
-        ],
       },
       cv: {
         title: "Curriculum Vitae",
@@ -313,35 +283,15 @@ export const messages: Record<Locale, Messages> = {
           "HongYu Liu 关于行业、公司和重要报道的随笔与观察。",
         eyebrow: "随笔洞察",
         title: "随笔与想法",
-        subtitle: "关于行业、公司与重要报道的观察笔记。",
-        aside:
-          "这里记录不适合放进简历的分析：市场结构、公司战略、产品变化，以及对重要报道的回应。",
-        streamsEyebrow: "写作线索",
-        streamsTitle: "我把公开信号整理成笔记的三种方式。",
+        subtitle: "这里平常会写一些对行业的分析与判断。",
         publishedEyebrow: "已发布文章",
         publishedTitle: "近期笔记与长文。",
-        queueEyebrow: "笔记队列",
-        queueTitle: "草稿会在这里变成文章。",
         futureNote: "未来发布的文章可以接入 MDX，而无需改变这个页面结构。",
         backHome: "返回首页",
         footerLabel: "随笔与想法",
         articleLabel: "文章",
         readingLabel: "正文",
         backToInsights: "返回随笔洞察",
-        noteQueue: [
-          {
-            label: "下一篇文章",
-            title: "当语音模型成为社交智能体，会发生什么变化？",
-            description:
-              "一条关于交互隐私、主动对话和语音优先产品风险的写作线索。",
-          },
-          {
-            label: "公司笔记",
-            title: "AI 产品战略如何早于财报体现出来",
-            description:
-              "一个用于在数据披露前阅读产品节奏、招聘信号和分发选择的分析模板。",
-          },
-        ],
       },
       cv: {
         title: "简历",

@@ -202,15 +202,19 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
             <section id="insights" className="academic-home-section">
               <SectionHeading title={copy.insightsTitle} description={copy.insightsDescription} />
               {latestPost ? (
-                <AcademicRecordCard
-                  category={copy.latestNote}
-                  meta={latestPost.date ?? copy.insightsTitle}
-                  title={latestPost.title}
-                  description={latestPost.excerpt}
-                  details={latestPost.tags}
+                <Link
+                  className="academic-home-insights-card-link"
                   href={localizedHref(`/insights/${latestPost.slug}/`, locale)}
-                  linkLabel={copy.openInsights}
-                />
+                  aria-label={latestPost.title}
+                >
+                  <AcademicRecordCard
+                    category={copy.latestNote}
+                    meta={latestPost.date ?? copy.insightsTitle}
+                    title={latestPost.title}
+                    description={latestPost.excerpt}
+                    details={latestPost.tags}
+                  />
+                </Link>
               ) : (
                 <div className="academic-home-insights-fallback">
                   <p>{featuredInsight.description || copy.fallbackInsights}</p>
