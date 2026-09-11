@@ -7,8 +7,10 @@ import {
   extractTextNodes,
   parseFrontmatter,
   restoreHtmlBlocks,
+  summariseInlineMarks,
   toCachePath,
   validateHtmlText,
+  validateInlineMarksPreserved,
 } from "../translate-content.mjs";
 import { createSourceHash as createRuntimeSourceHash } from "../../src/lib/content/cache.ts";
 import { renderMarkdownToHtml } from "../../src/lib/content/posts.ts";
@@ -151,5 +153,65 @@ describe("translate-content helpers", () => {
     expect(rendered).toContain('<figure class="x">');
     expect(rendered).toContain("<text>内部</text>");
     expect(rendered).toContain("&lt;div&gt;code&lt;/div&gt;");
+  });
+});
+
+describe("inline annotation marks across translation", () => {
+  it("counts delimiters, notes and colour names", () => {
+    expect(summariseInlineMarks("一处 ==red|风险== 与一处 ==blue|机会==\n\n^[一条批注]")).toEqual({
+      delimiters: 4,
+      notes: 1,
+      colors: ["blue", "red"],
+    });
+  });
+
+  it("ignores marks quoted as code", () => {
+    expect(summariseInlineMarks("行内 `==不是标记==` 和\n\n```text\n==也不算==\n```\n\n真标记 ==red|风险==")).toEqual({
+      delimiters: 2,
+      notes: 0,
+      colors: ["red"],
+    });
+  });
+
+  it("accepts a translation that keeps every mark", () => {
+    const source = "我担心 ==red|供给领先真实使用量== 。\n\n^[利润不会平均留在所有环节。]";
+    const translated =
+      "I worry that ==red|supply is running ahead of real usage==。\n\n^[Profit does not stay evenly across every stage.]";
+
+    expect(() => validateInlineMarksPreserved(source, translated)).not.toThrow();
+  });
+
+  it("accepts reordered clauses as long as every mark survives", () => {
+    const source = "A ==red|一== B ==blue|二==";
+    const translated = "==blue|Two== comes before ==red|One== in English word order";
+
+    expect(() => validateInlineMarksPreserved(source, translated)).not.toThrow();
+  });
+
+  it("rejects a dropped mark", () => {
+    expect(() =>
+      validateInlineMarksPreserved("一处 ==red|风险== 和 ==blue|机会==", "One ==red|risk== only")
+    ).toThrow(/行内标记与原文不一致/);
+  });
+
+  it("rejects a dropped margin note", () => {
+    expect(() => validateInlineMarksPreserved("正文。\n\n^[批注]", "Body only.")).toThrow(
+      /页边批注数量/
+    );
+  });
+
+  it("rejects a translated colour name", () => {
+    expect(() =>
+      validateInlineMarksPreserved("==red|风险==", "==红|risk==")
+    ).toThrow(/颜色名集合/);
+  });
+
+  it("rejects a duplicated mark", () => {
+    expect(() => validateInlineMarksPreserved("==red|风险==", "==red|risk== and ==red|risk=="))
+      .toThrow(/行内标记与原文不一致/);
+  });
+
+  it("tolerates a body with no marks at all", () => {
+    expect(() => validateInlineMarksPreserved("纯文字正文。", "Plain prose only.")).not.toThrow();
   });
 });

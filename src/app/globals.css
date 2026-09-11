@@ -638,6 +638,353 @@ html[data-theme="dark"] {
     margin-top: 0;
   }
 
+  /* ── Insight 正文：阅读列 + 页边批注双栏 ──
+     文章段落占第一列，批注占第二列。默认所有块跨两列，所以内嵌 SVG 图不会
+     被挤窄；只有连续正文被收进阅读列。 */
+
+  .insight-reading-section .aligned-section-content {
+    padding-left: clamp(1.2rem, 2vw, 2rem);
+    padding-right: clamp(1.2rem, 2vw, 2rem);
+  }
+
+  .aligned-article-prose .insight-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(11rem, 22%, 14rem);
+    column-gap: clamp(1.25rem, 2vw, 2rem);
+    align-content: start;
+  }
+
+  .aligned-article-prose .insight-body > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+    /* 网格项不会折叠外边距。把下外边距归零，让行间距与改造前的流式布局
+       逐像素一致（原本折叠后的间距等于较大的那个上外边距）。 */
+    margin-bottom: 0;
+  }
+
+  .aligned-article-prose .insight-body > p,
+  .aligned-article-prose .insight-body > ul,
+  .aligned-article-prose .insight-body > ol,
+  .aligned-article-prose .insight-body > h1,
+  .aligned-article-prose .insight-body > h2,
+  .aligned-article-prose .insight-body > h3 {
+    grid-column: 1;
+  }
+
+  /* display: contents 让段落和它的批注落入同一网格行，批注因此永远不会
+     压到后面的内容上。 */
+  .aligned-article-prose .insight-body > .note-pair {
+    display: contents;
+  }
+
+  .aligned-article-prose .insight-body > .note-pair > * {
+    grid-column: 1;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+
+  .aligned-article-prose .insight-body > .note-pair > .side-note {
+    grid-column: 2;
+  }
+
+  .aligned-article-prose .insight-body > :first-child,
+  .aligned-article-prose .insight-body > .note-pair:first-child > p:first-child {
+    margin-top: 0;
+  }
+
+  .aligned-article-prose .side-note {
+    /* 网格项不折叠外边距，所以批注必须自己补上段落本应折叠掉的上外边距。
+       prose 的段落上外边距是 1.25em（基字号 1rem），再加约 2px 补偿小字号的
+       半行距，让批注首行墨迹与段落首行墨迹对齐。 */
+    margin-top: 1.375rem;
+    padding-left: 0.72rem;
+    border-left: 1px solid rgba(176, 196, 224, 0.32);
+    color: rgba(160, 174, 195, 0.94);
+    font-family: var(--home-font-body);
+    font-size: 0.74rem;
+    font-weight: 400;
+    line-height: 1.64;
+  }
+
+  /* ── 彩色下划线（公众号划线风格）──
+     文字保持正文颜色以保证可读性，只有下划线和淡底色承担颜色。 */
+
+  .insight-body .mk {
+    padding: 0.04em 0.1em;
+    border-radius: 0.18em;
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.24em;
+  }
+
+  .insight-body .mk-blue {
+    background-color: rgba(109, 152, 216, 0.16);
+    text-decoration-color: #7ea9e4;
+  }
+
+  .insight-body .mk-red {
+    background-color: rgba(220, 108, 108, 0.16);
+    text-decoration-color: #e08585;
+  }
+
+  .insight-body .mk-orange {
+    background-color: rgba(220, 150, 84, 0.16);
+    text-decoration-color: #e0a163;
+  }
+
+  .insight-body .mk-yellow {
+    background-color: rgba(214, 190, 96, 0.16);
+    text-decoration-color: #d6c163;
+  }
+
+  .insight-body .mk-green {
+    background-color: rgba(112, 190, 140, 0.16);
+    text-decoration-color: #7cc79b;
+  }
+
+  .insight-body .mk-purple {
+    background-color: rgba(170, 138, 216, 0.16);
+    text-decoration-color: #b195e0;
+  }
+
+  .insight-body .mk-pink {
+    background-color: rgba(214, 130, 178, 0.16);
+    text-decoration-color: #dd8ebc;
+  }
+
+  .insight-body .mk-brown {
+    background-color: rgba(190, 152, 116, 0.16);
+    text-decoration-color: #c4a184;
+  }
+
+  .insight-body .mk-gray {
+    background-color: rgba(166, 178, 194, 0.14);
+    text-decoration-color: #a9b6c6;
+  }
+
+  /* 窄屏不做真页边，批注降级为段落下方的注块。DOM 顺序已经是
+     「段落 → 批注」，单列下自然就排对了。 */
+  @media (max-width: 1151px) {
+    .aligned-article-prose .insight-body {
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: 0;
+    }
+
+    .aligned-article-prose .insight-body > .note-pair > .side-note {
+      grid-column: 1;
+      max-width: 34rem;
+      margin-top: 0.75rem;
+      margin-bottom: 1.1rem;
+      border-left-width: 2px;
+      padding-left: 0.78rem;
+    }
+  }
+
+  /* ── 阅读侧批注层 ──
+     工具栏、面板、浮动操作条，以及「已隐藏」与「本地标注」两种状态。 */
+
+  .annotation-controls {
+    margin-bottom: 1.5rem;
+    font-family: var(--home-font-body);
+    font-size: 0.78rem;
+  }
+
+  .annotation-controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .annotation-toggle {
+    padding: 0.32rem 0.85rem;
+    border: 1px solid rgba(176, 196, 224, 0.28);
+    border-radius: 999px;
+    background: transparent;
+    color: #b9c6d8;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: border-color 180ms ease, color 180ms ease;
+  }
+
+  .annotation-toggle:hover,
+  .annotation-toggle:focus-visible {
+    border-color: rgba(220, 228, 238, 0.6);
+    color: #eef3fa;
+  }
+
+  .annotation-hint {
+    margin: 0;
+    color: #7d8899;
+    font-size: 0.74rem;
+    line-height: 1.6;
+  }
+
+  .annotation-notice {
+    margin: 0.7rem 0 0;
+    color: #e08585;
+    font-size: 0.74rem;
+  }
+
+  .annotation-panel {
+    margin-top: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(176, 196, 224, 0.2);
+    border-radius: 0.7rem;
+    background: rgba(221, 231, 246, 0.03);
+  }
+
+  .annotation-group + .annotation-group {
+    margin-top: 1.1rem;
+  }
+
+  .annotation-group h3 {
+    margin: 0 0 0.6rem;
+    color: #93a1b5;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .annotation-empty {
+    margin: 0;
+    color: #6f7c90;
+    font-size: 0.75rem;
+  }
+
+  .annotation-group ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .annotation-group li {
+    margin: 0 0 0.75rem;
+  }
+
+  .annotation-group blockquote {
+    margin: 0 0 0.35rem;
+    padding-left: 0.7rem;
+    border-left: 1px solid rgba(176, 196, 224, 0.28);
+    color: #b9c6d8;
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+
+  .annotation-note {
+    margin: 0 0 0.35rem;
+    color: #93a1b5;
+    font-size: 0.76rem;
+    line-height: 1.6;
+  }
+
+  .annotation-group button,
+  .annotation-bar button {
+    padding: 0.24rem 0.7rem;
+    border: 1px solid rgba(176, 196, 224, 0.24);
+    border-radius: 999px;
+    background: transparent;
+    color: #a9b6c6;
+    font-family: inherit;
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+
+  .annotation-group button:hover,
+  .annotation-group button:focus-visible,
+  .annotation-bar button:hover,
+  .annotation-bar button:focus-visible {
+    border-color: rgba(220, 228, 238, 0.55);
+    color: #eef3fa;
+  }
+
+  .annotation-bar {
+    position: fixed;
+    z-index: 40;
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid rgba(176, 196, 224, 0.28);
+    border-radius: 0.55rem;
+    background: rgba(9, 13, 20, 0.96);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    transform: translate(-50%, -115%);
+  }
+
+  .annotation-bar input {
+    min-width: 12rem;
+    padding: 0.26rem 0.6rem;
+    border: 1px solid rgba(176, 196, 224, 0.24);
+    border-radius: 0.4rem;
+    background: rgba(5, 6, 8, 0.9);
+    color: #e8edf7;
+    font-family: inherit;
+    font-size: 0.72rem;
+  }
+
+  /* 已隐藏的已发布标记：完全退出阅读，但仍保留在 DOM 里，
+     这样「管理」模式下还能重新看到并恢复。 */
+  .insight-body .mk[data-hidden="true"] {
+    background-color: transparent !important;
+    text-decoration-color: transparent !important;
+  }
+
+  .insight-body .side-note[data-hidden="true"] {
+    display: none;
+  }
+
+  .insight-body[data-annotations-editing] .mk,
+  .insight-body[data-annotations-editing] .side-note {
+    cursor: pointer;
+  }
+
+  .insight-body[data-annotations-editing] .mk[data-hidden="true"] {
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: rgba(176, 196, 224, 0.45) !important;
+  }
+
+  .insight-body[data-annotations-editing] .mk:hover {
+    outline: 1px dashed rgba(220, 228, 238, 0.42);
+    outline-offset: 2px;
+  }
+
+  .insight-body[data-annotations-editing] .side-note[data-hidden="true"] {
+    display: block;
+    border-left-style: dotted;
+    border-left-color: rgba(176, 196, 224, 0.42);
+    font-size: 0;
+  }
+
+  .insight-body[data-annotations-editing] .side-note[data-hidden="true"]::before {
+    content: attr(data-hidden-label);
+    color: #6f7c90;
+    font-size: 0.7rem;
+    line-height: 1.6;
+  }
+
+  .insight-body[data-annotations-editing] .side-note:hover {
+    border-left-color: rgba(220, 228, 238, 0.6);
+  }
+
+  /* 读者自己标的：用偏紫的配色与已发布标记区分开 */
+  .insight-body .mk-local {
+    padding: 0.04em 0.1em;
+    border-radius: 0.18em;
+    background-color: rgba(176, 140, 224, 0.16);
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.24em;
+    text-decoration-color: #b08ce0;
+  }
+
+  .insight-body .mk-local[data-has-note="true"] {
+    cursor: help;
+  }
+
   .supply-chain-diagram {
     margin: 2.8rem 0 3.2rem;
     max-width: 70rem;

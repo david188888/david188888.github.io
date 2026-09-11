@@ -224,6 +224,10 @@ export function buildTranslationRequest({
           "Preserve markdown structure, code fences, links, numbers, and factual claims.",
           "The body may contain placeholder lines like [[html-block-1]] that mark embedded HTML blocks.",
           "Keep every placeholder exactly as-is on its own line; never translate, reorder, merge, or drop placeholders.",
+          "The body may also contain author annotation marks: ==colour|text== or ==text== for a coloured underline, and lines starting with ^[text] for a margin note.",
+          "Keep every == delimiter and every ^[ ] wrapper: same count, same pairing, same relationship to the sentence they wrap. Never drop, merge, duplicate, or reorder them.",
+          "Never translate the colour name that appears before the | inside a ==...== mark. The allowed names are gray, brown, orange, yellow, green, blue, purple, pink, red.",
+          "Translate the text inside ==...== and inside ^[...] naturally, and keep the surrounding punctuation understandable in the target language.",
           "Translate each value in htmlText naturally and return htmlText with identical keys.",
           "Return only valid JSON with translated title, excerpt, tags, body, and htmlText fields.",
         ].join(" "),
@@ -333,6 +337,7 @@ async function translatePost({ sourcePath, baseUrl, apiKey, model }) {
   }
 
   const finalBody = restoreHtmlBlocks(translated.body, blocks, translated.htmlText);
+  validateInlineMarksPreserved(body, finalBody);
   const cache = {
     sourcePath,
     sourceHash,
@@ -561,6 +566,56 @@ export function validateHtmlText(htmlText, expected) {
 
   if (missing.length > 0) {
     throw new Error(`OpenRouter response is missing htmlText translations for keys: ${missing.join(", ")}.`);
+  }
+}
+
+/**
+ * Counts the author's inline annotation marks in a body.
+ *
+ * Fenced blocks and inline code are stripped first so a `==` that is being
+ * quoted as code does not inflate the count.
+ */
+export function summariseInlineMarks(text) {
+  const source = typeof text === "string" ? text : "";
+  const prose = source.replace(/```[\s\S]*?```/g, "").replace(/`[^`\n]*`/g, "");
+
+  return {
+    delimiters: (prose.match(/==/g) ?? []).length,
+    notes: (prose.match(/\^\[/g) ?? []).length,
+    colors: [...prose.matchAll(/==([a-z_]+)\|/g)].map((match) => match[1]).sort(),
+  };
+}
+
+/**
+ * Refuses a translation that lost, duplicated, or recoloured the author's
+ * marks.
+ *
+ * The translation model rewrites sentences rather than markup, but it is free
+ * to reorder clauses, and a dropped `==` would silently turn an emphasised
+ * judgement into plain prose. Failing here keeps a bad translation out of the
+ * cache instead of publishing it.
+ */
+export function validateInlineMarksPreserved(sourceBody, translatedBody) {
+  const before = summariseInlineMarks(sourceBody);
+  const after = summariseInlineMarks(translatedBody);
+  const problems = [];
+
+  if (before.delimiters !== after.delimiters) {
+    problems.push(`== 标记符数量 ${before.delimiters} → ${after.delimiters}`);
+  }
+  if (before.notes !== after.notes) {
+    problems.push(`页边批注数量 ${before.notes} → ${after.notes}`);
+  }
+  if (before.colors.join(",") !== after.colors.join(",")) {
+    problems.push(
+      `颜色名集合 [${before.colors.join(", ")}] → [${after.colors.join(", ")}]`
+    );
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `翻译后行内标记与原文不一致：${problems.join("；")}。已拒绝写入缓存，请重跑或更换模型。`
+    );
   }
 }
 

@@ -47,6 +47,26 @@ export interface Messages {
       footerLabel: string;
       articleLabel: string;
       readingLabel: string;
+      annotations: {
+        toggleOpen: string;
+        toggleClose: string;
+        hint: string;
+        hiddenTitle: string;
+        hiddenEmpty: string;
+        localTitle: string;
+        localEmpty: string;
+        underline: string;
+        note: string;
+        notePlaceholder: string;
+        save: string;
+        cancel: string;
+        hide: string;
+        restore: string;
+        restoreAll: string;
+        delete: string;
+        selectionFailed: string;
+        hiddenPlaceholder: string;
+      };
       backToInsights: string;
     };
     cv: {
@@ -161,6 +181,26 @@ export const messages: Record<Locale, Messages> = {
         footerLabel: "Blog & Ideas",
         articleLabel: "Article",
         readingLabel: "Reading",
+        annotations: {
+          toggleOpen: "Annotations",
+          toggleClose: "Done",
+          hint: "Click a published note or underline to hide it, and click again to bring it back.",
+          hiddenTitle: "Hidden marks",
+          hiddenEmpty: "Nothing is hidden.",
+          localTitle: "My marks",
+          localEmpty: "No marks yet. Select text in the article to add one.",
+          underline: "Underline",
+          note: "Add note",
+          notePlaceholder: "Write a note…",
+          save: "Save",
+          cancel: "Cancel",
+          hide: "Hide",
+          restore: "Restore",
+          restoreAll: "Restore all",
+          delete: "Delete",
+          selectionFailed: "That selection crosses formatting blocks. Try a shorter one.",
+          hiddenPlaceholder: "Hidden note · click to restore",
+        },
         backToInsights: "Back to Insights",
       },
       cv: {
@@ -291,6 +331,26 @@ export const messages: Record<Locale, Messages> = {
         footerLabel: "随笔与想法",
         articleLabel: "文章",
         readingLabel: "正文",
+        annotations: {
+          toggleOpen: "批注",
+          toggleClose: "完成",
+          hint: "点击已发布的批注或下划线即可隐藏，再点一次恢复。",
+          hiddenTitle: "已隐藏的标记",
+          hiddenEmpty: "当前没有隐藏任何标记。",
+          localTitle: "我的标注",
+          localEmpty: "还没有标注。在正文里选中文字就能添加。",
+          underline: "划线",
+          note: "加批注",
+          notePlaceholder: "写点批注…",
+          save: "保存",
+          cancel: "取消",
+          hide: "隐藏",
+          restore: "恢复",
+          restoreAll: "全部还原",
+          delete: "删除",
+          selectionFailed: "这段选区跨了格式块，换短一点再试。",
+          hiddenPlaceholder: "已隐藏的批注 · 点击恢复",
+        },
         backToInsights: "返回随笔洞察",
       },
       cv: {

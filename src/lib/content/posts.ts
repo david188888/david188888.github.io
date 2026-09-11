@@ -1,10 +1,56 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
+import MarkdownIt from "markdown-it";
 import type { Locale } from "@/i18n/locales";
 import { defaultLocale } from "@/i18n/locales";
+import { createAnnotationIdFactory } from "./annotation-ids.mjs";
 import { createSourceHash } from "./cache";
+import { extractInlineMarks, restoreInlineMarks } from "./inline-marks.mjs";
 import { splitMarkdownSegments } from "./markdown-segments.mjs";
 import { detectSourceLanguage, getTargetLanguage } from "./language";
+
+/**
+ * Per-document id factory for author-authored marks. Reset at the start of
+ * every `renderMarkdownToHtml` call so occurrence numbering is scoped to one
+ * rendered page.
+ */
+let annotationIds = createAnnotationIdFactory();
+
+export function resetAnnotationIds(): void {
+  annotationIds = createAnnotationIdFactory();
+}
+
+/**
+ * Inline Markdown is handled by markdown-it; block structure is still handled
+ * by this module's own block renderer so author-authored block HTML keeps
+ * passing through verbatim.
+ *
+ * `html: false` keeps paragraphs safe: a bare tag written mid-sentence stays
+ * escaped text, exactly as before this renderer existed.
+ */
+const inlineMarkdown = new MarkdownIt({
+  html: false,
+  linkify: false,
+  breaks: false,
+  typographer: false,
+});
+
+// Only absolute http(s) links become anchors. Relative and other schemes stay
+// literal text, matching the previous inline renderer's behavior.
+inlineMarkdown.validateLink = (url: string) => /^https?:\/\//i.test(url);
+
+const defaultLinkOpenRule =
+  inlineMarkdown.renderer.rules.link_open ??
+  ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+
+// Attribute order is pinned (href, rel, target) so rendered output stays
+// byte-stable for snapshot-style assertions.
+inlineMarkdown.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  tokens[idx].attrSet("href", tokens[idx].attrGet("href") ?? "");
+  tokens[idx].attrSet("rel", "noreferrer");
+  tokens[idx].attrSet("target", "_blank");
+  return defaultLinkOpenRule(tokens, idx, options, env, self);
+};
 
 const POSTS_DIR = "content/posts";
 const CACHE_DIR = "content/generated/translations/posts";
@@ -242,6 +288,8 @@ function createPost({
 }
 
 export function renderMarkdownToHtml(markdown: string): string {
+  resetAnnotationIds();
+
   return splitMarkdownSegments(markdown)
     .map((segment) =>
       segment.type === "html"
@@ -254,27 +302,86 @@ export function renderMarkdownToHtml(markdown: string): string {
 
 function renderMarkdownBlocks(markdown: string): string {
   const blocks = markdown.trim().split(/\n{2,}/);
-  return blocks
-    .map((block) => {
-      const trimmed = block.trim();
-      if (!trimmed) return "";
-      if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
-        const code = trimmed.replace(/^```[^\n]*\n?/, "").replace(/\n?```$/, "");
-        return `<pre><code>${escapeHtml(code)}</code></pre>`;
-      }
-      if (trimmed.startsWith("### ")) return `<h3>${renderInlineMarkdown(trimmed.slice(4))}</h3>`;
-      if (trimmed.startsWith("## ")) return `<h2>${renderInlineMarkdown(trimmed.slice(3))}</h2>`;
-      if (trimmed.startsWith("# ")) return `<h1>${renderInlineMarkdown(trimmed.slice(2))}</h1>`;
+  const rendered: string[] = [];
 
-      const lines = trimmed.split(/\r?\n/);
-      if (lines.every((line) => line.startsWith("- "))) {
-        return `<ul>${lines.map((line) => `<li>${renderInlineMarkdown(line.slice(2))}</li>`).join("")}</ul>`;
-      }
+  for (const block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
 
-      return `<p>${renderInlineMarkdown(trimmed).replace(/\n/g, "<br />")}</p>`;
-    })
-    .filter((part) => part.length > 0)
-    .join("\n");
+    const note = renderNoteBlock(trimmed);
+    if (note === null) {
+      rendered.push(renderMarkdownBlock(trimmed));
+      continue;
+    }
+
+    const previous = rendered.pop();
+    if (previous === undefined || !previous.startsWith("<p>")) {
+      throw new Error(
+        `批注块 ^[...] 必须紧跟在它要标注的段落之后。当前它前面是 ${
+          previous === undefined ? "本区块的开头" : "一个非段落块"
+        }：${trimmed.slice(0, 40)}`
+      );
+    }
+
+    rendered.push(
+      `<div class="note-pair">${previous}` +
+        `<aside class="side-note" role="note" data-note="${note.id}">${note.html}</aside></div>`
+    );
+  }
+
+  return rendered.filter((part) => part.length > 0).join("\n");
+}
+
+/**
+ * Renders a `^[内容]` margin note, or returns null when the block is ordinary
+ * content.
+ *
+ * Notes attach to the paragraph directly above them. Anchoring to an exact
+ * phrase is deliberately not supported yet, so `^[#短语|内容]` fails loudly
+ * rather than being parsed as note text that starts with a hash.
+ */
+function renderNoteBlock(block: string): { html: string; id: string } | null {
+  if (!block.startsWith("^[")) return null;
+
+  if (!block.endsWith("]")) {
+    throw new Error(`批注块缺少收尾的 "]"：${block.slice(0, 40)}`);
+  }
+
+  const raw = block.slice(2, -1).trim().replace(/\s*\n\s*/g, " ");
+
+  if (raw.startsWith("#")) {
+    throw new Error(
+      "批注暂不支持锚点短语写法 ^[#短语|内容]；请改写为 ^[内容]，把要标注的原话直接写进正文。"
+    );
+  }
+
+  if (!raw) {
+    throw new Error("批注内容为空：^[]");
+  }
+
+  return { html: renderInlineMarkdown(raw), id: annotationIds("note", raw) };
+}
+
+function renderMarkdownBlock(trimmed: string): string {
+  if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
+    const code = trimmed.replace(/^```[^\n]*\n?/, "").replace(/\n?```$/, "");
+    return `<pre><code>${escapeHtml(code)}</code></pre>`;
+  }
+  if (trimmed.startsWith("### ")) return `<h3>${renderInlineMarkdown(trimmed.slice(4))}</h3>`;
+  if (trimmed.startsWith("## ")) return `<h2>${renderInlineMarkdown(trimmed.slice(3))}</h2>`;
+  if (trimmed.startsWith("# ")) return `<h1>${renderInlineMarkdown(trimmed.slice(2))}</h1>`;
+
+  const lines = trimmed.split(/\r?\n/);
+  if (lines.every((line) => line.startsWith("- "))) {
+    return `<ul>${lines.map((line) => `<li>${renderInlineMarkdown(line.slice(2))}</li>`).join("")}</ul>`;
+  }
+  if (lines.every((line) => /^\d+\.\s/.test(line))) {
+    return `<ol>${lines
+      .map((line) => `<li>${renderInlineMarkdown(line.replace(/^\d+\.\s/, ""))}</li>`)
+      .join("")}</ol>`;
+  }
+
+  return `<p>${renderInlineMarkdown(trimmed).replace(/\n/g, "<br />")}</p>`;
 }
 
 /**
@@ -297,10 +404,22 @@ function sanitizeEmbeddedHtml(html: string): string {
 }
 
 
+/**
+ * Renders a single inline run: standard Markdown emphasis plus the site's own
+ * `==color|text==` colored-underline mark.
+ *
+ * Marks are lifted out before parsing and restored afterwards, so mark
+ * contents can still contain `**bold**` while `==` inside backticks stays
+ * literal text.
+ */
 function renderInlineMarkdown(value: string): string {
-  return escapeHtml(value).replace(
-    /\[([^\]]+)\]\((https?:\/\/[^\s)<]+)\)/g,
-    '<a href="$2" rel="noreferrer" target="_blank">$1</a>'
+  const { text, marks } = extractInlineMarks(value);
+  const html = inlineMarkdown.renderInline(text);
+  return restoreInlineMarks(
+    html,
+    marks,
+    (content) => inlineMarkdown.renderInline(content),
+    (mark) => annotationIds("mk", mark.content)
   );
 }
 function escapeHtml(value: string): string {

@@ -6,6 +6,7 @@ import {
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
 import { getMessages } from "@/i18n/messages";
+import { AnnotationControls } from "@/components/insights/AnnotationControls";
 import { InsightBody } from "@/components/insights/InsightBody";
 import type { LocalizedPost } from "@/lib/content/posts";
 
@@ -37,11 +38,15 @@ export function buildInsightArticleSections(
     {
       id: "reading",
       label: insights.readingLabel,
+      className: "insight-reading-section",
       content: (
-        <article className="aligned-article-prose prose prose-invert max-w-none prose-headings:font-serif prose-a:text-[#c8d8f2]">
-          <h2 className="sr-only">{insights.readingLabel}</h2>
-          <InsightBody body={post.body} />
-        </article>
+        <>
+          <AnnotationControls slug={post.slug} locale={locale} labels={insights.annotations} />
+          <article className="aligned-article-prose prose prose-invert max-w-none prose-headings:font-serif prose-a:text-[#c8d8f2]">
+            <h2 className="sr-only">{insights.readingLabel}</h2>
+            <InsightBody body={post.body} />
+          </article>
+        </>
       ),
     },
   ];
