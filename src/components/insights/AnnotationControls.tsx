@@ -18,7 +18,7 @@ import {
   storageKey,
   toggleHidden,
 } from "@/lib/annotations/state.mjs";
-import { isAuthorUnlocked, lockAuthor, unlockAuthor } from "@/lib/auth/author";
+import { isAuthorUnlocked, lockAuthor, matchesAuthorCredentials, signInAsAuthor, unlockAuthor } from "@/lib/auth/author";
 
 export interface AnnotationLabels {
   toggleOpen: string;
@@ -40,6 +40,13 @@ export interface AnnotationLabels {
   disableTools: string;
   selectionFailed: string;
   hiddenPlaceholder: string;
+  unlock: string;
+  credentials: {
+    username: string;
+    password: string;
+    signIn: string;
+    invalidCredentials: string;
+  };
 }
 
 interface AnnotationControlsProps {
@@ -61,7 +68,10 @@ type AnnotationState = ReturnType<typeof createEmptyState>;
 /** Finds the article this toolbar belongs to. */
 function findArticle(host: HTMLElement | null): HTMLElement | null {
   const row = host?.closest(".aligned-section-row");
-  return row?.querySelector<HTMLElement>(".insight-body") ?? null;
+  return (
+    row?.querySelector<HTMLElement>(".insight-body") ??
+    document.querySelector<HTMLElement>(".insight-body")
+  );
 }
 
 /** Flat-text offsets of a DOM range, matching `readFlatText`'s traversal. */
@@ -120,6 +130,10 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
   const [barAt, setBarAt] = useState<{ top: number; left: number } | null>(null);
   const [noteDraft, setNoteDraft] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginUser, setLoginUser] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginFailed, setLoginFailed] = useState(false);
 
   const storageId = storageKey(slug, locale);
 
@@ -150,6 +164,26 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
     setEnabled(false);
     setOpen(false);
   }, []);
+
+  /** Signs in with the same credentials the private stats page uses. */
+  const handleUnlock = useCallback(
+    (event: React.FormEvent) => {
+      event.preventDefault();
+
+      if (!matchesAuthorCredentials(loginUser, loginPass)) {
+        setLoginFailed(true);
+        return;
+      }
+
+      signInAsAuthor();
+      setLoginOpen(false);
+      setLoginUser("");
+      setLoginPass("");
+      setLoginFailed(false);
+      setEnabled(true);
+    },
+    [loginUser, loginPass]
+  );
 
   /* ── load and persist ─────────────────────────────────────────────────── */
 
@@ -338,9 +372,72 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
   const hiddenPublished = published.filter((entry) => state.hidden.includes(entry.id));
 
-  // The tools stay out of the static HTML entirely: readers never receive the
-  // markup, not merely a hidden version of it.
-  if (!enabled) return null;
+  /* Locked: readers get nothing beyond a small, quiet sign-in affordance, and
+     the annotation markup is not rendered at all. */
+  if (!enabled) {
+    return (
+      <div className="annotation-controls annotation-controls--locked" ref={hostRef}>
+        {loginOpen ? (
+          <form className="annotation-login" onSubmit={handleUnlock}>
+            <input
+              type="text"
+              autoFocus
+              placeholder={labels.credentials.username}
+              aria-label={labels.credentials.username}
+              value={loginUser}
+              onChange={(event) => setLoginUser(event.target.value)}
+            />
+            <input
+              type="password"
+              placeholder={labels.credentials.password}
+              aria-label={labels.credentials.password}
+              value={loginPass}
+              onChange={(event) => setLoginPass(event.target.value)}
+            />
+            <button type="submit">{labels.credentials.signIn}</button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginOpen(false);
+                setLoginFailed(false);
+              }}
+            >
+              {labels.cancel}
+            </button>
+            {loginFailed ? (
+              <p className="annotation-notice">{labels.credentials.invalidCredentials}</p>
+            ) : null}
+          </form>
+        ) : (
+          <button
+            type="button"
+            className="annotation-unlock"
+            title={labels.unlock}
+            aria-label={labels.unlock}
+            onClick={() => setLoginOpen(true)}
+          >
+            <svg aria-hidden="true" viewBox="0 0 16 16" width="13" height="13" fill="none">
+              <rect
+                x="3.25"
+                y="7"
+                width="9.5"
+                height="6.25"
+                rx="1.4"
+                stroke="currentColor"
+                strokeWidth="1.2"
+              />
+              <path
+                d="M5.6 7V5.3a2.4 2.4 0 0 1 4.8 0V7"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="annotation-controls" ref={hostRef}>

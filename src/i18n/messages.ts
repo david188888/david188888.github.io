@@ -67,6 +67,7 @@ export interface Messages {
         disableTools: string;
         selectionFailed: string;
         hiddenPlaceholder: string;
+        unlock: string;
       };
       backToInsights: string;
     };
@@ -202,6 +203,7 @@ export const messages: Record<Locale, Messages> = {
           disableTools: "Turn off annotation tools",
           selectionFailed: "That selection crosses formatting blocks. Try a shorter one.",
           hiddenPlaceholder: "Hidden note · click to restore",
+          unlock: "Sign in to annotate",
         },
         backToInsights: "Back to Insights",
       },
@@ -353,6 +355,7 @@ export const messages: Record<Locale, Messages> = {
           disableTools: "关闭批注工具",
           selectionFailed: "这段选区跨了格式块，换短一点再试。",
           hiddenPlaceholder: "已隐藏的批注 · 点击恢复",
+          unlock: "登录后启用批注",
         },
         backToInsights: "返回随笔洞察",
       },

@@ -19,7 +19,7 @@ export function buildInsightArticleSections(
   locale: Locale,
   post: LocalizedPost
 ): AlignedPageSection[] {
-  const { insights } = getMessages(locale).pages;
+  const { insights, stats } = getMessages(locale).pages;
   const insightsHref = localizedHref("/insights/", locale);
 
   return [
@@ -41,7 +41,21 @@ export function buildInsightArticleSections(
       className: "insight-reading-section",
       content: (
         <>
-          <AnnotationControls slug={post.slug} locale={locale} labels={insights.annotations} />
+          <AnnotationControls
+            slug={post.slug}
+            locale={locale}
+            labels={{
+              ...insights.annotations,
+              // The annotation tools reuse the stats page credentials, so the
+              // form labels come from the same place rather than being copied.
+              credentials: {
+                username: stats.username,
+                password: stats.password,
+                signIn: stats.signIn,
+                invalidCredentials: stats.invalidCredentials,
+              },
+            }}
+          />
           <article className="aligned-article-prose prose prose-invert max-w-none prose-headings:font-serif prose-a:text-[#c8d8f2]">
             <h2 className="sr-only">{insights.readingLabel}</h2>
             <InsightBody body={post.body} />
