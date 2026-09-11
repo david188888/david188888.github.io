@@ -1,270 +1,215 @@
 ---
-title: "Agent 时代的 AI 芯片，要同时穿过云端与端侧"
+title: "Agent 时代的推理算力：GPU、HBM 与计算芯片的钱流向哪里"
 date: "2026-09-05"
 language: zh
-permalink: /posts/2026/09/ai-chip-infrastructure-token-economics/
-excerpt: "Agent 把推理需求推向云端大规模吞吐，也推向汽车和家庭设备的本地响应。真正需要警惕的，是资本和供应链会不会沿着需求预期层层放大，最后跑在有效使用量前面。"
+permalink: "/posts/2026/09/ai-chip-infrastructure-token-economics/"
+excerpt: "Agent 正在把 AI 芯片竞争从单颗芯片推向整套系统。本文沿一项有效任务拆解云平台、机房、GPU、HBM 与先进封装的利润来源，也考察合同和融资怎样放大建设，并把端侧 AI 作为第二条待验证的需求曲线。"
 tags:
   - AI
   - Chips
   - Strategy
 ---
 
-我现在看 AI 芯片，脑子里有两条需求曲线。第一条在云端，模型需要更多并发、更长上下文和更稳定的持续吞吐。第二条在端侧，汽车、家庭设备和其他终端开始要求助手低延迟、能离线工作，也要把一部分数据留在本地。
+Agent 的工作方式正在把 AI 芯片的竞争从单颗芯片推向整套系统。Agent 会规划步骤、调用工具、读取结果，再继续推理。每多走一步，模型都可能重新处理上下文、读写 KV Cache，并占用计算、内存和网络资源。因此相比 token 消耗量，当前更值得跟踪的是：**有效 Token 转化率（Effective Token Ratio）**与**单位付费价值所需的推理调用链成本**。
 
-这两条曲线会同时增长，但它们需要的芯片和商业账并不相同。云端更在意每小时能完成多少推理任务，端侧更在意一颗芯片能否在有限功耗和设备成本下长期处理真实交互。把两者都归结为“需要更多 GPU”，会漏掉下一阶段最重要的变化。
+Agent 会继续推高云端推理需求，也会让需求沿着 GPU、HBM、先进封装、服务器、网络、电力和液冷向上游传导。利润不会平均留在所有扩产环节。当前更有机会获得溢价的环节，要么掌握稀缺产能、良率和客户认证，要么能把芯片、软件调度和客户计费接成一套可稳定交付的系统。同时长期合同、预付款和债务融资又把未来的调用预期提前变成今天的机房和设备。最终需求一旦低于采购假设，行业压力可能先出现在利用率、租赁价格和资产回报上。
 
-我更担心另一件事。Agent 带来的需求预期，可能沿着云服务商、GPU 租赁商、服务器厂商、内存供应商和融资机构逐层放大。每一层都根据上一层的订单和预测继续扩产，最后形成一套比真实付费使用量更大的供给。牛鞭效应一旦反过来，泡沫可能先从内存、服务器和租赁价格开始破，再传到芯片资产的回报。
+端侧构成第二条需求曲线。汽车和家庭设备确实需要更低延迟、离线能力和本地数据处理，但这条曲线还要经过使用频率、设备成本和产品毛利的验证。云端已经进入大规模建设期，端侧目前更接近一项等待产品行为证明的判断。
 
-所以我的判断有两半。AI 芯片仍然处在推理需求扩张期，云端和端侧都值得关注。行业的风险也在同步上升，判断谁能留下利润，不能只看算力需求和资本开支，还要看这些投入最后完成了多少任务，产生了多少收入。
+## Agent 把任务完成变成新的成本单位
 
-## Agent 把推理从一次调用变成连续工作
+普通问答通常只有一轮输入和输出。Agent 会把一个目标拆成多步，调用外部工具，读回结果，再决定下一步。一次任务可能包含多轮模型调用，不同步骤还会使用不同大小的模型。调用次数、上下文长度、缓存命中率和失败重试共同决定最后的成本。
 
-普通问答往往只需要一次请求和一段输出。Agent 会先规划，再调用搜索、数据库或其他软件，读回结果以后继续生成下一步。一个任务可能因此包含多轮模型调用，产生更长的上下文，也需要更频繁地读写 KV Cache。
+大模型推理通常包含 Prefill 和 Decode。Prefill 处理已经给出的输入，可以较充分地并行计算。Decode 逐个生成新 Token，需要反复读取模型权重和此前生成的 KV Cache，更容易受到内存带宽影响。上下文变长以后，KV Cache 占用还会随批量和序列长度增加。此时，计算峰值依然重要，内存容量、带宽、跨卡通信和调度效率也会直接限制吞吐。
 
-这会改变推理系统的工作负载。Prefill 主要处理输入上下文，通常更接近计算密集型任务。Decode 按顺序生成输出，需要反复读取模型权重和缓存。上下文越长，内存容量、带宽、跨卡通信和调度等待越容易成为限制。完成一个任务究竟用了多少次调用，也会影响客户最后承担的成本。
-
-我会用一笔简单的工程账来观察这件事。
+我会用下面这笔账比较不同推理系统。
 
 ```text
 每百万有效 Token 成本 = 每小时完整系统成本 ÷ 每小时有效 Token 产出 × 1,000,000
 ```
 
-完整系统成本包括加速器、HBM、服务器、网络、电力、液冷、软件、托管和折旧。有效 Token 需要放在具体模型、上下文长度、并发、延迟和服务质量里计算。输入、输出、缓存命中和失败重试不能随意混在一起。
+完整系统成本包括加速器、HBM、服务器、网络、电力、液冷、软件、托管和折旧。
 
-Token 只是比较服务产出的共同尺度，未必就是客户真正购买的单位。客户可能按一次任务、一次会话、一个用户或一项业务结果付费。对芯片供应商来说，最重要的问题也就从峰值 FLOPS 变成了芯片能否让客户以更低成本完成一项任务。
+每小时有效 Token 产出需要放在固定模型、平均输入输出长度、并发数、延迟和质量要求下计算。排队超时、失败重试和未达到质量要求的结果不应计入产出，输入 Token、输出 Token 和缓存命中也要分开记录。
 
-这也是云端推理需求会继续增加的原因。Agent 越复杂，单个用户带来的调用量越高。模型越长，显存、带宽和互联的重要性越高。云厂商需要一套能够持续服务、稳定计费的系统，单张卡偶尔达到峰值并不能满足这个要求。
+单位任务成本下降以后，原本无法覆盖模型调用、软件集成和人工兜底成本的工作，才可能进入产品。价格进一步下降，使用量也可能增加。这种增长有一个明确前提，任务完成率和结果价值必须同时达标。单纯生成更多 Token，只会增加设备使用量，不会自动形成健康的需求。
 
-## 云端与端侧是两套不同的推理经济
+## 一项 Agent 任务怎样传导到基础设施利润
 
-云端适合集中处理大模型、长上下文和需要多个工具协作的任务。模型集中部署，算力可以在多个客户之间调度，昂贵的内存、网络和液冷也能被更多请求摊薄。云端的主要考题是利用率、每次任务成本、延迟和软件适配。
+一项可计费任务先产生模型调用和上下文处理需求，随后才形成对计算、内存、互联和机房的采购。下面这张图把需求传导、端侧第二曲线和金融风险压成三层。左到右看，越靠近用户的环节越容易掌握调度和计费入口，越靠近上游的环节越依赖产能、良率和认证形成议价权。
 
-端侧面对另一组限制。汽车助手和家庭控制中枢需要快速响应，弱网时仍能完成一部分工作，涉及家庭状态和个人信息的请求也更适合留在设备附近。设备的空间、电池或散热能力有限，芯片不能把数据中心的功耗直接搬过去。它还必须稳定运行多年，不能因为模型和软件更新就频繁更换硬件。
-
-这会形成端云分工。端侧负责唤醒、感知、简单决策和高频控制，云端负责复杂推理、长上下文和需要更大模型的任务。两边之间传什么数据、何时切换、失败后怎样降级，都会影响体验和成本。
-
-端侧需求能否形成大规模芯片市场，取决于几个现实问题。用户每天是否足够频繁地使用助手，设备厂商是否愿意为本地推理多付钱，本地运行是否明显改善延迟和隐私，芯片能否在产品生命周期内支持模型更新。汽车和家庭设备是我会重点观察的场景，但目前还不能仅凭产品演示判断它们已经形成稳定的芯片需求。
-
-这两条曲线的差异会影响投资判断。云端更容易先出现采购订单和大型资本开支，端侧需要等设备出货、用户使用和芯片设计周期逐步兑现。前者的验证速度快，资产规模也大。后者的兑现时间更长，但一旦进入高频设备场景，需求可能更分散，也更接近真实用户行为。
-
-## HBM、服务器和机房会沿着预期一起扩张
-
-推理系统的瓶颈会沿着数据移动逐层出现。HBM提供容量和带宽，先进封装把计算芯片与内存连接起来，服务器和机架把部件组织成可部署的系统，网络决定多张芯片能否共同工作，电力和液冷决定系统能否持续运行。软件调度则决定这些投入有多少能变成可计费吞吐。
-
-Google 在 Ironwood TPU 的官方介绍中把推理、内存访问和芯片间互联放在同一个系统问题里，并称最大规模的液冷系统连接 9,216 颗芯片，功耗接近 10 MW。这是 Google 的产品口径，不能外推成所有集群的统一标准。它说明的是，数据中心的供给边界已经延伸到芯片之外。
-
-台积电在 2025 年第一季度业绩电话会上称 CoWoS 需求处于满载状态，并计划扩大产能。Micron 在 2025 年 6 月的业绩材料中把数据中心 DRAM 收入增长与 HBM 需求和扩产投资联系起来。需求增长与产能扩张正在同一时间发生。
-
+```html
 <figure class="supply-chain-diagram">
   <div class="supply-chain-diagram-scroll">
     <svg
       aria-labelledby="supply-chain-diagram-title supply-chain-diagram-description"
       class="supply-chain-diagram-svg"
       role="img"
-      viewBox="0 0 1120 836"
+      viewBox="0 0 1120 720"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <title id="supply-chain-diagram-title">AI 基础设施的实物供应链与金融放大链</title>
+      <title id="supply-chain-diagram-title">Agent 任务如何传导到 AI 基建利润与风险</title>
       <desc id="supply-chain-diagram-description">
-        上半部分展示用户请求如何传导到模型服务、GPU、内存、封装、服务器、网络和电力液冷。下半部分展示长期合同和融资如何在需求低于预期时放大库存与资产残值压力。
+        上半部分从有效任务出发，展示需求如何传到云平台、系统设施、核心部件与上游制造，并标出各环节的价值来源。中间展示端侧设备形成的第二条需求曲线。下半部分展示合同和融资如何推动提前建设，以及利用率不足时的资产风险。
       </desc>
       <defs>
-        <marker
-          id="supply-chain-arrow"
-          markerHeight="8"
-          markerWidth="8"
-          orient="auto-start-reverse"
-          refX="8"
-          refY="4"
-          viewBox="0 0 8 8"
-        >
+        <marker id="supply-chain-arrow" markerHeight="8" markerWidth="8" orient="auto-start-reverse" refX="8" refY="4" viewBox="0 0 8 8">
           <path class="supply-chain-arrow" d="M 0 0 L 8 4 L 0 8 z" />
         </marker>
-        <marker
-          id="supply-chain-risk-arrow"
-          markerHeight="8"
-          markerWidth="8"
-          orient="auto-start-reverse"
-          refX="8"
-          refY="4"
-          viewBox="0 0 8 8"
-        >
+        <marker id="supply-chain-risk-arrow" markerHeight="8" markerWidth="8" orient="auto-start-reverse" refX="8" refY="4" viewBox="0 0 8 8">
           <path class="supply-chain-risk-arrow" d="M 0 0 L 8 4 L 0 8 z" />
         </marker>
       </defs>
 
-      <text class="supply-chain-heading" x="50" y="48">
-        实物需求链
-      </text>
-      <text class="supply-chain-subheading" x="50" y="75">
-        实线代表已经可观察的部署与采购传导
-      </text>
+      <text class="supply-chain-heading" x="50" y="44">需求向上游传导</text>
+      <text class="supply-chain-subheading" x="50" y="70">从付费任务走向芯片、内存、封装与机房建设</text>
 
-      <path class="supply-chain-flow" d="M 184 159 H 230" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 394 159 H 440" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 604 159 H 650" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 814 159 H 860" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 942 214 V 281" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 860 336 H 814" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 650 336 H 604" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 440 336 H 394" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-flow" d="M 230 336 H 184" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 234 152 H 266" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 444 152 H 476" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 654 152 H 686" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-flow" d="M 864 152 H 896" marker-end="url(#supply-chain-arrow)" />
 
       <g class="supply-chain-node supply-chain-node-demand">
-        <rect height="110" rx="16" width="134" x="50" y="104" />
-        <text x="117" y="150">用户请求</text>
-        <text class="supply-chain-node-small" x="117" y="177">有效 Token</text>
+        <rect height="130" rx="16" width="184" x="50" y="87" />
+        <text x="142" y="126">有效任务</text>
+        <text class="supply-chain-node-small" x="142" y="156">完成率与任务收入</text>
+        <text class="supply-chain-node-small" x="142" y="181">验证需求是否成立</text>
       </g>
       <g class="supply-chain-node supply-chain-node-demand">
-        <rect height="110" rx="16" width="164" x="230" y="104" />
-        <text x="312" y="150">模型与 Agent</text>
-        <text class="supply-chain-node-small" x="312" y="177">规划、工具、推理</text>
+        <rect height="130" rx="16" width="178" x="266" y="87" />
+        <text x="355" y="126">Agent 与云平台</text>
+        <text class="supply-chain-node-small" x="355" y="156">规划、调度、计费</text>
+        <text class="supply-chain-node-small" x="355" y="181">客户入口与利用率</text>
       </g>
-      <g class="supply-chain-node supply-chain-node-system">
-        <rect height="110" rx="16" width="164" x="440" y="104" />
-        <text x="522" y="150">GPU / ASIC</text>
-        <text class="supply-chain-node-small" x="522" y="177">Prefill 与 Decode</text>
-      </g>
-      <g class="supply-chain-node supply-chain-node-bottleneck">
-        <rect height="110" rx="16" width="164" x="650" y="104" />
-        <text x="732" y="150">HBM / DRAM</text>
-        <text class="supply-chain-node-small" x="732" y="177">KV Cache 与容量</text>
+      <g class="supply-chain-node">
+        <rect height="130" rx="16" width="178" x="476" y="87" />
+        <text x="565" y="126">系统与机房</text>
+        <text class="supply-chain-node-small" x="565" y="156">服务器、网络、电力</text>
+        <text class="supply-chain-node-small" x="565" y="181">交付速度与可靠性</text>
       </g>
       <g class="supply-chain-node supply-chain-node-bottleneck">
-        <rect height="110" rx="16" width="164" x="860" y="104" />
-        <text x="942" y="150">先进封装</text>
-        <text class="supply-chain-node-small" x="942" y="177">晶圆与 CoWoS</text>
-      </g>
-      <g class="supply-chain-node supply-chain-node-system">
-        <rect height="110" rx="16" width="164" x="860" y="281" />
-        <text x="942" y="327">服务器与机架</text>
-        <text class="supply-chain-node-small" x="942" y="354">可部署算力</text>
-      </g>
-      <g class="supply-chain-node supply-chain-node-system">
-        <rect height="110" rx="16" width="164" x="650" y="281" />
-        <text x="732" y="327">网络互连</text>
-        <text class="supply-chain-node-small" x="732" y="354">NVLink、交换、光</text>
+        <rect height="130" rx="16" width="178" x="686" y="87" />
+        <text x="775" y="126">核心部件</text>
+        <text class="supply-chain-node-small" x="775" y="156">GPU / ASIC、HBM</text>
+        <text class="supply-chain-node-small" x="775" y="181">生态、带宽与能效</text>
       </g>
       <g class="supply-chain-node supply-chain-node-bottleneck">
-        <rect height="110" rx="16" width="164" x="440" y="281" />
-        <text x="522" y="327">电力与液冷</text>
-        <text class="supply-chain-node-small" x="522" y="354">并网、配电、散热</text>
-      </g>
-      <g class="supply-chain-node supply-chain-node-system">
-        <rect height="110" rx="16" width="164" x="230" y="281" />
-        <text x="312" y="327">KV Cache / 调度</text>
-        <text class="supply-chain-node-small" x="312" y="354">路由、复用、迁移</text>
-      </g>
-      <g class="supply-chain-node supply-chain-node-demand">
-        <rect height="110" rx="16" width="134" x="50" y="281" />
-        <text x="117" y="327">可计费服务</text>
-        <text class="supply-chain-node-small" x="117" y="354">质量、延迟、成本</text>
+        <rect height="130" rx="16" width="174" x="896" y="87" />
+        <text x="983" y="126">上游制造</text>
+        <text class="supply-chain-node-small" x="983" y="156">晶圆与先进封装</text>
+        <text class="supply-chain-node-small" x="983" y="181">产能、良率与认证</text>
       </g>
 
-      <text class="supply-chain-heading" x="50" y="477">
-        场景把需求带回不同芯片与系统
-      </text>
-      <path class="supply-chain-scene-flow" d="M 260 555 H 334" marker-end="url(#supply-chain-arrow)" />
-      <path class="supply-chain-scene-flow" d="M 552 555 H 626" marker-end="url(#supply-chain-arrow)" />
+      <path class="supply-chain-scene-flow" d="M 355 217 V 268" marker-end="url(#supply-chain-arrow)" />
       <g class="supply-chain-scene-node">
-        <rect height="84" rx="14" width="210" x="50" y="513" />
-        <text x="155" y="546">云推理与 Agent</text>
-        <text class="supply-chain-node-small" x="155" y="573">复杂任务与多模型编排</text>
-      </g>
-      <g class="supply-chain-scene-node">
-        <rect height="84" rx="14" width="218" x="334" y="513" />
-        <text x="443" y="546">汽车个人助手</text>
-        <text class="supply-chain-node-small" x="443" y="573">车控、导航、端云协同</text>
-      </g>
-      <g class="supply-chain-scene-node">
-        <rect height="84" rx="14" width="244" x="626" y="513" />
-        <text x="748" y="546">家庭控制中枢</text>
-        <text class="supply-chain-node-small" x="748" y="573">传感器、工具、权限与记忆</text>
+        <rect height="88" rx="15" width="632" x="244" y="268" />
+        <text x="560" y="301">端侧第二曲线</text>
+        <text class="supply-chain-node-small" x="560" y="329">SoC、内存与设备厂商承担本地推理，使用频率和产品毛利决定需求能否兑现</text>
       </g>
 
-      <text class="supply-chain-heading supply-chain-risk-heading" x="50" y="683">
-        金融放大链
-      </text>
-      <text class="supply-chain-subheading" x="50" y="710">
-        虚线是条件性风险，只有 Token 需求、利用率或续约低于采购假设时才会展开
-      </text>
-      <path class="supply-chain-risk-flow" d="M 370 777 H 442" marker-end="url(#supply-chain-risk-arrow)" />
-      <path class="supply-chain-risk-flow" d="M 656 777 H 728" marker-end="url(#supply-chain-risk-arrow)" />
-      <path class="supply-chain-risk-flow" d="M 948 777 H 1000" marker-end="url(#supply-chain-risk-arrow)" />
+      <text class="supply-chain-heading supply-chain-risk-heading" x="50" y="430">金融放大与风险验证</text>
+      <text class="supply-chain-subheading" x="50" y="456">合同和融资让建设提前，资产回报仍要等设备上架后验证</text>
+
+      <path class="supply-chain-risk-flow" d="M 278 558 H 328" marker-end="url(#supply-chain-risk-arrow)" />
+      <path class="supply-chain-risk-flow" d="M 538 558 H 588" marker-end="url(#supply-chain-risk-arrow)" />
+      <path class="supply-chain-risk-flow" d="M 798 558 H 848" marker-end="url(#supply-chain-risk-arrow)" />
+
       <g class="supply-chain-risk-node">
-        <rect height="76" rx="14" width="320" x="50" y="739" />
-        <text x="210" y="768">长期合同、预付款、租赁与 SPV</text>
-        <text class="supply-chain-node-small" x="210" y="795">采购约束下降</text>
+        <rect height="116" rx="16" width="228" x="50" y="500" />
+        <text x="164" y="540">合同与融资</text>
+        <text class="supply-chain-node-small" x="164" y="570">长期租赁、债务、预付款</text>
+        <text class="supply-chain-node-small" x="164" y="593">把未来收入带到今天</text>
       </g>
       <g class="supply-chain-risk-node">
-        <rect height="76" rx="14" width="214" x="442" y="739" />
-        <text x="549" y="768">提前采购与扩产</text>
-        <text class="supply-chain-node-small" x="549" y="795">GPU、内存、机房</text>
+        <rect height="116" rx="16" width="210" x="328" y="500" />
+        <text x="433" y="540">提前建设</text>
+        <text class="supply-chain-node-small" x="433" y="570">GPU、内存与机房扩产</text>
+        <text class="supply-chain-node-small" x="433" y="593">供给可能领先使用量</text>
       </g>
       <g class="supply-chain-risk-node">
-        <rect height="76" rx="14" width="220" x="728" y="739" />
-        <text x="838" y="768">低利用率或订单放缓</text>
-        <text class="supply-chain-node-small" x="838" y="795">情景触发条件</text>
+        <rect height="116" rx="16" width="210" x="588" y="500" />
+        <text x="693" y="540">经营验证</text>
+        <text class="supply-chain-node-small" x="693" y="570">有效任务、利用率、续约</text>
+        <text class="supply-chain-node-small" x="693" y="593">收入能否覆盖资本成本</text>
       </g>
       <g class="supply-chain-risk-node">
-        <rect height="76" rx="14" width="70" x="1000" y="739" />
-        <text class="supply-chain-node-small" x="1035" y="768">库存</text>
-        <text class="supply-chain-node-small" x="1035" y="795">残值</text>
+        <rect height="116" rx="16" width="222" x="848" y="500" />
+        <text x="959" y="540">压力传导</text>
+        <text class="supply-chain-node-small" x="959" y="570">租赁价格、残值、库存</text>
+        <text class="supply-chain-node-small" x="959" y="593">供给反转的观察信号</text>
       </g>
+
+      <text class="supply-chain-subheading" x="50" y="680">左到右表示需求信号向上游传递。上游供给最终仍要回到有效任务、利用率和现金回报。</text>
     </svg>
   </div>
   <figcaption>
-    AI 基础设施先由可售 Token 和系统部署拉动。融资、合同和扩产会加快采购，供给反转仍须由利用率、续约、价格和库存共同确认。
+    Agent 增加多轮推理和上下文处理，需求随之传到云平台、机房、核心部件和上游制造。利润来自客户入口、系统交付或受限供给，合同与融资则可能让建设速度领先真实使用量。
   </figcaption>
 </figure>
+```
 
-云厂商会据此设计自有加速器，也会提前锁定服务器、内存和机房容量。专用芯片的条件是负载足够稳定，软件迁移成本可控，长期利用率能覆盖研发、部署和维护投入。AWS 的 Trainium、Inferentia 和 Neuron 软件栈，Google 的 TPU，都是围绕特定云端工作负载建立系统能力的例子。
+**GPU、ASIC 与软件栈**
 
-问题在于，供应链看到的需求信号通常比最终用户的付费行为更早。云厂商看到客户询价，会增加采购计划。GPU 云服务商看到长期租赁合同，会建设新的数据中心。服务器厂商看到订单，会增加库存。内存和封装厂商看到扩产计划，会继续投入资本。融资机构又会把这些合同和设备当成未来现金流的依据。
+GPU 的利润基础来自通用性、成熟的软件生态和快速适配新模型的能力。模型架构和请求形态仍在变化时，客户可以用同一套硬件和工具处理训练、开发和多类推理任务，迁移成本也相对可控。
 
-同一份预期在不同环节被重复使用，牛鞭效应就出现了。每一层都没有必要等到最终任务真的发生，供给却已经被提前放大。只要 Agent 需求持续增长，这套机制可以帮助行业快速建设能力。需求增速一旦放缓，前面累积的库存、折旧和利息就会一起寻找出口。
+ASIC 可以围绕固定模型、固定精度和稳定请求形态优化成本与能效。它的经济性需要三个条件共同成立。工作负载达到足够规模，长期利用率能够覆盖芯片研发和部署投入，软件还要把客户原有的模型、算子和运维流程接进来。例如 AWS 把 Trainium 与 Neuron 软件栈、服务器、网络和云服务放在同一套产品里，Google 也用 TPU、互联和 Pathways 共同支撑大规模推理。这些案例说明，专用芯片的竞争单位已经扩展到整套系统。只比较单颗芯片的理论性能，很难判断它能否形成持续利润。
 
-## 泡沫可能先从资产回报开始破
+**HBM 与先进封装**
 
-我并不把“内存马上过剩”当作当前结论。HBM 仍然可能受益于高带宽推理，端侧设备也可能带来新的存储与计算需求。我要观察的是，资本投入是否已经快到足以让部分环节脱离真实使用量。
+长上下文和并发请求会增加权重与 KV Cache 的内存占用，Decode 又需要持续搬运数据。HBM 的容量和带宽因此会影响加速器利用率。先进封装负责把计算芯片与多颗 HBM 组合起来，还要满足良率、功耗和客户认证要求。短期供给受限时，能稳定交付合格产品的供应商更容易获得溢价。
 
-Applied Digital 在 2025 年 6 月披露，它与 CoreWeave 签订两份约 15 年的租赁协议，将提供 250 MW 的 IT 负载。这样的合同能够支持数据中心提前建设容量，也能让融资机构对未来现金流形成判断。BIS 在 2026 年关于 AI 基础设施融资的讨论中，分析了公司债务、私募信贷、合资企业和表外安排怎样共同支持扩张。
+这类溢价有清楚的回落条件。新产能投放、良率改善、替代方案通过认证，或者客户开始分散采购，供给紧张带来的议价权就会减弱（例如出现很多长鑫之类的企业）。截至 2026 年 9 月，台积电已经把全年资本开支指引上调至 600 亿至 640 亿美元，并把客户推动扩产列为主要原因。SK hynix 披露 HBM4 已在 2026 年第二季度开始量产出货，下半年继续提升产量，同时已与约十家核心客户签订长期协议。这些公司披露说明需求和扩产正在同时发生，还不足以证明当前溢价能够长期维持。
 
-这类安排本身没有证明需求虚假。它把未来可能产生的收入提前转换成今天可以建设和购买的资产，也把经营判断转成了金融合同。真正需要核对的是合同期限、债务期限、GPU 经济寿命、设备迭代速度和客户付费周期是否相互匹配。
+**服务器、网络、电力与液冷**
 
-如果客户持续使用，长期合同有助于摊薄建设成本。若有效 Token 增长、客户续约或 GPU 利用率低于采购假设，租赁、折旧、电力和利息仍会按合同发生。设备可以正常运行，资产回报却可能已经下降。随后，GPU 租赁价格、二手设备残值、服务器库存和部分内存价格都会承受压力。
+GPU 和 HBM 只有装进服务器、接入低延迟网络并获得稳定电力以后，才能形成可部署算力。Google 为 Ironwood 提供最多 9,216 颗芯片的液冷配置，整套系统功耗接近 10 MW。这个产品口径不能代表所有集群，却能说明采购边界已经延伸到芯片之外。
 
-这也是我把 A 和 C 同时放进风险判断的原因。需求错配会让过多设备追逐有限的付费调用，供应链扩产又会把这种错配传导到 HBM、标准 DRAM、服务器、封装和机房。泡沫破裂未必从模型需求突然消失开始，也可能从某个环节发现新增订单不足以覆盖资本成本开始。
+这些环节的利润通常来自电力接入、交付速度、系统集成和可靠性。它们也承担**更长的建设周期**与更重的资本投入。机房建成以后，折旧、维护和电力合同仍会继续发生。收入可以随着建设订单快速增长，资本回报则取决于设备是否按期上架、利用率能否达到假设，以及合同能否覆盖资产回收周期。
 
-## 利润会落在哪些环节
+**调度软件与云平台**
 
-云端推理的利润，首先会流向能把多个约束放进同一套系统的人。GPU 设计商掌握芯片性能、软件生态和供应链控制，云厂商掌握模型、客户、调度和计费入口，HBM 与先进封装供应商在供给紧张时拥有议价权。它们的优势来源不同，持续时间也不同。
+云厂商掌握客户入口、模型部署、任务路由和计费。调度软件可以提高批处理效率，复用缓存，减少空闲和失败重试，让同样的硬件完成更多任务。云平台还可以在 GPU 与自研 ASIC 之间分配工作负载，把硬件成本变化转成客户价格或平台毛利。
 
-GPU 仍然会在训练、模型开发和变化快速的推理任务中保持通用性。云厂商的自研芯片适合重复出现的工作负载，但软件迁移、开发工具和客户兼容性会限制它的扩张。HBM 和先进封装在供给紧张时更容易获得溢价，扩产以后，认证周期、良率、替代路径和客户集中度会变得更重要。
+这部分利润依赖客户使用规模、软件兼容性和迁移成本，也会受到价格竞争与资本开支的制约。云厂商购买了更多设备，只有在任务收入和现金流跟上以后，系统优势才会转成可持续回报。
 
-端侧的利润位置也不一定只在芯片设计商。汽车厂商、手机和家庭设备厂商掌握产品入口，芯片供应商需要在功耗、成本、模型工具和长期支持之间取得平衡。真正值得关注的公司，应该能够把芯片放进高频使用的产品，并让本地推理改善用户体验或减少云端调用费用。
+## 融资让供给建设早于最终收入
 
-我的投资观察会先按三个问题筛选。第一，客户为哪项结果付费。第二，供应商改善的是任务成本、延迟、功耗还是供给确定性。第三，订单增长以后，利用率、毛利和现金回报有没有跟上。单项参数领先可以带来一段时间的溢价，持续完成任务的能力才有机会把溢价留下。
+AI 基础设施具有很长的采购和建设周期。云厂商根据客户需求规划算力，GPU 云服务商根据合同建设机房，服务器、内存和封装厂商再根据订单扩产。每个环节看到的都是相对靠前的采购信号，最终用户是否会持续付费，往往要等设备上架以后才能验证。
+
+台积电管理层在 2026 年第二季度业绩电话会上提到，客户各自给出的需求都可能是真实的，把所有需求相加以后仍然需要判断。公司还会检查数据中心的建设、地点和机架进度，避免芯片交付以后进入库存。这段表述说明，上游厂商已经意识到订单与最终部署之间存在距离。
+
+但同时，英伟达已经在和金融机构合作，通过包装芯片为一种金融资产去投资于小型初创企业，在自己扩大销量的同时，间接参与前沿科技投资，并建立深度绑定。这些初创公司根据协议以及需求，需要阶段性继续向英伟达购买芯片。又或者 Meta 成立空壳公司参与数据中心的建设，虽然账面上不影响母公司的业绩，但是这种金融包装行为随着后续的行业不稳定或其他层面的波动极有可能造成破坏性的影响。
+
+种种现象都没有证明泡沫已经发生，但是又无时无刻不揭示着目前的杠杆越加越大。它们说明长期合同和融资可以把未来收入提前转换成今天的服务器、GPU 和机房。只要有效任务持续增长，提前建设可以缩短交付时间，也能提高资产利用率。需求增速、续约率或利用率低于采购假设以后，租赁、折旧、电力和利息仍会继续发生。
+
+因此行业压力可能先出现在资产回报。即使模型调用总量仍在增长，只要供给增长得更快，GPU 租赁价格、二手设备残值、服务器库存和部分内存价格就会承压。上游还可能在终端需求放缓以前继续收到订单，直到某个环节发现新增收入不足以覆盖资本成本，金融放大过程才会反向传导，造成牛鞭效应。
+
+## 端侧是等待使用行为验证的第二条曲线
+
+汽车助手和家庭控制中枢需要快速响应，弱网时也要完成一部分操作。车内状态、家庭传感器和个人习惯还涉及隐私，本地处理可以减少部分数据上传。端侧适合承担唤醒、感知、简单决策和高频控制，复杂推理与长上下文仍可以交给云端。
+
+本地运行消耗的是用户设备的电力，设备厂商仍要承担前置投入。更高规格的 SoC、内存和存储会增加 BOM，散热、模型适配、安全、OTA 更新和多年售后也需要工程资源。厂商只有在本地推理能够支持更高售价、减少云端调用支出、改善体验，或者满足隐私与离线要求时，才有理由长期承担这些成本。
+
+端侧芯片还要在有限功耗下处理模型更新。低比特计算、更高效的内存架构和端云调度可以缓解限制，能够部署不等于形成稳定需求。汽车和家庭设备的真实使用频率、本地运行占比、硬件增量成本和产品毛利，仍然是这条曲线最重要的验证指标。
+
+端侧一旦进入高频设备，需求会更分散，也更接近用户每天的真实行为。当前公开材料仍不足以证明这一阶段已经到来，所以我会把它保留为第二条曲线，不把产品演示提前写成大规模芯片订单。
 
 ## 我会等待哪些信号
 
-云端方面，我会看云厂商是否披露有效 Token、利用率、服务质量和每兆瓦产出，也会看资本开支增长能否转化为云服务收入和现金流。更高的峰值吞吐本身不足以改变判断。
+云端需求要看付费任务量、任务完成率和单位任务收入。有效 Token 可以帮助比较推理系统，但它要和延迟、质量、失败率一起看。云厂商的资本开支还要转化为 AI 云服务收入、现金流和更高的每兆瓦产出。
 
-供应链方面，我会比较 HBM、标准 DRAM、服务器和 GPU 租赁价格的变化，看库存与交付周期是否出现分化。设备上架以后有没有稳定工作，客户合同能否续下去，比宣布了多少资本开支更有用。
+供应链要看 HBM 与标准 DRAM 的价格和库存是否分化，先进封装的交付周期是否缩短，GPU 租赁价格和二手残值是否开始下降。供给紧张带来的利润，只有在扩产以后仍能保持良率、认证优势和客户黏性，才更接近耐久优势。
 
-端侧方面，我会看汽车和家庭设备的实际出货、助手使用频率、本地运行占比和产品毛利。产品演示能证明技术可行，长期使用才能证明芯片需求成立。
+金融结构要看合同期限、债务期限和 GPU 经济寿命能否匹配。客户续约、机房上架进度和利用率，能够判断长期合同是在锁定真实需求，还是把未来需求提前计入了今天的投资。
 
-如果付费 Token 长期落后于算力供给，或者云厂商的自研芯片始终停留在内部展示，行业判断需要下调。如果复杂 Agent 任务带来持续的付费调用，端侧设备开始承担高频且低延迟的工作，单位推理成本也继续下降，云端与端侧的双重需求才会真正支撑新一轮芯片投资。
+端侧要看助手的日均使用次数、本地完成比例和设备毛利。汽车与家庭设备开始承担高频任务以后，端侧芯片需求才会从配置竞争转成用户愿意持续使用的产品能力。
+
+如果有效任务和收入能够跟上算力供给，GPU、ASIC、HBM、封装和数据中心仍有扩张空间。利润会更多留在能降低单位任务成本、掌握受限供给或控制客户与调度入口的环节。利用率、续约和资产回报持续低于采购假设时，即使 Agent 叙事仍然成立，这一轮基础设施投资也需要下调预期。
 
 ## 关键来源
 
-- [Groq Inference Tokenomics, Speed, But At What Cost?](https://semianalysis.com/2024/02/21/groq-inference-tokenomics-speed-but)，SemiAnalysis，2024-02-21
-- [Mastering LLM Techniques, Inference Optimization](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization)，NVIDIA，Prefill、Decode 与 KV Cache
-- [Ironwood TPU](https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/ironwood-tpu-age-of-inference/)，Google，2025-04-09
-- [TSMC Q1 2025 Earnings Call Transcript](https://investor.tsmc.com/english/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf)，台积电，2025-04
-- [Micron FY2025 Q3 results](https://investors.micron.com/news-releases/news-release-details/micron-technology-inc-reports-results-third-quarter-fiscal-2025)，Micron，2025-06-25
-- [AWS Neuron SDK 2.26.0](https://aws.amazon.com/about-aws/whats-new/2025/09/aws-neuron-2-26-announce/)，AWS，2025-09
-- [Applied Digital Announces 250MW AI Data Center Lease With CoreWeave](https://ir.applieddigital.com/news-events/press-releases/detail/123/applied-digital-announces-250mw-ai-data-center-lease-with)，Applied Digital，2025-06-02
-- [Financing the AI infrastructure boom](https://www.bis.org/publ/qtrpdf/r_qt2603u.htm)，BIS，2026-03-16
-- [AI agents for the smart home](https://www.home-assistant.io/blog/2024/06/07/ai-agents-for-the-smart-home)，Home Assistant，2024-06-07
+- [NVIDIA 推理优化说明](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/)，Prefill、Decode、KV Cache 与内存带宽
+- [AWS Trainium 官方资料](https://aws.amazon.com/ai/machine-learning/trainium/)，芯片、Neuron 软件栈、服务器、网络与云服务的系统设计
+- [Google Ironwood 官方介绍](https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/ironwood-tpu-age-of-inference/)，大规模推理的计算、内存、互联和液冷配置
+- [台积电 2026 年第二季度业绩电话会](https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2026-07/547d1696765e05ce3adb81c108ce1c8c1682b80c/TSMC+2Q26+Transcript.pdf)，资本开支、扩产判断与终端部署核查
+- [SK hynix 2026 年第二季度业绩](https://news.skhynix.com/en/q2-2026-business-results)，HBM4 出货、长期协议与扩产计划
