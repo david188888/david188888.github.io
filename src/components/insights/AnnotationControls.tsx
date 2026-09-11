@@ -8,7 +8,6 @@ import {
   resolveQuoteOffsets,
 } from "@/lib/annotations/anchoring.mjs";
 import {
-  TOOLS_ENABLED_KEY,
   addLocalAnnotation,
   createEmptyState,
   createLocalId,
@@ -19,6 +18,7 @@ import {
   storageKey,
   toggleHidden,
 } from "@/lib/annotations/state.mjs";
+import { isAuthorUnlocked, lockAuthor, unlockAuthor } from "@/lib/auth/author";
 
 export interface AnnotationLabels {
   toggleOpen: string;
@@ -123,39 +123,32 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
   const storageId = storageKey(slug, locale);
 
-  /* ── the tools are off for every visitor unless the author turns them on ──
-     Published marks are part of the article HTML and stay visible either way;
-     this only decides who gets the editing and hiding interface. */
+  /* ── author-only interface ───────────────────────────────────────────────
+     The tools stay out of the static HTML entirely, so readers never receive
+     the markup. Signing in on the private stats page unlocks them here, and
+     the unlock is remembered, so the author never has to do anything extra.
+     Published marks are article content and stay visible either way. */
 
   useEffect(() => {
-    let stored = null;
-    try {
-      stored = window.localStorage.getItem(TOOLS_ENABLED_KEY);
-    } catch {
-      stored = null;
-    }
+    const resolved = resolveToolsEnabled({
+      search: window.location.search,
+      authorized: isAuthorUnlocked(),
+    });
 
-    const resolved = resolveToolsEnabled({ search: window.location.search, stored });
-
+    // A URL override is also how the author unlocks a device they have not
+    // signed in on, so it writes the shared unlock rather than its own flag.
     if (resolved.fromUrl) {
-      try {
-        window.localStorage.setItem(TOOLS_ENABLED_KEY, resolved.enabled ? "1" : "0");
-      } catch {
-        /* private mode: the choice simply will not persist */
-      }
+      if (resolved.enabled) unlockAuthor();
+      else lockAuthor();
     }
 
     setEnabled(resolved.enabled);
   }, []);
 
   const disableTools = useCallback(() => {
+    lockAuthor();
     setEnabled(false);
     setOpen(false);
-    try {
-      window.localStorage.setItem(TOOLS_ENABLED_KEY, "0");
-    } catch {
-      /* ignore */
-    }
   }, []);
 
   /* ── load and persist ─────────────────────────────────────────────────── */

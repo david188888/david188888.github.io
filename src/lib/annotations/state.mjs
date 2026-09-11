@@ -9,34 +9,36 @@
 export const STORAGE_VERSION = 1;
 
 /**
- * Whether the annotation tools are available at all, stored globally rather
- * than per post so activating them on one article activates them everywhere.
+ * Whether the annotation tools are available at all.
  *
- * The tools are off for every visitor by default. Published underlines and
- * margin notes are part of the article HTML and stay visible regardless; this
- * flag only controls who gets the editing and hiding interface.
+ * The unlock is the author sign-in (`src/lib/auth/author.ts`), remembered in
+ * localStorage, so signing in once — which the author already does on the
+ * private stats page — makes the tools available on every article.
+ *
+ * Published underlines and margin notes are part of the article HTML and stay
+ * visible regardless; this flag only controls who gets the editing and hiding
+ * interface.
  */
-export const TOOLS_ENABLED_KEY = `david-homepage:annotations:v${STORAGE_VERSION}:tools-enabled`;
 
 const TRUTHY = new Set(["1", "on", "true", "yes"]);
 const FALSY = new Set(["0", "off", "false", "no"]);
 
 /**
- * Resolves the tools flag from the URL and then persisted storage.
+ * Resolves the tools flag from the URL, then from the author unlock.
  *
- * A `?annotate=` query parameter wins and is what the author uses to switch
- * the interface on; anything else falls back to the remembered choice. An
+ * A `?annotate=` query parameter wins, which is how the author switches the
+ * interface on or off from a device where they have not signed in. An
  * unrecognised value is treated as "not specified" so a stray link cannot
  * silently flip the setting.
  *
  * This is a visibility gate, not a security boundary: it keeps the interface
  * out of readers' way, and nothing it protects can leave the browser.
  *
- * @param {{ search?: string, stored?: string | null }} [input]
+ * @param {{ search?: string, authorized?: boolean }} [input]
  * @returns {{ enabled: boolean, fromUrl: boolean }}
  */
 export function resolveToolsEnabled(input = {}) {
-  const { search = "", stored = null } = input;
+  const { search = "", authorized = false } = input;
   // Tolerate a full location value: the query ends at the fragment.
   const flag = new URLSearchParams(search.split("#")[0]).get("annotate");
 
@@ -46,7 +48,7 @@ export function resolveToolsEnabled(input = {}) {
     if (FALSY.has(value)) return { enabled: false, fromUrl: true };
   }
 
-  return { enabled: stored === "1", fromUrl: false };
+  return { enabled: authorized, fromUrl: false };
 }
 
 const MAX_LOCAL_ANNOTATIONS = 200;

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAnchor, resolveQuoteOffsets } from "../anchoring.mjs";
 import {
-  TOOLS_ENABLED_KEY,
   addLocalAnnotation,
   createEmptyState,
   createLocalId,
@@ -75,31 +74,27 @@ describe("buildAnchor", () => {
 });
 
 describe("resolveToolsEnabled", () => {
-  it("is off for a visitor with no parameter and nothing stored", () => {
-    expect(resolveToolsEnabled({ search: "", stored: null })).toEqual({
-      enabled: false,
+  it("is off for a visitor who has not signed in", () => {
+    expect(resolveToolsEnabled({ search: "" })).toEqual({ enabled: false, fromUrl: false });
+  });
+
+  it("is on once the author is signed in, with no parameter needed", () => {
+    expect(resolveToolsEnabled({ search: "", authorized: true })).toEqual({
+      enabled: true,
       fromUrl: false,
     });
   });
 
-  it("turns on for the author's parameter and reports the source", () => {
+  it("turns on for the URL override on a device without a sign-in", () => {
     expect(resolveToolsEnabled({ search: "?annotate=1" })).toEqual({ enabled: true, fromUrl: true });
     expect(resolveToolsEnabled({ search: "?annotate=on" }).enabled).toBe(true);
   });
 
-  it("turns off when the parameter says so, overriding a remembered yes", () => {
-    expect(resolveToolsEnabled({ search: "?annotate=0", stored: "1" })).toEqual({
+  it("turns off when the parameter says so, overriding a signed-in author", () => {
+    expect(resolveToolsEnabled({ search: "?annotate=0", authorized: true })).toEqual({
       enabled: false,
       fromUrl: true,
     });
-  });
-
-  it("remembers the author's choice on later visits without the parameter", () => {
-    expect(resolveToolsEnabled({ search: "", stored: "1" })).toEqual({
-      enabled: true,
-      fromUrl: false,
-    });
-    expect(resolveToolsEnabled({ search: "", stored: "0" }).enabled).toBe(false);
   });
 
   it("survives unrelated query parameters and a fragment", () => {
@@ -107,20 +102,15 @@ describe("resolveToolsEnabled", () => {
   });
 
   it("ignores an unrecognised value instead of guessing", () => {
-    expect(resolveToolsEnabled({ search: "?annotate=maybe", stored: "1" })).toEqual({
+    expect(resolveToolsEnabled({ search: "?annotate=maybe", authorized: true })).toEqual({
       enabled: true,
       fromUrl: false,
     });
-    expect(resolveToolsEnabled({ search: "?annotate=maybe", stored: null }).enabled).toBe(false);
+    expect(resolveToolsEnabled({ search: "?annotate=maybe" }).enabled).toBe(false);
   });
 
-  it("accepts a bare annotate parameter as on", () => {
-    expect(resolveToolsEnabled({ search: "?annotate=" }).enabled).toBe(false);
-  });
-
-  it("keeps the tools key global rather than per post", () => {
-    expect(TOOLS_ENABLED_KEY).not.toContain("zh");
-    expect(TOOLS_ENABLED_KEY).toContain("tools-enabled");
+  it("treats a bare annotate parameter as not specified", () => {
+    expect(resolveToolsEnabled({ search: "?annotate=", authorized: true }).fromUrl).toBe(false);
   });
 });
 

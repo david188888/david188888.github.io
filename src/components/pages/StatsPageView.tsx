@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  isStatsAuthenticated,
+  matchesAuthorCredentials,
+  signInAsAuthor,
+  signOutOfStats,
+} from "@/lib/auth/author";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { getMessages } from "@/i18n/messages";
 
-const VALID_USER = "ZGF2aWRsaXU=";
-const VALID_PASS = "TGh5MDQwNjE5";
 const GA_TRACKING_ID = "G-6S2MZXN5QQ";
 
 interface StatsPageViewProps {
@@ -20,14 +24,15 @@ export function StatsPageView({ locale = defaultLocale }: StatsPageViewProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const auth = sessionStorage.getItem("stats-auth");
-    if (auth === "true") setAuthenticated(true);
+    if (isStatsAuthenticated()) setAuthenticated(true);
   }, []);
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (btoa(username) === VALID_USER && btoa(password) === VALID_PASS) {
-      sessionStorage.setItem("stats-auth", "true");
+    if (matchesAuthorCredentials(username, password)) {
+      // Signing in here also unlocks the article annotation tools on this
+      // browser, so the author never has to unlock them separately.
+      signInAsAuthor();
       setAuthenticated(true);
       setError("");
     } else {
@@ -36,7 +41,7 @@ export function StatsPageView({ locale = defaultLocale }: StatsPageViewProps) {
   }
 
   function handleLogout() {
-    sessionStorage.removeItem("stats-auth");
+    signOutOfStats();
     setAuthenticated(false);
     setUsername("");
     setPassword("");
