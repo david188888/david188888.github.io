@@ -337,7 +337,9 @@ async function translatePost({ sourcePath, baseUrl, apiKey, model }) {
   }
 
   const finalBody = restoreHtmlBlocks(translated.body, blocks, translated.htmlText);
+  validateNoLeftoverPlaceholders(finalBody);
   validateInlineMarksPreserved(body, finalBody);
+  validateActuallyTranslated(finalBody, targetLanguage);
   const cache = {
     sourcePath,
     sourceHash,
@@ -566,6 +568,54 @@ export function validateHtmlText(htmlText, expected) {
 
   if (missing.length > 0) {
     throw new Error(`OpenRouter response is missing htmlText translations for keys: ${missing.join(", ")}.`);
+  }
+}
+
+/**
+ * Refuses a body that still carries an unrestored HTML placeholder.
+ *
+ * `restoreHtmlBlocks` replaces the first occurrence of each placeholder and
+ * throws when one is missing entirely, so a model that echoed or duplicated a
+ * placeholder can leave a second copy behind and still pass that check.
+ */
+export function validateNoLeftoverPlaceholders(body) {
+  const leftover = (typeof body === "string" ? body : "").match(/\[\[html-block-\d+\]\]/g);
+
+  if (leftover) {
+    throw new Error(
+      `译文里残留未还原的占位符：${[...new Set(leftover)].join(", ")}。已拒绝写入缓存。`
+    );
+  }
+}
+
+/**
+ * Refuses a "translation" that is really the source text.
+ *
+ * Free models occasionally echo the input back. Every structural check still
+ * passes in that case, so a build would publish a page in the wrong language.
+ * Measured on prose only: code fences legitimately keep their original text.
+ */
+export function validateActuallyTranslated(translatedBody, targetLanguage) {
+  const prose = (typeof translatedBody === "string" ? translatedBody : "").replace(
+    /```[\s\S]*?```/g,
+    ""
+  );
+  const cjk = (prose.match(/[\u3400-\u9fff]/g) ?? []).length;
+  const total = prose.replace(/\s/g, "").length;
+
+  if (total === 0) {
+    throw new Error("译文正文为空。已拒绝写入缓存。");
+  }
+
+  const ratio = cjk / total;
+  const percent = `${(ratio * 100).toFixed(1)}%`;
+
+  if (targetLanguage === "en" && ratio > 0.05) {
+    throw new Error(`译文仍是中文（中文占比 ${percent}），判定为未翻译。已拒绝写入缓存。`);
+  }
+
+  if (targetLanguage === "zh" && ratio < 0.3) {
+    throw new Error(`译文缺少中文（中文占比 ${percent}），判定为未翻译。已拒绝写入缓存。`);
   }
 }
 

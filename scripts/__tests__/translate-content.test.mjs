@@ -9,8 +9,10 @@ import {
   restoreHtmlBlocks,
   summariseInlineMarks,
   toCachePath,
+  validateActuallyTranslated,
   validateHtmlText,
   validateInlineMarksPreserved,
+  validateNoLeftoverPlaceholders,
 } from "../translate-content.mjs";
 import { createSourceHash as createRuntimeSourceHash } from "../../src/lib/content/cache.ts";
 import { renderMarkdownToHtml } from "../../src/lib/content/posts.ts";
@@ -213,5 +215,48 @@ describe("inline annotation marks across translation", () => {
 
   it("tolerates a body with no marks at all", () => {
     expect(() => validateInlineMarksPreserved("纯文字正文。", "Plain prose only.")).not.toThrow();
+  });
+});
+
+describe("unguarded translation failures", () => {
+  it("rejects a body that still contains an HTML placeholder", () => {
+    expect(() => validateNoLeftoverPlaceholders("text\n\n[[html-block-1]]\n\nmore")).toThrow(
+      /残留未还原的占位符/
+    );
+  });
+
+  it("accepts a body whose placeholders were restored", () => {
+    expect(() => validateNoLeftoverPlaceholders("text\n\n<figure>ok</figure>\n\nmore")).not.toThrow();
+  });
+
+  it("rejects an English target that came back in Chinese", () => {
+    expect(() =>
+      validateActuallyTranslated("Agent 的工作方式正在把竞争推向整套系统，这是中文正文。", "en")
+    ).toThrow(/判定为未翻译/);
+  });
+
+  it("accepts a real English target", () => {
+    expect(() =>
+      validateActuallyTranslated("Agents are pushing chip competition toward whole systems.", "en")
+    ).not.toThrow();
+  });
+
+  it("ignores code fences when measuring, since code legitimately stays put", () => {
+    const body = "English prose.\n\n```text\n每百万有效 Token 成本 = 成本 ÷ 产出\n```\n\nMore English prose.";
+    expect(() => validateActuallyTranslated(body, "en")).not.toThrow();
+  });
+
+  it("rejects a Chinese target that came back in English", () => {
+    expect(() => validateActuallyTranslated("Plain English body only.", "zh")).toThrow(
+      /判定为未翻译/
+    );
+  });
+
+  it("accepts a real Chinese target", () => {
+    expect(() => validateActuallyTranslated("这是一段中文译文，应该通过校验。", "zh")).not.toThrow();
+  });
+
+  it("rejects an empty body", () => {
+    expect(() => validateActuallyTranslated("   \n  ", "en")).toThrow(/正文为空/);
   });
 });

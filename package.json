@@ -10,7 +10,7 @@
     "postbuild": "next-sitemap",
     "test": "vitest",
     "test:run": "vitest run",
-    "translate:content": "node scripts/translate-content.mjs"
+    "translate:content": "node --env-file-if-exists=.env scripts/translate-content.mjs"
   },
   "dependencies": {
     "next": "^15.1.0",
