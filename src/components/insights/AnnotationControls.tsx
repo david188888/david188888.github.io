@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   buildAnchor,
+  createArticleTextWalker,
   locateTextOffset,
   readFlatText,
   resolveQuoteOffsets,
@@ -74,9 +75,9 @@ function findArticle(host: HTMLElement | null): HTMLElement | null {
   );
 }
 
-/** Flat-text offsets of a DOM range, matching `readFlatText`'s traversal. */
+/** Flat-text offsets of a DOM range, using the same walker as the anchors. */
 function rangeOffsets(article: HTMLElement, range: Range): { start: number; end: number } | null {
-  const walker = document.createTreeWalker(article, NodeFilter.SHOW_TEXT);
+  const walker = createArticleTextWalker(article);
   let consumed = 0;
   let start = -1;
   let end = -1;
@@ -93,7 +94,8 @@ function rangeOffsets(article: HTMLElement, range: Range): { start: number; end:
   return start >= 0 && end > start ? { start, end } : null;
 }
 
-function wrapRange(range: Range, id: string, hasNote: boolean): boolean {
+/** Wraps the selected words in a local mark. Returns the wrapper element. */
+function wrapLocalMark(range: Range, id: string, hasNote: boolean): HTMLElement | null {
   const span = document.createElement("span");
   span.className = "mk-local";
   span.dataset.localId = id;
@@ -102,10 +104,35 @@ function wrapRange(range: Range, id: string, hasNote: boolean): boolean {
   try {
     span.appendChild(range.extractContents());
     range.insertNode(span);
-    return true;
+    return span;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/**
+ * Renders a reader note in the right margin, beside the block holding the
+ * marked words.
+ *
+ * The article body is a two-column grid, so inserting the note directly after
+ * the paragraph makes it a grid item that auto-places into the second column of
+ * the same row — the same mechanism published notes use. Note text is excluded
+ * from the anchoring text, so adding one never moves another.
+ */
+function renderLocalNote(article: HTMLElement, mark: HTMLElement, entry: { id: string; note: string }) {
+  if (article.querySelector(`aside[data-local-id="${entry.id}"]`)) return;
+
+  const block = mark.closest("p, li");
+  if (!block) return;
+
+  const aside = document.createElement("aside");
+  aside.className = "side-note side-note--local";
+  aside.setAttribute("role", "note");
+  aside.dataset.localId = entry.id;
+  aside.dataset.hasNote = "true";
+  aside.textContent = entry.note;
+
+  block.insertAdjacentElement("afterend", aside);
 }
 
 /**
@@ -252,11 +279,18 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
     const article = findArticle(hostRef.current);
     if (!article) return;
 
-    // Drop wrappers whose annotation is gone (deleted, or storage reset).
+    // Drop marks whose annotation is gone (deleted, or storage reset). Margin
+    // notes are removed outright; inline marks are unwrapped so the words stay.
     const wanted = new Set(state.local.map((entry) => entry.id));
     for (const element of article.querySelectorAll<HTMLElement>("[data-local-id]")) {
       const id = element.dataset.localId ?? "";
       if (wanted.has(id)) continue;
+
+      if (element.tagName === "ASIDE") {
+        element.remove();
+        continue;
+      }
+
       const parent = element.parentNode;
       if (!parent) continue;
       while (element.firstChild) parent.insertBefore(element.firstChild, element);
@@ -265,7 +299,7 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
     let failed = false;
     for (const entry of state.local) {
-      if (article.querySelector(`[data-local-id="${entry.id}"]`)) continue;
+      if (article.querySelector(`span[data-local-id="${entry.id}"]`)) continue;
 
       const offsets = resolveQuoteOffsets(readFlatText(article), entry);
       if (!offsets) continue;
@@ -274,11 +308,25 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
       const end = locateTextOffset(article, offsets.end);
       if (!start || !end) continue;
 
+      // A mark belongs inside real prose. If the anchor resolves between
+      // blocks, skip it rather than drop a stray element into the body.
+      const block = start.node.parentElement?.closest("p, li");
+      if (!block || !block.contains(end.node)) {
+        failed = true;
+        continue;
+      }
+
       const range = document.createRange();
       range.setStart(start.node, start.offset);
       range.setEnd(end.node, end.offset);
 
-      if (!wrapRange(range, entry.id, Boolean(entry.note))) failed = true;
+      const mark = wrapLocalMark(range, entry.id, Boolean(entry.note));
+      if (!mark) {
+        failed = true;
+        continue;
+      }
+
+      if (entry.note) renderLocalNote(article, mark, entry);
     }
 
     setNotice(failed ? labels.selectionFailed : "");

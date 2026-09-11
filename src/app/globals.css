@@ -683,8 +683,14 @@ html[data-theme="dark"] {
     margin-bottom: 0;
   }
 
-  .aligned-article-prose .insight-body > .note-pair > .side-note {
+  .aligned-article-prose .insight-body > .note-pair > .side-note,
+  .aligned-article-prose .insight-body > .side-note {
     grid-column: 2;
+  }
+
+  /* 读者自己写的批注，用偏紫的左侧线跟已发布批注区分开 */
+  .aligned-article-prose .side-note--local {
+    border-left-color: rgba(176, 140, 224, 0.5);
   }
 
   .aligned-article-prose .insight-body > :first-child,
@@ -770,7 +776,8 @@ html[data-theme="dark"] {
       column-gap: 0;
     }
 
-    .aligned-article-prose .insight-body > .note-pair > .side-note {
+    .aligned-article-prose .insight-body > .note-pair > .side-note,
+    .aligned-article-prose .insight-body > .side-note {
       grid-column: 1;
       max-width: 34rem;
       margin-top: 0.75rem;
