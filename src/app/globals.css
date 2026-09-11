@@ -814,6 +814,25 @@ html[data-theme="dark"] {
     color: #eef3fa;
   }
 
+  .annotation-disable {
+    margin-left: auto;
+    padding: 0.28rem 0.8rem;
+    border: 1px solid rgba(176, 196, 224, 0.18);
+    border-radius: 999px;
+    background: transparent;
+    color: #6f7c90;
+    font-family: inherit;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: border-color 180ms ease, color 180ms ease;
+  }
+
+  .annotation-disable:hover,
+  .annotation-disable:focus-visible {
+    border-color: rgba(220, 228, 238, 0.45);
+    color: #b9c6d8;
+  }
+
   .annotation-hint {
     margin: 0;
     color: #7d8899;

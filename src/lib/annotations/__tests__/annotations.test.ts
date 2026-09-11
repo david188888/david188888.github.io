@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { buildAnchor, resolveQuoteOffsets } from "../anchoring.mjs";
 import {
+  TOOLS_ENABLED_KEY,
   addLocalAnnotation,
   createEmptyState,
   createLocalId,
   hideIds,
   normaliseState,
   removeLocalAnnotation,
+  resolveToolsEnabled,
   restoreIds,
   storageKey,
   toggleHidden,
@@ -69,6 +71,56 @@ describe("buildAnchor", () => {
     const anchor = buildAnchor(text, 5, 8, 3);
 
     expect(resolveQuoteOffsets(text, anchor)).toEqual({ start: 5, end: 8 });
+  });
+});
+
+describe("resolveToolsEnabled", () => {
+  it("is off for a visitor with no parameter and nothing stored", () => {
+    expect(resolveToolsEnabled({ search: "", stored: null })).toEqual({
+      enabled: false,
+      fromUrl: false,
+    });
+  });
+
+  it("turns on for the author's parameter and reports the source", () => {
+    expect(resolveToolsEnabled({ search: "?annotate=1" })).toEqual({ enabled: true, fromUrl: true });
+    expect(resolveToolsEnabled({ search: "?annotate=on" }).enabled).toBe(true);
+  });
+
+  it("turns off when the parameter says so, overriding a remembered yes", () => {
+    expect(resolveToolsEnabled({ search: "?annotate=0", stored: "1" })).toEqual({
+      enabled: false,
+      fromUrl: true,
+    });
+  });
+
+  it("remembers the author's choice on later visits without the parameter", () => {
+    expect(resolveToolsEnabled({ search: "", stored: "1" })).toEqual({
+      enabled: true,
+      fromUrl: false,
+    });
+    expect(resolveToolsEnabled({ search: "", stored: "0" }).enabled).toBe(false);
+  });
+
+  it("survives unrelated query parameters and a fragment", () => {
+    expect(resolveToolsEnabled({ search: "?utm_source=x&annotate=1#section" }).enabled).toBe(true);
+  });
+
+  it("ignores an unrecognised value instead of guessing", () => {
+    expect(resolveToolsEnabled({ search: "?annotate=maybe", stored: "1" })).toEqual({
+      enabled: true,
+      fromUrl: false,
+    });
+    expect(resolveToolsEnabled({ search: "?annotate=maybe", stored: null }).enabled).toBe(false);
+  });
+
+  it("accepts a bare annotate parameter as on", () => {
+    expect(resolveToolsEnabled({ search: "?annotate=" }).enabled).toBe(false);
+  });
+
+  it("keeps the tools key global rather than per post", () => {
+    expect(TOOLS_ENABLED_KEY).not.toContain("zh");
+    expect(TOOLS_ENABLED_KEY).toContain("tools-enabled");
   });
 });
 

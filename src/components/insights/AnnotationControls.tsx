@@ -8,11 +8,13 @@ import {
   resolveQuoteOffsets,
 } from "@/lib/annotations/anchoring.mjs";
 import {
+  TOOLS_ENABLED_KEY,
   addLocalAnnotation,
   createEmptyState,
   createLocalId,
   normaliseState,
   removeLocalAnnotation,
+  resolveToolsEnabled,
   restoreIds,
   storageKey,
   toggleHidden,
@@ -35,6 +37,7 @@ export interface AnnotationLabels {
   restore: string;
   restoreAll: string;
   delete: string;
+  disableTools: string;
   selectionFailed: string;
   hiddenPlaceholder: string;
 }
@@ -111,6 +114,7 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
   const [state, setState] = useState<AnnotationState>(createEmptyState);
   const [hydrated, setHydrated] = useState(false);
+  const [enabled, setEnabled] = useState(false);
   const [open, setOpen] = useState(false);
   const [published, setPublished] = useState<PublishedMark[]>([]);
   const [barAt, setBarAt] = useState<{ top: number; left: number } | null>(null);
@@ -118,6 +122,41 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
   const [notice, setNotice] = useState("");
 
   const storageId = storageKey(slug, locale);
+
+  /* ── the tools are off for every visitor unless the author turns them on ──
+     Published marks are part of the article HTML and stay visible either way;
+     this only decides who gets the editing and hiding interface. */
+
+  useEffect(() => {
+    let stored = null;
+    try {
+      stored = window.localStorage.getItem(TOOLS_ENABLED_KEY);
+    } catch {
+      stored = null;
+    }
+
+    const resolved = resolveToolsEnabled({ search: window.location.search, stored });
+
+    if (resolved.fromUrl) {
+      try {
+        window.localStorage.setItem(TOOLS_ENABLED_KEY, resolved.enabled ? "1" : "0");
+      } catch {
+        /* private mode: the choice simply will not persist */
+      }
+    }
+
+    setEnabled(resolved.enabled);
+  }, []);
+
+  const disableTools = useCallback(() => {
+    setEnabled(false);
+    setOpen(false);
+    try {
+      window.localStorage.setItem(TOOLS_ENABLED_KEY, "0");
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   /* ── load and persist ─────────────────────────────────────────────────── */
 
@@ -143,6 +182,7 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
   /* ── collect published marks once the article is in the DOM ───────────── */
 
   useEffect(() => {
+    if (!hydrated || !enabled) return;
     const article = findArticle(hostRef.current);
     if (!article) return;
 
@@ -153,12 +193,12 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
         text: (element.textContent ?? "").trim().slice(0, 80),
       })).filter((entry) => entry.id !== "")
     );
-  }, [hydrated]);
+  }, [hydrated, enabled]);
 
   /* ── reflect state onto the article ───────────────────────────────────── */
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !enabled) return;
     const article = findArticle(hostRef.current);
     if (!article) return;
 
@@ -176,12 +216,12 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
     if (open) article.dataset.annotationsEditing = "true";
     else delete article.dataset.annotationsEditing;
-  }, [state.hidden, hydrated, open, labels.hiddenPlaceholder]);
+  }, [state.hidden, hydrated, enabled, open, labels.hiddenPlaceholder]);
 
   /* ── re-apply the reader's own marks after a reload ───────────────────── */
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !enabled) return;
     const article = findArticle(hostRef.current);
     if (!article) return;
 
@@ -215,12 +255,12 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
     }
 
     setNotice(failed ? labels.selectionFailed : "");
-  }, [state.local, hydrated, labels.selectionFailed]);
+  }, [state.local, hydrated, enabled, labels.selectionFailed]);
 
   /* ── click a published mark to hide or restore it (while managing) ────── */
 
   useEffect(() => {
-    if (!hydrated || !open) return;
+    if (!hydrated || !enabled || !open) return;
 
     const onClick = (event: MouseEvent) => {
       const element = (event.target as HTMLElement | null)?.closest?.(SELECTOR);
@@ -233,12 +273,12 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
-  }, [hydrated, open]);
+  }, [hydrated, enabled, open]);
 
   /* ── text selection ───────────────────────────────────────────────────── */
 
   useEffect(() => {
-    if (!hydrated || !open) {
+    if (!hydrated || !enabled || !open) {
       setBarAt(null);
       pendingRange.current = null;
       return;
@@ -270,7 +310,7 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
     document.addEventListener("mouseup", onMouseUp);
     return () => document.removeEventListener("mouseup", onMouseUp);
-  }, [hydrated, open]);
+  }, [hydrated, enabled, open]);
 
   const commitSelection = useCallback(
     (note: string) => {
@@ -305,6 +345,10 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
   const hiddenPublished = published.filter((entry) => state.hidden.includes(entry.id));
 
+  // The tools stay out of the static HTML entirely: readers never receive the
+  // markup, not merely a hidden version of it.
+  if (!enabled) return null;
+
   return (
     <div className="annotation-controls" ref={hostRef}>
       <div className="annotation-controls-row">
@@ -320,6 +364,9 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
           {open ? labels.toggleClose : labels.toggleOpen}
         </button>
         {open ? <p className="annotation-hint">{labels.hint}</p> : null}
+        <button type="button" className="annotation-disable" onClick={disableTools}>
+          {labels.disableTools}
+        </button>
       </div>
 
       {notice ? <p className="annotation-notice">{notice}</p> : null}

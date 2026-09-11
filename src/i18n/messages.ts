@@ -64,6 +64,7 @@ export interface Messages {
         restore: string;
         restoreAll: string;
         delete: string;
+        disableTools: string;
         selectionFailed: string;
         hiddenPlaceholder: string;
       };
@@ -198,6 +199,7 @@ export const messages: Record<Locale, Messages> = {
           restore: "Restore",
           restoreAll: "Restore all",
           delete: "Delete",
+          disableTools: "Turn off annotation tools",
           selectionFailed: "That selection crosses formatting blocks. Try a shorter one.",
           hiddenPlaceholder: "Hidden note · click to restore",
         },
@@ -348,6 +350,7 @@ export const messages: Record<Locale, Messages> = {
           restore: "恢复",
           restoreAll: "全部还原",
           delete: "删除",
+          disableTools: "关闭批注工具",
           selectionFailed: "这段选区跨了格式块，换短一点再试。",
           hiddenPlaceholder: "已隐藏的批注 · 点击恢复",
         },
