@@ -140,7 +140,10 @@ Some paragraph text.
 During translation the script replaces each embedded block with a
 `[[html-block-N]]` placeholder, translates the block's visible text nodes
 (`element > text <` content) separately, and stitches the translated text back
-into the original markup, so diagrams never get mangled by the model.
+into the original markup, so diagrams never get mangled by the model. A
+```` ```html ```` fence that wraps such a block gets the same treatment: the
+fence markers are re-attached from the source and only the text nodes are
+translated.
 
 Write the source in either English or Chinese, then run:
 
@@ -152,22 +155,38 @@ Review `content/generated/translations/posts/<YYYY-MM-DD>-<slug>.json`. Commit
 the source MDX and generated JSON together, then run `npm run test:run` and
 `npm run build`. A post without a fresh translation cache is not listed.
 
-Translation uses OpenRouter through environment variables:
+Translation runs fully locally on a Hy-MT2-7B model (Tencent's dedicated
+translation model) served by Ollama. One-time setup:
 
-```env
-OPENROUTER_API_KEY=
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-OPENROUTER_MODEL=minimax/minimax-m3:free
+```bash
+# 1. Download the weights (Q8_0, ~7.5 GB) from the official Tencent repo
+aria2c -x16 -s16 -k1M --file-allocation=none -d ~/models/hy-mt2 \
+  "https://hf-mirror.com/tencent/Hy-MT2-7B-GGUF/resolve/main/HY-MT2-7B-Q8_0.gguf"
+
+# 2. Register the model with the official Hy-MT2 sampling parameters
+ollama create hy-mt2-7b -f scripts/translation/Modelfile
+
+# 3. Serve the OpenAI-compatible endpoint while translating
+ollama serve
 ```
 
-Every free variant on OpenRouter is served by a single provider whose shared
-pool can saturate intermittently (HTTP 429). `minimax/minimax-m3:free` is the
-current default because its pool has been the most reliable; if 429s persist,
-switch `OPENROUTER_MODEL` in `.env` to another free id (for example
-`z-ai/glm-5.2:free`) and rerun — no code changes needed. Free variants are
-rate limited to roughly 50 requests per day on accounts with less than $10 of
-credit. Put the real key in a local `.env` file; `.env` is gitignored and
-never committed.
+The script translates each field with Hy-MT2's official instruction templates:
+the title uses the style-controlled mode (headline register), the excerpt the
+basic mode, tags the delimiter-preserving mode (` @@ `-separated), and embedded
+HTML text nodes the structured-data mode (keys pinned). The body is split into
+markdown-safe chunks (`scripts/translate-content.mjs`, `MAX_CHUNK_CHARS`) that
+are translated and reassembled; fence markers stay out of the prompt and are
+re-attached from the source, so a block can never lose a backtick. A fence that
+contains Chinese is translated as reader-facing text, a fence that does not is
+carried over verbatim. `npm run translate:content -- --force` re-translates even
+when the cache is fresh.
+
+Configuration via environment variables (see `.env.example`):
+
+```env
+HY_MT2_BASE_URL=http://localhost:11434/v1
+HY_MT2_MODEL=hy-mt2-7b
+```
 
 Generated translations are cached under
 `content/generated/translations/posts/` and should be reviewed and committed

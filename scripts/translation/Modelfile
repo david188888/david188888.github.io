@@ -1,0 +1,14 @@
+# Hy-MT2-7B local translation model for `npm run translate:content`.
+# Weights: tencent/Hy-MT2-7B-GGUF (Q8_0) — download via:
+#   aria2c -x16 -s16 -k1M --file-allocation=none -d ~/models/hy-mt2 \
+#     "https://hf-mirror.com/tencent/Hy-MT2-7B-GGUF/resolve/main/HY-MT2-7B-Q8_0.gguf"
+# Register:  ollama create hy-mt2-7b -f scripts/translation/Modelfile
+# Sampling parameters are the official Hy-MT2 recommendations for 1.8B/7B.
+FROM /Users/david/models/hy-mt2/HY-MT2-7B-Q8_0.gguf
+
+PARAMETER temperature 0.7
+PARAMETER top_p 0.6
+PARAMETER top_k 20
+PARAMETER repeat_penalty 1.05
+PARAMETER num_ctx 8192
+PARAMETER num_predict 4096

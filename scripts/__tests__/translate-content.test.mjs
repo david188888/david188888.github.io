@@ -1,15 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
   applyTextTranslations,
-  buildTranslationRequest,
+  buildHtmlTextPrompt,
+  buildTagsPrompt,
+  buildTitlePrompt,
+  buildTranslatePrompt,
+  chunkMarkdownBody,
   createSourceHash as createScriptSourceHash,
   extractHtmlBlocks,
   extractTextNodes,
+  hasInlineMarks,
   parseFrontmatter,
   restoreHtmlBlocks,
+  splitTranslatedTags,
   summariseInlineMarks,
   toCachePath,
   validateActuallyTranslated,
+  validateFencesPreserved,
   validateHtmlText,
   validateInlineMarksPreserved,
   validateNoLeftoverPlaceholders,
@@ -30,38 +37,47 @@ describe("translate-content helpers", () => {
     expect(toCachePath("content/posts/2026-06-13-my-note.mdx")).toBe("content/generated/translations/posts/2026-06-13-my-note.json");
   });
 
-  it("builds OpenRouter requests without exposing secrets", () => {
-    const request = buildTranslationRequest({
-      model: "z-ai/glm-5.2:free",
-      sourceLanguage: "en",
-      targetLanguage: "zh",
-      title: "AI Strategy",
-      body: "Intro\n\n[[html-block-1]]\n\nOutro",
-      excerpt: "",
-      tags: [],
-      htmlText: { "1.1": "用户请求" },
-    });
-    expect(request.model).toBe("z-ai/glm-5.2:free");
-    expect(request.stream).toBe(false);
-    expect(request.response_format).toEqual({ type: "json_object" });
-    const serialized = JSON.stringify(request.messages);
-    expect(serialized).toContain("[[html-block-1]]");
-    expect(serialized).toContain("htmlText");
-    expect(serialized).not.toContain("sk-or-");
-  });
+  it("extracts fenced html blocks but leaves other fences verbatim", () => {
+    const source = [
+      "Para",
+      "",
+      "```html",
+      '<figure class="x">',
+      "  <text>云平台</text>",
+      "</figure>",
+      "```",
+      "",
+      "```text",
+      "<div>sample</div>",
+      "```",
+      "",
+      "Tail",
+    ].join("\n");
 
-  it("omits htmlText when the body has no embedded HTML blocks", () => {
-    const request = buildTranslationRequest({
-      model: "z-ai/glm-5.2:free",
-      sourceLanguage: "en",
-      targetLanguage: "zh",
-      title: "AI Strategy",
-      body: "Plain body.",
-      excerpt: "",
-      tags: [],
-      htmlText: undefined,
-    });
-    expect(JSON.stringify(request.messages)).not.toContain("htmlText\":");
+    const { body, blocks } = extractHtmlBlocks(source);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].html).toContain("云平台");
+    expect(blocks[0].prefix).toBe("```html\n");
+    expect(body).toContain("[[html-block-1]]");
+    expect(body).toContain("```text");
+    expect(body).not.toContain("云平台");
+
+    const restored = restoreHtmlBlocks(
+      "段落\n\n[[html-block-1]]\n\n```text\n<div>sample</div>\n```\n\n结尾",
+      blocks,
+      { "1.1": "Cloud platforms" }
+    );
+    expect(restored).toContain("```html");
+    expect(restored).toContain("<text>Cloud platforms</text>");
+    expect(restored).toContain("```text");
+    expect(restored).not.toContain("[[html-block-1]]");
+
+    // The closing marker keeps its own line: without the wrapper newline the
+    // fence would glue onto the last markup line and the block would swallow
+    // the rest of the page.
+    expect(restored).toContain("</figure>\n```");
+    expect(restored.split("\n").filter((line) => /^[ \t]*```/.test(line))).toHaveLength(4);
   });
 
   it("extracts embedded HTML blocks and leaves stable placeholders", () => {
@@ -158,6 +174,147 @@ describe("translate-content helpers", () => {
   });
 });
 
+describe("Hy-MT2 prompt builders", () => {
+  it("uses the Chinese instruction wording with a full language name for zh sources", () => {
+    const prompt = buildTranslatePrompt({
+      sourceText: "你好世界",
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+    });
+    expect(prompt).toContain("将以下文本翻译为 `英语`");
+    expect(prompt).toContain("只需要输出翻译后的结果");
+    expect(prompt).toContain("你好世界");
+    expect(prompt).not.toContain("html-block");
+  });
+
+  it("appends the annotation-mark clause only when preserveMarks is set", () => {
+    const plain = buildTranslatePrompt({
+      sourceText: "标题",
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+    });
+    const guarded = buildTranslatePrompt({
+      sourceText: "正文 [[html-block-1]]",
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+      preserveMarks: true,
+    });
+    expect(plain).not.toContain("行内标记");
+    expect(guarded).toContain("行内标记");
+    expect(guarded).toContain("[[html-block-N]]");
+    expect(guarded).toContain("颜色名不翻译");
+  });
+
+  it("uses the English instruction wording for en sources", () => {
+    const prompt = buildTranslatePrompt({
+      sourceText: "Hello world",
+      sourceLanguage: "en",
+      targetLanguage: "zh",
+      preserveMarks: true,
+    });
+    expect(prompt).toContain("Translate the following text into `Chinese`");
+    expect(prompt).toContain("only output the translated result");
+    expect(prompt).toContain("margin notes");
+  });
+
+  it("names a headline style for titles instead of translating them literally", () => {
+    const prompt = buildTitlePrompt({
+      sourceText: "Agent 时代的推理算力",
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+    });
+    expect(prompt).toContain("风格");
+    expect(prompt).toContain("技术博客标题");
+    expect(prompt).toContain("Agent 时代的推理算力");
+  });
+
+  it("joins tags with the @@ delimiter under the delimiter-preserving template", () => {
+    const prompt = buildTagsPrompt({
+      tags: ["人工智能", "芯片"],
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+    });
+    expect(prompt).toContain("人工智能 @@ 芯片");
+    expect(prompt).toContain("分隔符");
+  });
+
+  it("builds a structured-data prompt that pins htmlText keys", () => {
+    const prompt = buildHtmlTextPrompt({
+      htmlText: { "1.1": "用户请求", "1.2": "有效 Token" },
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+    });
+    expect(prompt).toContain("JSON");
+    expect(prompt).toContain('"1.1": "用户请求"');
+    expect(prompt).toContain("严禁");
+  });
+});
+
+describe("body chunking for the Hy-MT2 context window", () => {
+  it("rejoins chunked content exactly and carries code fences separately", () => {
+    const body = "开头段落。\n\n```python\n# 注释\nprint('hi')\n```\n\n结尾段落。";
+    const chunks = chunkMarkdownBody(body);
+
+    expect(chunks.map((chunk) => chunk.content).join("\n")).toBe(body);
+
+    // A fence holding CJK is reader-facing text (comments, formulas) and is
+    // translated under the fenced-prompt rules; a CJK-free fence is untouched.
+    const cjkFence = chunks.find((chunk) => chunk.content.includes("print('hi')"));
+    expect(cjkFence.kind).toBe("fenced");
+
+    const pureCode = "```python\nprint('hi')\n```";
+    expect(chunkMarkdownBody(pureCode)[0].kind).toBe("verbatim");
+  });
+
+  it("keeps fence markers out of the prompt for a fenced formula", () => {
+    const chunks = chunkMarkdownBody("```text\n每百万 Token 成本 = 成本 ÷ 产出\n```");
+    const chunk = chunks[0];
+
+    expect(chunk.kind).toBe("fenced");
+    expect(chunk.prefix).toBe("```text\n");
+    expect(chunk.suffix).toBe("\n```");
+    expect(chunk.inner).toContain("每百万 Token 成本");
+    expect(chunk.inner).not.toContain("```");
+    expect(`${chunk.prefix}${chunk.inner}${chunk.suffix}`).toBe(chunk.content);
+  });
+
+  it("flags only prose that actually carries annotation marks", () => {
+    expect(hasInlineMarks("普通正文，没有标记。")).toBe(false);
+    expect(hasInlineMarks("一处 ==red|风险==")).toBe(true);
+    expect(hasInlineMarks("正文\n\n^[一条批注]")).toBe(true);
+  });
+
+  it("packs small segments together but never crosses the character budget", () => {
+    const segments = ["a".repeat(100), "b".repeat(100), "c".repeat(100)];
+    const body = segments.join("\n\n");
+    const chunks = chunkMarkdownBody(body, 250);
+
+    expect(chunks).toHaveLength(2);
+    expect(chunks.every((chunk) => chunk.content.length <= 250)).toBe(true);
+    expect(chunks.map((chunk) => chunk.content).join("\n")).toBe(body);
+  });
+
+  it("splits a single oversized segment on paragraph boundaries, byte-exact", () => {
+    const paragraphs = Array.from({ length: 6 }, (_v, index) => `第${index}段 ` + "字".repeat(120));
+    const body = paragraphs.join("\n\n");
+    const chunks = chunkMarkdownBody(body, 300);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.every((chunk) => chunk.content.length <= 300)).toBe(true);
+    expect(chunks.map((chunk) => chunk.content).join("\n")).toBe(body);
+  });
+});
+
+describe("delimiter-mode tag splitting", () => {
+  it("splits translated tags back into one entry per source tag", () => {
+    expect(splitTranslatedTags("AI @@ Chips @@ Strategy", 3)).toEqual(["AI", "Chips", "Strategy"]);
+  });
+
+  it("throws when the separator count drifted", () => {
+    expect(() => splitTranslatedTags("AI Chips Strategy", 3)).toThrow(/@@ separator/);
+  });
+});
+
 describe("inline annotation marks across translation", () => {
   it("counts delimiters, notes and colour names", () => {
     expect(summariseInlineMarks("一处 ==red|风险== 与一处 ==blue|机会==\n\n^[一条批注]")).toEqual({
@@ -219,6 +376,16 @@ describe("inline annotation marks across translation", () => {
 });
 
 describe("unguarded translation failures", () => {
+  it("rejects a body whose fenced blocks no longer balance", () => {
+    const source = "Intro\n\n```text\n公式\n```\n\nOutro";
+    expect(() => validateFencesPreserved(source, "Intro\n\n``text\nformula\n```\n\nOutro")).toThrow(
+      /代码围栏数量/
+    );
+    expect(() =>
+      validateFencesPreserved(source, "Intro\n\n```text\nformula\n```\n\nOutro")
+    ).not.toThrow();
+  });
+
   it("rejects a body that still contains an HTML placeholder", () => {
     expect(() => validateNoLeftoverPlaceholders("text\n\n[[html-block-1]]\n\nmore")).toThrow(
       /残留未还原的占位符/

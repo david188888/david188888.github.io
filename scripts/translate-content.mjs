@@ -7,12 +7,31 @@ import { fileURLToPath } from "node:url";
 
 import { splitMarkdownSegments } from "../src/lib/content/markdown-segments.mjs";
 
-const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
-const DEFAULT_MODEL = "minimax/minimax-m3:free";
-const SITE_URL = "https://david188888.github.io";
+const DEFAULT_BASE_URL = "http://localhost:11434/v1";
+const DEFAULT_MODEL = "hy-mt2-7b";
 const POSTS_DIR = "content/posts";
 const TRANSLATION_DIR = "content/generated/translations/posts";
 const DIAGNOSTICS_PATH = "local/translation-diagnostics/last-invalid-response.txt";
+
+// Hy-MT2 max_context is 8192 tokens. A 2400-char Chinese chunk is roughly
+// 1.5-2.5k tokens in, leaving room for the English output under num_predict
+// 4096. Larger chunks keep cross-paragraph coherence; smaller ones are safer
+// against truncation.
+const MAX_CHUNK_CHARS = 2400;
+
+// Official Hy-MT2 sampling recommendations for the 1.8B/7B models.
+const GENERATION_PARAMETERS = {
+  temperature: 0.7,
+  top_p: 0.6,
+  top_k: 20,
+  repetition_penalty: 1.05,
+  max_tokens: 4096,
+};
+
+const LANGUAGE_NAMES = {
+  zh: { zh: "中文", en: "Chinese" },
+  en: { zh: "英语", en: "English" },
+};
 
 export function parseFrontmatter(source) {
   if (!source.startsWith("---\n")) {
@@ -75,6 +94,32 @@ export function getTargetLanguage(sourceLanguage) {
 }
 
 /**
+ * A ```` ```html ```` fence whose body is markup. The site renders fenced
+ * blocks as escaped code, but their visible text is still reader-facing prose
+ * (the previous single-request pipeline translated it), so these blocks get
+ * the same placeholder + text-node treatment as unfenced HTML: the model only
+ * ever sees the text nodes, never the tags. Fences in any other language stay
+ * verbatim — sample code is not prose.
+ */
+const FENCED_HTML_PATTERN = /^```html[^\n]*\n([\s\S]*?)\n?```$/;
+
+function matchFencedHtmlBlock(content) {
+  const trimmed = content.trim();
+  const match = trimmed.match(FENCED_HTML_PATTERN);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    inner: match[1],
+    prefix: `${trimmed.slice(0, trimmed.indexOf("\n") + 1)}`,
+    // The newline before the closing marker belongs to the wrapper, not to the
+    // body: without it the restored fence glues onto the last markup line.
+    suffix: "\n```",
+  };
+}
+
+/**
  * Replaces every embedded HTML block in the body with a stable placeholder
  * line so the translation model never has to reproduce raw markup. Returns the
  * placeholder body plus the extracted blocks in document order.
@@ -85,13 +130,19 @@ export function extractHtmlBlocks(body) {
   const lines = [];
 
   for (const segment of segments) {
-    if (segment.type !== "html") {
+    const fenced = segment.type !== "html" ? matchFencedHtmlBlock(segment.content) : null;
+
+    if (segment.type !== "html" && !fenced) {
       lines.push(segment.content);
       continue;
     }
 
     const token = `html-block-${blocks.length + 1}`;
-    blocks.push({ token, html: segment.content });
+    blocks.push(
+      fenced
+        ? { token, html: fenced.inner, prefix: fenced.prefix, suffix: fenced.suffix }
+        : { token, html: segment.content }
+    );
     lines.push(`[[${token}]]`);
   }
 
@@ -193,68 +244,295 @@ export function restoreHtmlBlocks(translatedBody, blocks, htmlText) {
       throw new Error(`Translated body is missing the required placeholder [[${block.token}]].`);
     }
 
-    result = result.replace(placeholderPattern, () => finalHtml);
+    const restored = block.prefix ? `${block.prefix}${finalHtml}${block.suffix}` : finalHtml;
+    result = result.replace(placeholderPattern, () => restored);
   }
 
   return result;
 }
 
-export function buildTranslationRequest({
-  model,
-  sourceLanguage,
-  targetLanguage,
-  title,
-  body,
-  excerpt,
-  tags,
-  htmlText,
-}) {
-  return {
-    model,
-    stream: false,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content: [
-          "You are a professional bilingual content translator.",
-          "Follow baoyu-translate normal mode: analyze the source first, then translate.",
-          "Rewrite naturally instead of translating literally.",
-          "Translate portfolio blog content with a business/formal style.",
-          "Preserve markdown structure, code fences, links, numbers, and factual claims.",
-          "The body may contain placeholder lines like [[html-block-1]] that mark embedded HTML blocks.",
-          "Keep every placeholder exactly as-is on its own line; never translate, reorder, merge, or drop placeholders.",
-          "The body may also contain author annotation marks: ==colour|text== or ==text== for a coloured underline, and lines starting with ^[text] for a margin note.",
-          "Keep every == delimiter and every ^[ ] wrapper: same count, same pairing, same relationship to the sentence they wrap. Never drop, merge, duplicate, or reorder them.",
-          "Never translate the colour name that appears before the | inside a ==...== mark. The allowed names are gray, brown, orange, yellow, green, blue, purple, pink, red.",
-          "Translate the text inside ==...== and inside ^[...] naturally, and keep the surrounding punctuation understandable in the target language.",
-          "Translate each value in htmlText naturally and return htmlText with identical keys.",
-          "Return only valid JSON with translated title, excerpt, tags, body, and htmlText fields.",
-        ].join(" "),
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          sourceLanguage,
-          targetLanguage,
-          style: ["business", "formal"],
-          fields: {
-            title,
-            excerpt,
-            tags,
-            body,
-          },
-          ...(htmlText ? { htmlText } : {}),
-        }),
-      },
-    ],
+// ---------------------------------------------------------------------------
+// Hy-MT2 prompt construction
+//
+// Hy-MT2 is a dedicated translation model: it has no system prompt and is
+// instruction-tuned for a fixed family of translation templates (see the
+// Hy-MT2-Translator skill vendored under .claude/skills/hy-mt2-translator).
+// Prompts use the Chinese instruction wording when the source is Chinese and
+// the English wording otherwise, mirroring the official examples.
+// ---------------------------------------------------------------------------
+
+const MARKS_CLAUSE_ZH =
+  "保持 Markdown 结构（标题、列表、链接、代码块）不变。" +
+  "文本中的 ==颜色|文字== 与 ==文字== 是作者的行内标记，^[文字] 是页边批注：" +
+  "这些标记必须原样保留，数量相同、成对出现、颜色名不翻译，只翻译标记包裹的文字。" +
+  "形如 [[html-block-N]] 的占位符行必须单独成行并原样保留，不得翻译、移动、合并或删除。";
+
+const MARKS_CLAUSE_EN =
+  "Keep the Markdown structure (headings, lists, links, code blocks) unchanged. " +
+  "The text contains author inline marks ==color|text== and ==text==, and margin notes ^[text]: " +
+  "keep every mark exactly as-is — same count, same pairing, colour names untranslated — and only translate the text they wrap. " +
+  "Placeholder lines like [[html-block-N]] must stay on their own line, verbatim; never translate, move, merge, or drop them.";
+
+/**
+ * Basic-mode Hy-MT2 prompt. `preserveMarks` appends the blog-specific
+ * structure/annotation clause used for body chunks.
+ */
+export function buildTranslatePrompt({ sourceText, sourceLanguage, targetLanguage, preserveMarks = false }) {
+  const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
+
+  if (sourceLanguage === "zh") {
+    const extra = preserveMarks ? `，并且${MARKS_CLAUSE_ZH}` : "";
+    return `将以下文本翻译为 \`${target}\`，注意**只需要输出翻译后的结果，不要额外解释**${extra}：\n\n${sourceText}`;
+  }
+
+  const extra = preserveMarks ? ` ${MARKS_CLAUSE_EN}` : "";
+  return `Translate the following text into \`${target}\`. Note that you should **only output the translated result without any additional explanation**.${extra}\n\n${sourceText}`;
+}
+
+const TITLE_STYLE = {
+  zh: "简洁专业的英文技术博客标题，实词首字母大写",
+  en: "简洁专业的中文技术博客标题",
+};
+
+/**
+ * Title prompt in the official style-controlled mode. The basic template
+ * translates headlines literally (`推理算力` -> "Reasoning computing power"),
+ * while naming a style recovers the headline register the site had before.
+ */
+export function buildTitlePrompt({ sourceText, sourceLanguage, targetLanguage }) {
+  const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
+  const style = TITLE_STYLE[sourceLanguage];
+
+  if (sourceLanguage === "zh") {
+    return `请将以下文本翻译为 \`${target}\`。\n注意翻译的风格要严格符合【**\`${style}\`**】\n\n${sourceText}`;
+  }
+
+  return `Please translate the following text into \`${target}\`. Note that the translation style must strictly conform to [**\`${style}\`**]:\n\n${sourceText}`;
+}
+
+/**
+ * Delimiter-mode prompt for the tag list: tags are joined with a rare ` @@ `
+ * separator so one call translates all of them and the result can be split
+ * back deterministically.
+ */
+export function buildTagsPrompt({ tags, sourceLanguage, targetLanguage }) {
+  const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
+  const joined = tags.join(" @@ ");
+
+  if (sourceLanguage === "zh") {
+    return `请将以下文本准确翻译为 \`${target}\`。你必须在译文中**保留等量的分隔符 \` @@ \`，绝对不可遗漏、转义或翻译该符号，并注意分隔符的位置**：\n\n${joined}`;
+  }
+
+  return `Please accurately translate the following text into \`${target}\`. You must **retain the exact same number of \` @@ \` delimiters in the translation. Strictly do not omit, escape, or translate these symbols, and pay close attention to their placement**:\n\n${joined}`;
+}
+
+/**
+ * Structured-data mode prompt for the visible text nodes of embedded HTML
+ * blocks: the model translates JSON values only and must keep keys untouched.
+ */
+export function buildHtmlTextPrompt({ htmlText, sourceLanguage, targetLanguage }) {
+  const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
+  const data = JSON.stringify(htmlText, null, 2);
+
+  if (sourceLanguage === "zh") {
+    return [
+      `*# 任务目标*`,
+      `将下方文本中的 JSON 格式数据翻译为 \`${target}\`。`,
+      ``,
+      `*# 严格约束*`,
+      `1. **结构锁定**：绝对保持原有的 JSON 数据结构、缩进和层级完全不变。`,
+      `2. **选择性翻译**：仅翻译面向用户展示的可见文本内容。`,
+      `3. **禁止修改**：**严禁**翻译或更改任何键名 (Key)。`,
+      ``,
+      `*# 数据输入*`,
+      data,
+    ].join("\n");
+  }
+
+  return [
+    `*### Task*`,
+    `Translate the user-facing text within the following JSON data into \`${target}\`.`,
+    ``,
+    `*### Strict Rules*`,
+    `1. **Structure Preservation:** You MUST preserve the original JSON data structure, nesting, hierarchy, and indentation exactly as they are.`,
+    `2. **Selective Translation:** Translate ONLY the visible, user-facing text content/values.`,
+    `3. **Strict Non-Translation:** NEVER translate or alter any keys.`,
+    ``,
+    `*### Source Data*`,
+    data,
+  ].join("\n");
+}
+
+/**
+ * Prompt for a fenced block that carries Chinese text (a formula, a table, or
+ * a comment inside sample code). The clause mirrors Hy-MT2's structured-data
+ * rules: translate what a reader must read, keep code, identifiers, operators
+ * and layout byte-identical.
+ */
+export function buildFencedPrompt({ sourceText, sourceLanguage, targetLanguage }) {
+  const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
+
+  if (sourceLanguage === "zh") {
+    return (
+      `将以下文本翻译为 \`${target}\`，注意**只需要输出翻译后的结果，不要额外解释**。` +
+      `这段内容位于 Markdown 代码块内：只翻译面向读者的自然语言和中文注释；` +
+      `代码、公式符号（如 = ÷ × 等）、标识符、变量名、数字、缩进与换行必须原样保留。\n\n${sourceText}`
+    );
+  }
+
+  return (
+    `Translate the following text into \`${target}\`. Note that you should **only output the translated result without any additional explanation**. ` +
+    `This content sits inside a Markdown code block: translate only reader-facing natural language and comments; ` +
+    `keep code, formula symbols (such as = ÷ ×), identifiers, variable names, numbers, indentation and line breaks exactly as they are.\n\n${sourceText}`
+  );
+}
+
+const CODE_FENCE_START = /^\s*```/;
+
+/**
+ * Groups the placeholder body into translation chunks of at most maxChars.
+ * Segment boundaries (including fenced code blocks) are never crossed, so
+ * markdown structure survives reassembly. Fenced code blocks are returned as
+ * `verbatim` chunks: a specialised translation model is more likely to mangle
+ * code than to help it, so code is carried over untranslated (callers should
+ * surface contained CJK so nothing is silently left behind). Fenced blocks
+ * tagged `html` never reach this function — extractHtmlBlocks lifts them out
+ * first, so only genuine sample code is carried over verbatim.
+ */
+/**
+ * Splits a fenced block into its opening marker line, body and closing marker,
+ * so the markers can be re-attached untouched after the body is translated.
+ * Returns null for single-line fences that have no body to translate.
+ */
+function splitFence(content) {
+  const firstNewline = content.indexOf("\n");
+  if (firstNewline === -1) {
+    return null;
+  }
+
+  const lastNewline = content.lastIndexOf("\n");
+  if (lastNewline <= firstNewline) {
+    return null;
+  }
+
+  const prefix = content.slice(0, firstNewline + 1);
+  const suffix = content.slice(lastNewline);
+  const inner = content.slice(prefix.length, lastNewline);
+
+  return inner.trim() === "" ? null : { prefix, suffix, inner };
+}
+
+export function chunkMarkdownBody(body, maxChars = MAX_CHUNK_CHARS) {
+  const segments = splitMarkdownSegments(body);
+  const chunks = [];
+  let buffer = [];
+
+  const flush = () => {
+    if (buffer.length > 0) {
+      chunks.push({ kind: "translate", content: buffer.join("\n") });
+      buffer = [];
+    }
   };
+
+  for (const segment of segments) {
+    if (CODE_FENCE_START.test(segment.content)) {
+      flush();
+      const fenced = splitFence(segment.content);
+      // A fence with no CJK has nothing to translate and is carried over
+      // untouched; one with CJK holds reader-facing text (formula, table,
+      // comment) that must not be left in the source language. The fence
+      // markers themselves stay out of the prompt \u2014 a small model will drop a
+      // backtick and break the block, so only the body is sent.
+      chunks.push(
+        fenced && /[\u3400-\u9fff]/.test(fenced.inner)
+          ? { kind: "fenced", content: segment.content, prefix: fenced.prefix, suffix: fenced.suffix, inner: fenced.inner }
+          : { kind: "verbatim", content: segment.content }
+      );
+      continue;
+    }
+
+    const candidate = [...buffer, segment.content].join("\n");
+    if (buffer.length > 0 && candidate.length > maxChars) {
+      flush();
+    }
+
+    if (segment.content.length > maxChars) {
+      // A single oversized prose segment is split on blank lines, then on
+      // single newlines as a last resort, so no chunk exceeds the budget.
+      for (const piece of splitOversizedSegment(segment.content, maxChars)) {
+        if (buffer.length > 0 && [...buffer, piece].join("\n").length > maxChars) {
+          flush();
+        }
+        buffer.push(piece);
+      }
+      continue;
+    }
+
+    buffer.push(segment.content);
+  }
+
+  flush();
+  return chunks;
+}
+
+function splitOversizedSegment(content, maxChars) {
+  const pieces = [];
+  let remaining = content;
+
+  while (remaining.length > maxChars) {
+    // Cut boundaries keep their newlines on the left piece so that joining
+    // the final chunks with "\n" reproduces the source byte structure: a
+    // paragraph break cut leaves "\n" on the left and the join adds the other.
+    let pieceEnd;
+    let nextStart;
+    const paragraphCut = remaining.lastIndexOf("\n\n", maxChars);
+    if (paragraphCut >= maxChars * 0.5) {
+      pieceEnd = paragraphCut + 1;
+      nextStart = paragraphCut + 2;
+    } else {
+      const lineCut = remaining.lastIndexOf("\n", maxChars);
+      if (lineCut >= maxChars * 0.5) {
+        pieceEnd = lineCut;
+        nextStart = lineCut + 1;
+      } else {
+        // No usable newline (a single huge line): hard cut. The rejoin adds
+        // one newline that was not in the source — acceptable for this edge.
+        pieceEnd = maxChars;
+        nextStart = maxChars;
+      }
+    }
+    pieces.push(remaining.slice(0, pieceEnd));
+    remaining = remaining.slice(nextStart);
+  }
+
+  if (remaining.length > 0) {
+    pieces.push(remaining);
+  }
+
+  return pieces;
+}
+
+/**
+ * Splits a delimiter-mode tag translation back into one entry per source tag.
+ * Throws when the separator count drifted so a misaligned tag list is never
+ * written into the cache.
+ */
+export function splitTranslatedTags(translated, expectedCount) {
+  const parts = translated.split("@@").map((part) => part.trim());
+
+  if (parts.length !== expectedCount) {
+    throw new Error(
+      `Tags translation lost the @@ separator: expected ${expectedCount} tags, got ${parts.length}. 已拒绝写入缓存。`
+    );
+  }
+
+  return parts;
 }
 
 async function main() {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  const baseUrl = process.env.OPENROUTER_BASE_URL || DEFAULT_BASE_URL;
-  const model = process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+  const force = process.argv.includes("--force");
+  const baseUrl = process.env.HY_MT2_BASE_URL || DEFAULT_BASE_URL;
+  const model = process.env.HY_MT2_MODEL || DEFAULT_MODEL;
   const sourcePaths = await listPostPaths();
 
   if (sourcePaths.length === 0) {
@@ -269,7 +547,7 @@ async function main() {
   for (const sourcePath of sourcePaths) {
     let outcome;
     try {
-      outcome = await translatePost({ sourcePath, baseUrl, apiKey, model });
+      outcome = await translatePost({ sourcePath, baseUrl, model, force });
     } catch (error) {
       failures.push(`${sourcePath}: ${error.message}`);
       console.error(`Failed ${sourcePath}: ${error.message}`);
@@ -289,7 +567,7 @@ async function main() {
   }
 }
 
-async function translatePost({ sourcePath, baseUrl, apiKey, model }) {
+async function translatePost({ sourcePath, baseUrl, model, force }) {
   const source = await fs.readFile(sourcePath, "utf8");
   const parsed = parseFrontmatter(source);
   const title = normalizeString(parsed.frontmatter.title);
@@ -307,50 +585,103 @@ async function translatePost({ sourcePath, baseUrl, apiKey, model }) {
   const sourceHash = createSourceHash(source);
   const cachePath = toCachePath(sourcePath);
 
-  if (await isFreshCache(cachePath, { sourceHash, targetLanguage })) {
+  if (!force && (await isFreshCache(cachePath, { sourceHash, targetLanguage }))) {
     console.log(`Skipping ${sourcePath}: fresh translation cache exists.`);
     return "skipped";
   }
 
-  if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY is required to translate content with missing or stale cache.");
-  }
-
   const { body: placeholderBody, blocks } = extractHtmlBlocks(body);
   const htmlText = buildHtmlTextPayload(blocks);
+  const chunks = chunkMarkdownBody(placeholderBody);
 
-  const request = buildTranslationRequest({
-    model,
+  const request = { baseUrl, model, sourceLanguage, targetLanguage };
+
+  console.log(`${sourcePath}: translating title, excerpt, ${tags.length} tags, ${chunks.length} body chunks with ${model}.`);
+
+  const translatedTitle = await translateField(request, buildTitlePrompt({
+    sourceText: title,
     sourceLanguage,
     targetLanguage,
-    title,
-    body: placeholderBody,
-    excerpt,
-    tags,
-    htmlText,
-  });
+  }), "title");
 
-  const translated = await requestTranslation({ baseUrl, apiKey, request });
+  const translatedExcerpt = excerpt
+    ? await translateField(request, buildTranslatePrompt({
+        sourceText: excerpt,
+        sourceLanguage,
+        targetLanguage,
+        preserveMarks: hasInlineMarks(excerpt),
+      }), "excerpt")
+    : "";
 
-  if (htmlText) {
-    validateHtmlText(translated.htmlText, htmlText);
+  const translatedTags = tags.length > 0
+    ? splitTranslatedTags(
+        await translateField(request, buildTagsPrompt({ tags, sourceLanguage, targetLanguage }), "tags"),
+        tags.length
+      )
+    : [];
+
+  const translatedChunks = [];
+  for (const [index, chunk] of chunks.entries()) {
+    if (chunk.kind === "verbatim") {
+      translatedChunks.push(chunk.content);
+      continue;
+    }
+
+    console.log(`  [${index + 1}/${chunks.length}] translating ${chunk.content.length} chars...`);
+
+    if (chunk.kind === "fenced") {
+      const translatedInner = await translateField(
+        request,
+        buildFencedPrompt({ sourceText: chunk.inner, sourceLanguage, targetLanguage }),
+        `body chunk ${index + 1}`
+      );
+      translatedChunks.push(`${chunk.prefix}${translatedInner}${chunk.suffix}`);
+      continue;
+    }
+
+    translatedChunks.push(
+      await translateField(request, buildTranslatePrompt({
+        sourceText: chunk.content,
+        sourceLanguage,
+        targetLanguage,
+        // The clause names the literal mark syntax, and Hy-MT2 otherwise
+        // echoes those examples into the output as if they were body text.
+        // Only chunks that actually carry marks get it.
+        preserveMarks: hasInlineMarks(chunk.content),
+      }), `body chunk ${index + 1}`)
+    );
   }
 
-  const finalBody = restoreHtmlBlocks(translated.body, blocks, translated.htmlText);
+  let translatedHtmlText;
+  if (htmlText) {
+    const rawHtmlText = await translateField(
+      request,
+      buildHtmlTextPrompt({ htmlText, sourceLanguage, targetLanguage }),
+      "htmlText"
+    );
+    translatedHtmlText = parseJsonObject(rawHtmlText);
+    if (!translatedHtmlText) {
+      throw new Error("Hy-MT2 returned non-JSON htmlText. Diagnostics saved for inspection.");
+    }
+    validateHtmlText(translatedHtmlText, htmlText);
+  }
+
+  const finalBody = restoreHtmlBlocks(translatedChunks.join("\n"), blocks, translatedHtmlText);
   validateNoLeftoverPlaceholders(finalBody);
+  validateFencesPreserved(body, finalBody);
   validateInlineMarksPreserved(body, finalBody);
   validateActuallyTranslated(finalBody, targetLanguage);
+
   const cache = {
     sourcePath,
     sourceHash,
     sourceLanguage,
     targetLanguage,
     model,
-    mode: "normal",
-    style: ["business", "formal"],
-    title: translated.title,
-    excerpt: translated.excerpt,
-    tags: translated.tags,
+    mode: "hy-mt2",
+    title: translatedTitle.trim(),
+    excerpt: translatedExcerpt.trim(),
+    tags: translatedTags,
     body: finalBody,
   };
 
@@ -473,25 +804,40 @@ async function isFreshCache(cachePath, { sourceHash, targetLanguage }) {
   }
 }
 
-const REQUEST_MAX_ATTEMPTS = 6;
-const REQUEST_BASE_RETRY_DELAY_MS = 5_000;
-const REQUEST_MAX_RETRY_DELAY_MS = 60_000;
+const REQUEST_MAX_ATTEMPTS = 3;
+const REQUEST_BASE_RETRY_DELAY_MS = 2_000;
 
-export async function requestTranslation({ baseUrl, apiKey, request }) {
+/**
+ * One field/chunk translation against the local (or any OpenAI-compatible)
+ * Hy-MT2 server. Unlike the old chat-model pipeline there is no JSON envelope:
+ * the model answers with plain translated text, which the validators then
+ * check. Connection failures point at the setup steps instead of a bare stack.
+ */
+export async function translateField({ baseUrl, model, sourceLanguage, targetLanguage }, prompt, label) {
   const endpoint = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const request = {
+    model,
+    stream: false,
+    messages: [{ role: "user", content: prompt }],
+    ...GENERATION_PARAMETERS,
+  };
 
   let rawResponse = "";
   for (let attempt = 1; attempt <= REQUEST_MAX_ATTEMPTS; attempt += 1) {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": SITE_URL,
-        "X-Title": "david-homepage",
-      },
-      body: JSON.stringify(request),
-    });
+    let response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+    } catch (error) {
+      throw new Error(
+        `Cannot reach the Hy-MT2 server at ${endpoint}: ${error.message}. ` +
+          `Start it with \`ollama serve\` and register the model once with ` +
+          `\`ollama create ${DEFAULT_MODEL} -f scripts/translation/Modelfile\`.`
+      );
+    }
 
     rawResponse = await response.text();
     if (response.ok) {
@@ -499,18 +845,13 @@ export async function requestTranslation({ baseUrl, apiKey, request }) {
     }
 
     if (!isRetryableStatus(response.status) || attempt === REQUEST_MAX_ATTEMPTS) {
-      throw new Error(
-        `OpenRouter translation request failed with HTTP ${response.status}: ${redactSecrets(rawResponse)}`
-      );
+      throw new Error(`Hy-MT2 request failed with HTTP ${response.status}: ${rawResponse.slice(0, 500)}`);
     }
 
-    const retryDelayMs =
-      readRetryDelayMs(rawResponse) ??
-      Math.min(REQUEST_BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), REQUEST_MAX_RETRY_DELAY_MS);
     console.warn(
-      `OpenRouter returned HTTP ${response.status}; retrying in ${Math.round(retryDelayMs / 1000)}s (attempt ${attempt + 1}/${REQUEST_MAX_ATTEMPTS}).`
+      `Hy-MT2 returned HTTP ${response.status} for ${label}; retrying (attempt ${attempt + 1}/${REQUEST_MAX_ATTEMPTS}).`
     );
-    await sleep(retryDelayMs);
+    await sleep(REQUEST_BASE_RETRY_DELAY_MS * attempt);
   }
 
   let payload;
@@ -518,48 +859,21 @@ export async function requestTranslation({ baseUrl, apiKey, request }) {
     payload = JSON.parse(rawResponse);
   } catch {
     await writeInvalidResponse(rawResponse);
-    throw new Error(`OpenRouter returned invalid JSON. Diagnostics saved to ${DIAGNOSTICS_PATH}.`);
+    throw new Error(`Hy-MT2 returned invalid JSON for ${label}. Diagnostics saved to ${DIAGNOSTICS_PATH}.`);
   }
 
   const content = payload.choices?.[0]?.message?.content;
-  const translated = parseTranslatedContent(content);
-  if (!translated) {
+  if (typeof content !== "string" || content.trim() === "") {
     await writeInvalidResponse(rawResponse);
-    throw new Error(`OpenRouter returned an invalid translation shape. Diagnostics saved to ${DIAGNOSTICS_PATH}.`);
+    throw new Error(`Hy-MT2 returned an empty translation for ${label}. Diagnostics saved to ${DIAGNOSTICS_PATH}.`);
   }
 
-  return translated;
-}
-
-function parseTranslatedContent(content) {
-  if (typeof content !== "string") {
-    return null;
-  }
-
-  const jsonText = stripJsonFence(content);
-  let parsed;
-  try {
-    parsed = JSON.parse(jsonText);
-  } catch {
-    return null;
-  }
-
-  if (typeof parsed.title !== "string" || typeof parsed.body !== "string") {
-    return null;
-  }
-
-  return {
-    title: parsed.title,
-    excerpt: typeof parsed.excerpt === "string" ? parsed.excerpt : "",
-    tags: Array.isArray(parsed.tags) ? parsed.tags.map((tag) => String(tag)) : [],
-    body: parsed.body,
-    htmlText: parsed.htmlText && typeof parsed.htmlText === "object" ? parsed.htmlText : null,
-  };
+  return content.trim();
 }
 
 export function validateHtmlText(htmlText, expected) {
   if (!htmlText || typeof htmlText !== "object") {
-    throw new Error("OpenRouter response is missing translated htmlText for embedded HTML blocks.");
+    throw new Error("Hy-MT2 response is missing translated htmlText for embedded HTML blocks.");
   }
 
   const missing = Object.keys(expected).filter(
@@ -567,7 +881,7 @@ export function validateHtmlText(htmlText, expected) {
   );
 
   if (missing.length > 0) {
-    throw new Error(`OpenRouter response is missing htmlText translations for keys: ${missing.join(", ")}.`);
+    throw new Error(`Hy-MT2 response is missing htmlText translations for keys: ${missing.join(", ")}.`);
   }
 }
 
@@ -591,7 +905,7 @@ export function validateNoLeftoverPlaceholders(body) {
 /**
  * Refuses a "translation" that is really the source text.
  *
- * Free models occasionally echo the input back. Every structural check still
+ * Models occasionally echo the input back. Every structural check still
  * passes in that case, so a build would publish a page in the wrong language.
  * Measured on prose only: code fences legitimately keep their original text.
  */
@@ -637,6 +951,39 @@ export function summariseInlineMarks(text) {
 }
 
 /**
+ * Refuses a body whose fenced blocks no longer balance.
+ *
+ * Fence markers are re-attached from the source after translation, so a count
+ * mismatch means a block was lost or a model emitted a fence inside prose. A
+ * broken fence silently swallows the rest of the page as code, which no other
+ * validator here would notice.
+ */
+export function validateFencesPreserved(sourceBody, translatedBody) {
+  const countFences = (text) =>
+    ((typeof text === "string" ? text : "").match(/^[ \t]*```/gm) ?? []).length;
+  const before = countFences(sourceBody);
+  const after = countFences(translatedBody);
+
+  if (before !== after) {
+    throw new Error(
+      `代码围栏数量 ${before} → ${after}，Markdown 结构已被破坏。已拒绝写入缓存。`
+    );
+  }
+}
+
+/**
+ * Whether a piece of prose actually carries the author's annotation marks.
+ *
+ * Hy-MT2 tends to echo the literal `==color|text==` / `^[text]` examples from
+ * the preservation clause straight into its output, so that clause is only
+ * attached where marks really exist.
+ */
+export function hasInlineMarks(text) {
+  const marks = summariseInlineMarks(text);
+  return marks.delimiters > 0 || marks.notes > 0;
+}
+
+/**
  * Refuses a translation that lost, duplicated, or recoloured the author's
  * marks.
  *
@@ -669,27 +1016,24 @@ export function validateInlineMarksPreserved(sourceBody, translatedBody) {
   }
 }
 
-function stripJsonFence(content) {
-  const trimmed = content.trim();
-  const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-  return fenceMatch ? fenceMatch[1] : trimmed;
+function parseJsonObject(content) {
+  if (typeof content !== "string") {
+    return null;
+  }
+
+  const fenceMatch = content.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  const jsonText = fenceMatch ? fenceMatch[1] : content.trim();
+
+  try {
+    const parsed = JSON.parse(jsonText);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 function isRetryableStatus(status) {
   return status === 408 || status === 429 || status >= 500;
-}
-
-function readRetryDelayMs(rawResponse) {
-  try {
-    const retryAfter = JSON.parse(rawResponse)?.error?.metadata?.raw;
-    if (typeof retryAfter !== "string") {
-      return null;
-    }
-    const seconds = Number(JSON.parse(retryAfter)?.retry_after_seconds);
-    return Number.isFinite(seconds) && seconds >= 0 ? Math.min(seconds * 1000, 60_000) : null;
-  } catch {
-    return null;
-  }
 }
 
 function sleep(ms) {
@@ -699,10 +1043,6 @@ function sleep(ms) {
 async function writeInvalidResponse(rawResponse) {
   await fs.mkdir(path.dirname(DIAGNOSTICS_PATH), { recursive: true });
   await fs.writeFile(DIAGNOSTICS_PATH, rawResponse);
-}
-
-function redactSecrets(text) {
-  return text.replace(/sk-or-v1-[A-Za-z0-9]+/g, "sk-or-v1-[redacted]");
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
