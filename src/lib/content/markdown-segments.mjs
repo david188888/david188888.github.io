@@ -16,7 +16,13 @@ const HTML_VOID_TAGS = new Set([
 
 const HTML_BLOCK_START_PATTERN = /^\s*<([a-zA-Z][a-zA-Z0-9-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/;
 const HTML_COMMENT_START_PATTERN = /^\s*<!--/;
-const CODE_FENCE_PATTERN = /^\s*```/;
+/**
+ * A fenced code block opens with three or more backticks or tildes, optionally
+ * indented. Both flavours are recognised because the block renderer
+ * (markdown-it) treats them the same way: recognising only backticks would let
+ * an HTML-looking line inside a `~~~` block escape into a live HTML block.
+ */
+const CODE_FENCE_PATTERN = /^[ \t]*(`{3,}|~{3,})/;
 
 /**
  * Splits a markdown source string into ordered segments.
@@ -52,7 +58,7 @@ export function splitMarkdownSegments(markdown) {
 
     if (CODE_FENCE_PATTERN.test(line)) {
       flushMarkdown();
-      const fenceEnd = findCodeFenceEnd(lines, index);
+      const fenceEnd = findCodeFenceEnd(lines, index, line.match(CODE_FENCE_PATTERN)[1]);
       segments.push({ type: "markdown", content: lines.slice(index, fenceEnd + 1).join("\n") });
       index = fenceEnd + 1;
       continue;
@@ -75,13 +81,24 @@ export function splitMarkdownSegments(markdown) {
   return segments;
 }
 
-function findCodeFenceEnd(lines, startIndex) {
+function findCodeFenceEnd(lines, startIndex, marker) {
+  const closer = closingFencePattern(marker);
+
   for (let index = startIndex + 1; index < lines.length; index += 1) {
-    if (CODE_FENCE_PATTERN.test(lines[index])) {
+    if (closer.test(lines[index])) {
       return index;
     }
   }
   return lines.length - 1;
+}
+
+/**
+ * A closing fence repeats the opening character, is at least as long, and
+ * carries no info string (CommonMark 4.5).
+ */
+function closingFencePattern(marker) {
+  const character = marker[0] === "`" ? "`" : "~";
+  return new RegExp(`^[ \\t]*${character}{${marker.length},}[ \\t]*$`);
 }
 
 function matchHtmlBlockStart(line) {

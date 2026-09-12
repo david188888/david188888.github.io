@@ -101,22 +101,67 @@ export function getTargetLanguage(sourceLanguage) {
  * ever sees the text nodes, never the tags. Fences in any other language stay
  * verbatim — sample code is not prose.
  */
-const FENCED_HTML_PATTERN = /^```html[^\n]*\n([\s\S]*?)\n?```$/;
+const FENCE_START_PATTERN = /^[ \t]*(`{3,}|~{3,})/;
+const FENCED_HTML_OPEN_PATTERN = /^[ \t]*`{3,}html(?:[ \t]+\S[^\n]*)?[ \t]*$/i;
 
-function matchFencedHtmlBlock(content) {
-  const trimmed = content.trim();
-  const match = trimmed.match(FENCED_HTML_PATTERN);
-  if (!match) {
+/**
+ * A closing fence repeats the opening character, is at least as long, and
+ * carries no info string (CommonMark 4.5).
+ */
+function fenceCloserPattern(marker) {
+  const character = marker[0] === "`" ? "`" : "~";
+  return new RegExp(`^[ \\t]*${character}{${marker.length},}[ \\t]*$`);
+}
+
+/**
+ * Splits a fenced block into its opening marker line, body and closing marker.
+ *
+ * The markers are sliced out of the source instead of being rebuilt, so an
+ * indented fence, a longer run of backticks, or a `~~~` fence keeps its exact
+ * shape once the body has been translated. Returns null when the block is not
+ * closed on its last line, or when it holds nothing to translate.
+ */
+export function splitFenceBlock(content) {
+  const lines = (typeof content === "string" ? content : "").split("\n");
+  const open = lines.length > 1 ? lines[0].match(FENCE_START_PATTERN) : null;
+  if (!open) {
+    return null;
+  }
+
+  const closer = fenceCloserPattern(open[1]);
+  let closeIndex = -1;
+  for (let index = 1; index < lines.length; index += 1) {
+    if (closer.test(lines[index])) {
+      closeIndex = index;
+      break;
+    }
+  }
+
+  if (closeIndex === -1 || closeIndex !== lines.length - 1) {
+    return null;
+  }
+
+  const inner = lines.slice(1, closeIndex).join("\n");
+  if (inner.trim() === "") {
     return null;
   }
 
   return {
-    inner: match[1],
-    prefix: `${trimmed.slice(0, trimmed.indexOf("\n") + 1)}`,
+    prefix: `${lines[0]}\n`,
+    inner,
     // The newline before the closing marker belongs to the wrapper, not to the
     // body: without it the restored fence glues onto the last markup line.
-    suffix: "\n```",
+    suffix: `\n${lines[closeIndex]}`,
   };
+}
+
+function matchFencedHtmlBlock(content) {
+  const block = splitFenceBlock(content);
+  if (!block || !FENCED_HTML_OPEN_PATTERN.test(block.prefix.trim())) {
+    return null;
+  }
+
+  return block;
 }
 
 /**
@@ -273,19 +318,45 @@ const MARKS_CLAUSE_EN =
   "keep every mark exactly as-is — same count, same pairing, colour names untranslated — and only translate the text they wrap. " +
   "Placeholder lines like [[html-block-N]] must stay on their own line, verbatim; never translate, move, merge, or drop them.";
 
+// The inline-formatting clause deliberately names no mark syntax: Hy-MT2 echoes
+// literal examples from a preservation clause straight into the body. It also has
+// to say that the marked text is translated like any other prose — a model told
+// only to "keep the formatting" will happily leave the wrapped words in the
+// source language.
+const STRUCTURE_CLAUSE_ZH =
+  "原文的加粗、斜体、删除线、行内代码、链接、标题层级和列表符号都要保留，" +
+  "标记里的文字和普通正文一样正常翻译；不要增加、删除或改写标记符号本身。";
+
+const STRUCTURE_CLAUSE_EN =
+  "Keep the source's bold, italics, strikethrough, inline code, links, heading levels and list bullets, " +
+  "and translate the text they wrap exactly like ordinary prose; never add, drop or rewrite the marker characters themselves.";
+
 /**
  * Basic-mode Hy-MT2 prompt. `preserveMarks` appends the blog-specific
- * structure/annotation clause used for body chunks.
+ * annotation clause, `preserveStructure` the inline-formatting clause. Both are
+ * attached only to chunks that actually carry such markup.
  */
-export function buildTranslatePrompt({ sourceText, sourceLanguage, targetLanguage, preserveMarks = false }) {
+export function buildTranslatePrompt({
+  sourceText,
+  sourceLanguage,
+  targetLanguage,
+  preserveMarks = false,
+  preserveStructure = false,
+}) {
   const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
+  const clausesZh = [preserveMarks ? MARKS_CLAUSE_ZH : "", preserveStructure ? STRUCTURE_CLAUSE_ZH : ""]
+    .filter(Boolean)
+    .join("");
+  const clausesEn = [preserveMarks ? MARKS_CLAUSE_EN : "", preserveStructure ? STRUCTURE_CLAUSE_EN : ""]
+    .filter(Boolean)
+    .join(" ");
 
   if (sourceLanguage === "zh") {
-    const extra = preserveMarks ? `，并且${MARKS_CLAUSE_ZH}` : "";
+    const extra = clausesZh ? `，并且${clausesZh}` : "";
     return `将以下文本翻译为 \`${target}\`，注意**只需要输出翻译后的结果，不要额外解释**${extra}：\n\n${sourceText}`;
   }
 
-  const extra = preserveMarks ? ` ${MARKS_CLAUSE_EN}` : "";
+  const extra = clausesEn ? ` ${clausesEn}` : "";
   return `Translate the following text into \`${target}\`. Note that you should **only output the translated result without any additional explanation**.${extra}\n\n${sourceText}`;
 }
 
@@ -387,7 +458,7 @@ export function buildFencedPrompt({ sourceText, sourceLanguage, targetLanguage }
   );
 }
 
-const CODE_FENCE_START = /^\s*```/;
+const CODE_FENCE_START = /^[ \t]*(?:`{3,}|~{3,})/;
 
 /**
  * Groups the placeholder body into translation chunks of at most maxChars.
@@ -399,28 +470,6 @@ const CODE_FENCE_START = /^\s*```/;
  * tagged `html` never reach this function — extractHtmlBlocks lifts them out
  * first, so only genuine sample code is carried over verbatim.
  */
-/**
- * Splits a fenced block into its opening marker line, body and closing marker,
- * so the markers can be re-attached untouched after the body is translated.
- * Returns null for single-line fences that have no body to translate.
- */
-function splitFence(content) {
-  const firstNewline = content.indexOf("\n");
-  if (firstNewline === -1) {
-    return null;
-  }
-
-  const lastNewline = content.lastIndexOf("\n");
-  if (lastNewline <= firstNewline) {
-    return null;
-  }
-
-  const prefix = content.slice(0, firstNewline + 1);
-  const suffix = content.slice(lastNewline);
-  const inner = content.slice(prefix.length, lastNewline);
-
-  return inner.trim() === "" ? null : { prefix, suffix, inner };
-}
 
 export function chunkMarkdownBody(body, maxChars = MAX_CHUNK_CHARS) {
   const segments = splitMarkdownSegments(body);
@@ -437,7 +486,7 @@ export function chunkMarkdownBody(body, maxChars = MAX_CHUNK_CHARS) {
   for (const segment of segments) {
     if (CODE_FENCE_START.test(segment.content)) {
       flush();
-      const fenced = splitFence(segment.content);
+      const fenced = splitFenceBlock(segment.content);
       // A fence with no CJK has nothing to translate and is carried over
       // untouched; one with CJK holds reader-facing text (formula, table,
       // comment) that must not be left in the source language. The fence
@@ -610,6 +659,7 @@ async function translatePost({ sourcePath, baseUrl, model, force }) {
         sourceLanguage,
         targetLanguage,
         preserveMarks: hasInlineMarks(excerpt),
+        preserveStructure: hasInlineStructure(excerpt),
       }), "excerpt")
     : "";
 
@@ -619,6 +669,33 @@ async function translatePost({ sourcePath, baseUrl, model, force }) {
         tags.length
       )
     : [];
+
+  // Header fields are cheap to check and expensive to get wrong: a title that
+  // came back in the source language would only surface after the body has been
+  // translated for minutes, so it is validated here instead.
+  validateTranslatedField({
+    text: translatedTitle,
+    sourceText: title,
+    targetLanguage,
+    label: "标题",
+  });
+  if (translatedExcerpt) {
+    validateTranslatedField({
+      text: translatedExcerpt,
+      sourceText: excerpt,
+      targetLanguage,
+      label: "摘要",
+    });
+  }
+  for (const [index, tag] of translatedTags.entries()) {
+    validateTranslatedField({
+      text: tag,
+      sourceText: tags[index] ?? "",
+      targetLanguage,
+      label: `标签 ${index + 1}`,
+      requireTranslated: false,
+    });
+  }
 
   const translatedChunks = [];
   for (const [index, chunk] of chunks.entries()) {
@@ -646,8 +723,10 @@ async function translatePost({ sourcePath, baseUrl, model, force }) {
         targetLanguage,
         // The clause names the literal mark syntax, and Hy-MT2 otherwise
         // echoes those examples into the output as if they were body text.
-        // Only chunks that actually carry marks get it.
+        // Only chunks that actually carry marks get it, and the formatting
+        // clause rides along only where there is formatting to keep.
         preserveMarks: hasInlineMarks(chunk.content),
+        preserveStructure: hasInlineStructure(chunk.content),
       }), `body chunk ${index + 1}`)
     );
   }
@@ -670,6 +749,8 @@ async function translatePost({ sourcePath, baseUrl, model, force }) {
   validateNoLeftoverPlaceholders(finalBody);
   validateFencesPreserved(body, finalBody);
   validateInlineMarksPreserved(body, finalBody);
+  validateInlineStructurePreserved(body, finalBody);
+  validateTextHygiene({ text: finalBody, sourceText: body, targetLanguage, label: "译文正文" });
   validateActuallyTranslated(finalBody, targetLanguage);
 
   const cache = {
@@ -909,7 +990,7 @@ export function validateNoLeftoverPlaceholders(body) {
  * passes in that case, so a build would publish a page in the wrong language.
  * Measured on prose only: code fences legitimately keep their original text.
  */
-export function validateActuallyTranslated(translatedBody, targetLanguage) {
+export function validateActuallyTranslated(translatedBody, targetLanguage, label = "译文正文") {
   const prose = (typeof translatedBody === "string" ? translatedBody : "").replace(
     /```[\s\S]*?```/g,
     ""
@@ -918,18 +999,18 @@ export function validateActuallyTranslated(translatedBody, targetLanguage) {
   const total = prose.replace(/\s/g, "").length;
 
   if (total === 0) {
-    throw new Error("译文正文为空。已拒绝写入缓存。");
+    throw new Error(`${label}为空。已拒绝写入缓存。`);
   }
 
   const ratio = cjk / total;
   const percent = `${(ratio * 100).toFixed(1)}%`;
 
   if (targetLanguage === "en" && ratio > 0.05) {
-    throw new Error(`译文仍是中文（中文占比 ${percent}），判定为未翻译。已拒绝写入缓存。`);
+    throw new Error(`${label}仍是中文（中文占比 ${percent}），判定为未翻译。已拒绝写入缓存。`);
   }
 
   if (targetLanguage === "zh" && ratio < 0.3) {
-    throw new Error(`译文缺少中文（中文占比 ${percent}），判定为未翻译。已拒绝写入缓存。`);
+    throw new Error(`${label}缺少中文（中文占比 ${percent}），判定为未翻译。已拒绝写入缓存。`);
   }
 }
 
@@ -951,22 +1032,75 @@ export function summariseInlineMarks(text) {
 }
 
 /**
- * Refuses a body whose fenced blocks no longer balance.
+/**
+ * Every fence marker line in a body, in document order.
  *
- * Fence markers are re-attached from the source after translation, so a count
- * mismatch means a block was lost or a model emitted a fence inside prose. A
- * broken fence silently swallows the rest of the page as code, which no other
- * validator here would notice.
+ * Opening and closing follow the renderer (and CommonMark 4.5): a block opens
+ * on a line holding three or more backticks or tildes and closes on a line that
+ * repeats the same character at least as many times with no info string. Lines
+ * inside a block are never mistaken for markers, so a ``` inside a `~~~` block
+ * does not count as one.
+ */
+export function listFenceMarkers(text) {
+  const lines = (typeof text === "string" ? text : "").split("\n");
+  const markers = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const open = lines[index].match(FENCE_START_PATTERN);
+    if (!open) {
+      index += 1;
+      continue;
+    }
+
+    const closer = fenceCloserPattern(open[1]);
+    let closeIndex = -1;
+    for (let scan = index + 1; scan < lines.length; scan += 1) {
+      if (closer.test(lines[scan])) {
+        closeIndex = scan;
+        break;
+      }
+    }
+
+    markers.push(lines[index]);
+    if (closeIndex === -1) {
+      // An unclosed fence owns the rest of the document.
+      break;
+    }
+
+    markers.push(lines[closeIndex]);
+    index = closeIndex + 1;
+  }
+
+  return markers;
+}
+
+/**
+ * Refuses a body whose fenced blocks changed shape.
+ *
+ * Fence markers are re-attached from the source after translation, so any
+ * difference means the model emitted a fence of its own inside prose; a stray
+ * ``` silently swallows the rest of the page as code, which no other validator
+ * here would notice. Comparing the marker lines themselves rather than only
+ * their number also catches a marker that came back as a different character, a
+ * longer run, or a changed info string.
  */
 export function validateFencesPreserved(sourceBody, translatedBody) {
-  const countFences = (text) =>
-    ((typeof text === "string" ? text : "").match(/^[ \t]*```/gm) ?? []).length;
-  const before = countFences(sourceBody);
-  const after = countFences(translatedBody);
+  const before = listFenceMarkers(sourceBody);
+  const after = listFenceMarkers(translatedBody);
 
-  if (before !== after) {
+  if (before.length !== after.length) {
     throw new Error(
-      `代码围栏数量 ${before} → ${after}，Markdown 结构已被破坏。已拒绝写入缓存。`
+      `代码围栏数量 ${before.length} → ${after.length}，Markdown 结构已被破坏。已拒绝写入缓存。`
+    );
+  }
+
+  const drift = before.findIndex((line, position) => line !== after[position]);
+  if (drift !== -1) {
+    throw new Error(
+      `第 ${Math.floor(drift / 2) + 1} 个代码围栏的标记被改动：` +
+        `${JSON.stringify(before[drift])} → ${JSON.stringify(after[drift])}，` +
+        "Markdown 结构已被破坏。已拒绝写入缓存。"
     );
   }
 }
@@ -1013,6 +1147,199 @@ export function validateInlineMarksPreserved(sourceBody, translatedBody) {
     throw new Error(
       `翻译后行内标记与原文不一致：${problems.join("；")}。已拒绝写入缓存，请重跑或更换模型。`
     );
+  }
+}
+
+const INLINE_CODE_PATTERN = /`([^`\n]+)`/g;
+const ITALIC_SPAN_PATTERN = /(?<!\*)\*(?![\s*])[^*\n]*[^\s*](?<!\*)\*(?!\*)/g;
+const LINK_PATTERN = /\[[^\]\n]*\]\(([^)\s]+)\)/g;
+const MOJIBAKE_PATTERN =
+  /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u2028\u2029\u2060\uFEFF\uFFFD]/;
+const HTML_ENTITY_PATTERN = /&(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);/g;
+const CJK_SENTENCE_PUNCTUATION_PATTERN = /[。，；！？、]/g;
+const DEGENERATE_REPEAT_PATTERN = /(.{12,80})\1{2,}/;
+const FIELD_PLACEHOLDER_PATTERN = /\[\[html-block-\d+\]\]/;
+
+// Phrases that only ever appear in this script's own prompts. Checked against
+// the source so a post that legitimately discusses translation still passes.
+const INSTRUCTION_LEAK_PHRASES = [
+  "只需要输出",
+  "翻译为",
+  "以下是翻译",
+  "Translate the following",
+  "only output the translated",
+  "Here is the translation",
+];
+
+/** Fenced blocks, removed so their contents are not read as author markup. */
+function stripFencedBlocks(text) {
+  return (typeof text === "string" ? text : "").replace(
+    /^[ \t]*[`~]{3,}[^\n]*\n[\s\S]*?^[ \t]*[`~]{3,}[ \t]*$/gm,
+    ""
+  );
+}
+
+/**
+ * The author's inline markup, summarised from prose only.
+ *
+ * Fenced blocks and inline code are stripped before counting: code is carried
+ * over verbatim, so a `**` or a `[` inside a fence is not one of the author's
+ * markers. The marker set is the one documented in docs/insights-markup.md.
+ */
+export function summariseInlineStructure(text) {
+  const prose = stripFencedBlocks(text);
+
+  return {
+    bold: (prose.match(/\*\*/g) ?? []).length,
+    italic: (prose.match(ITALIC_SPAN_PATTERN) ?? []).length,
+    strike: (prose.match(/~~/g) ?? []).length,
+    code: [...prose.matchAll(INLINE_CODE_PATTERN)].map((match) => match[1]),
+    linkUrls: [...prose.matchAll(LINK_PATTERN)].map((match) => match[1]),
+    headings: [...prose.matchAll(/^(#{1,6}) /gm)].map((match) => match[1]).join(","),
+    listItems: (prose.match(/^[ \t]*(?:[-*+]|\d+\.) /gm) ?? []).length,
+  };
+}
+
+const INLINE_STRUCTURE_LABELS = [
+  ["Markdown 行内代码", "code"],
+  ["链接地址", "linkUrls"],
+  ["标题层级", "headings"],
+  ["列表项数量", "listItems"],
+  ["粗体 ** 数量", "bold"],
+  ["斜体 * 数量", "italic"],
+  ["删除线 ~~ 数量", "strike"],
+];
+
+/**
+ * Whether a chunk carries inline formatting that must survive translation.
+ */
+export function hasInlineStructure(text) {
+  const structure = summariseInlineStructure(text);
+
+  return (
+    structure.bold > 0 ||
+    structure.italic > 0 ||
+    structure.strike > 0 ||
+    structure.code.length > 0 ||
+    structure.linkUrls.length > 0 ||
+    structure.headings.length > 0 ||
+    structure.listItems > 0
+  );
+}
+
+/**
+ * Refuses a translation that dropped, added or rewrote the author's inline
+ * markup.
+ *
+ * The model rewrites sentences, and a `**` that quietly disappears turns an
+ * emphasised judgement into plain prose — the text stays valid Markdown, so no
+ * structural check notices. Values are compared, not just counts: link targets
+ * must stay byte-identical, and inline code keeps the identifiers a reader is
+ * meant to copy.
+ */
+export function validateInlineStructurePreserved(sourceBody, translatedBody) {
+  const before = summariseInlineStructure(sourceBody);
+  const after = summariseInlineStructure(translatedBody);
+  const problems = [];
+
+  for (const [label, key] of INLINE_STRUCTURE_LABELS) {
+    const expected = JSON.stringify(before[key]);
+    const actual = JSON.stringify(after[key]);
+    if (expected !== actual) {
+      problems.push(`${label} ${expected} → ${actual}`);
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `翻译后 Markdown 行内标记与原文不一致：${problems.join("；")}。已拒绝写入缓存，请重跑或更换模型。`
+    );
+  }
+}
+
+/**
+ * Character-level sanity check for any translated string.
+ *
+ * Covers what no structural check can see: replacement characters and control
+ * bytes from a broken decode, HTML entities the model invented (which render as
+ * a literal `&amp;`), Chinese sentence punctuation left inside an English
+ * sentence, text the model repeated until it ran out of room, and this script's
+ * own prompt wording leaking into the output.
+ */
+export function validateTextHygiene({ text, sourceText = "", targetLanguage, label }) {
+  const value = typeof text === "string" ? text : "";
+  const source = typeof sourceText === "string" ? sourceText : "";
+  const problems = [];
+
+  const mojibake = value.match(MOJIBAKE_PATTERN);
+  if (mojibake) {
+    const codePoint = mojibake[0].codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
+    problems.push(`出现乱码或控制字符 U+${codePoint}`);
+  }
+
+  const entities = (value.match(HTML_ENTITY_PATTERN) ?? []).length;
+  const sourceEntities = (source.match(HTML_ENTITY_PATTERN) ?? []).length;
+  if (entities > sourceEntities) {
+    problems.push(`HTML 实体泄漏 ${sourceEntities} → ${entities}`);
+  }
+
+  if (targetLanguage === "en") {
+    const punctuation = [...new Set(value.match(CJK_SENTENCE_PUNCTUATION_PATTERN) ?? [])];
+    if (punctuation.length > 0) {
+      problems.push(`英文译文里残留中文标点 ${punctuation.join("")}`);
+    }
+  }
+
+  const leaked = INSTRUCTION_LEAK_PHRASES.find(
+    (phrase) => value.includes(phrase) && !source.includes(phrase)
+  );
+  if (leaked) {
+    problems.push(`疑似把提示词写进了译文：${leaked}`);
+  }
+
+  const repeated = stripFencedBlocks(value).match(DEGENERATE_REPEAT_PATTERN);
+  if (repeated) {
+    problems.push(`译文出现重复退化片段：${repeated[1].slice(0, 24)}`);
+  }
+
+  if (problems.length > 0) {
+    throw new Error(`${label}未通过输出检查：${problems.join("；")}。已拒绝写入缓存。`);
+  }
+}
+
+/**
+ * Checks a translated header field (title, excerpt, tag).
+ *
+ * These fields go straight into the page shell, so a newline or a leftover
+ * placeholder breaks the layout rather than just the prose. Titles and excerpts
+ * must also read as translated text; tags are exempt because this blog keeps
+ * product names (`AI`, `GPU`) in its Chinese tags.
+ */
+export function validateTranslatedField({
+  text,
+  sourceText = "",
+  targetLanguage,
+  label,
+  requireTranslated = true,
+}) {
+  const value = (typeof text === "string" ? text : "").trim();
+
+  if (value === "") {
+    throw new Error(`${label}译文为空。已拒绝写入缓存。`);
+  }
+
+  if (/[\n\r]/.test(value)) {
+    throw new Error(`${label}译文包含换行，会破坏页面结构。已拒绝写入缓存。`);
+  }
+
+  if (FIELD_PLACEHOLDER_PATTERN.test(value) || FENCE_START_PATTERN.test(value)) {
+    throw new Error(`${label}译文残留了 Markdown 结构标记。已拒绝写入缓存。`);
+  }
+
+  validateTextHygiene({ text: value, sourceText, targetLanguage, label });
+
+  if (requireTranslated) {
+    validateActuallyTranslated(value, targetLanguage, label);
   }
 }
 

@@ -56,6 +56,16 @@ describe("renderMarkdownToHtml", () => {
     expect(html).toContain("&lt;div&gt;not html&lt;/div&gt;");
     expect(html).not.toContain("<div>");
   });
+
+  // The renderer (markdown-it) treats `~~~` as a fence too, so the block
+  // splitter has to agree: otherwise an HTML-looking line inside a tilde
+  // fence would be promoted to a live author-authored HTML block.
+  it("keeps HTML-looking lines inside tilde fences escaped", () => {
+    const html = renderMarkdownToHtml('~~~text\n<div>not html</div>\n~~~');
+
+    expect(html).toContain("&lt;div&gt;not html&lt;/div&gt;");
+    expect(html).not.toContain("<div>");
+  });
 });
 
 describe("renderMarkdownToHtml inline syntax", () => {

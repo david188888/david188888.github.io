@@ -51,6 +51,8 @@ Markdown 行内解析由 markdown-it 完成，所以 `**` 与 `==` 可以互相�
 | `^[没有收尾` | 抛错：批注块缺少收尾的 `]` |
 | `^[#短语\|内容]` | 抛错：暂不支持锚点短语写法 |
 
+翻译侧沿用同一条原则：译文里的行内标记必须与原文一一对应，对不上就拒绝写入翻译缓存，而不是把标记的标点渲染到页面上。逐项比对的是 `**`、`*`、`~~`、行内代码内容、链接地址（逐字节）、标题层级和列表符号；代码围栏与行内代码里的 `==` 同样先被排除，不参与计数。代码围栏另有一道更严的检查：围栏标记必须逐字节相同（数量、顺序、反引号或波浪线的个数、info string），因为一个漂移的围栏标记会把后面的正文整段吞成代码。
+
 ---
 
 ## 4. Notion 侧写法与映射
@@ -134,7 +136,7 @@ Markdown 行内解析由 markdown-it 完成，所以 `**` 与 `==` 可以互相�
 | `src/lib/content/annotation-ids.mjs` | 内容哈希与稳定 id 生成 |
 | `src/lib/content/posts.ts` | 块级组装、行内渲染接入 markdown-it、页边注配对 |
 | `scripts/notion-to-mdx.mjs` | Notion 增强 Markdown → MDX 的确定性转换 |
-| `scripts/translate-content.mjs` | 翻译 + 标记保全校验 |
+| `scripts/translate-content.mjs` | 翻译 + 行内标记、围栏与乱码保全校验 |
 | `src/components/insights/AnnotationControls.tsx` | 页面上的隐藏/恢复与本地标注 |
 | `src/lib/annotations/` | 标注状态与引文锚定的纯逻辑 |
 

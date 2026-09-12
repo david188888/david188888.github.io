@@ -181,6 +181,17 @@ contains Chinese is translated as reader-facing text, a fence that does not is
 carried over verbatim. `npm run translate:content -- --force` re-translates even
 when the cache is fresh.
 
+A translation that fails validation is never written, so the previous cache
+stays in place and the site keeps publishing the last reviewed text. Fence
+markers have to come back byte-identical (count, order, backtick or tilde run,
+info string), the author's inline markup (`**`, `*`, `~~`, inline code, link
+targets, heading levels, list bullets) has to match the source one-to-one, and
+the text must be free of mojibake, invented HTML entities, Chinese sentence
+punctuation left in an English line, and prompt wording. Title, excerpt and tags
+go through the same checks before the body is translated, so a bad title fails in
+seconds instead of minutes. What the inline markers mean is defined in
+`docs/insights-markup.md`.
+
 Configuration via environment variables (see `.env.example`):
 
 ```env

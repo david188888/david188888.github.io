@@ -24,7 +24,7 @@ language: zh   # 可省略,会自动检测;检测失败时必须显式声明
 
 1. 校验/补全 frontmatter(date、permalink、tags、language)
 2. 移动到 `content/posts/<date>-<slug>.mdx`(命名沿用现有惯例,如 `2012-08-14-blog-post-1.mdx`)
-3. 运行 `npm run translate:content` 生成另一语言的翻译缓存
+3. 运行 `npm run translate:content` 生成另一语言的翻译缓存（校验不通过会拒绝写入，按报错重跑；旧缓存保持不变，不会发出半成品译文）
 4. 构建验证后提交
 
 ## 内嵌 HTML 可视化

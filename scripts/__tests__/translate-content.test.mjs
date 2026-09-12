@@ -10,16 +10,23 @@ import {
   extractHtmlBlocks,
   extractTextNodes,
   hasInlineMarks,
+  hasInlineStructure,
+  listFenceMarkers,
   parseFrontmatter,
   restoreHtmlBlocks,
+  splitFenceBlock,
   splitTranslatedTags,
   summariseInlineMarks,
+  summariseInlineStructure,
   toCachePath,
   validateActuallyTranslated,
   validateFencesPreserved,
   validateHtmlText,
   validateInlineMarksPreserved,
+  validateInlineStructurePreserved,
   validateNoLeftoverPlaceholders,
+  validateTextHygiene,
+  validateTranslatedField,
 } from "../translate-content.mjs";
 import { createSourceHash as createRuntimeSourceHash } from "../../src/lib/content/cache.ts";
 import { renderMarkdownToHtml } from "../../src/lib/content/posts.ts";
@@ -215,6 +222,52 @@ describe("Hy-MT2 prompt builders", () => {
     expect(prompt).toContain("Translate the following text into `Chinese`");
     expect(prompt).toContain("only output the translated result");
     expect(prompt).toContain("margin notes");
+  });
+
+  it("asks for the formatting clause only where formatting exists", () => {
+    expect(hasInlineStructure("普通正文，没有任何格式。")).toBe(false);
+    expect(hasInlineStructure("承担**更长的建设周期**的投入。")).toBe(true);
+    expect(hasInlineStructure("详见 [报告](https://example.com/a)。")).toBe(true);
+    expect(hasInlineStructure("```text\n** 代码块里的星号\n```")).toBe(false);
+  });
+
+  it("says the marked text is translated like any other prose", () => {
+    const prompt = buildTranslatePrompt({
+      sourceText: "承担**更长的建设周期**的投入。",
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+      preserveStructure: true,
+    });
+
+    expect(prompt).toContain("标记里的文字和普通正文一样正常翻译");
+  });
+
+  it("keeps literal mark syntax out of the formatting clause", () => {
+    const prompt = buildTranslatePrompt({
+      sourceText: "承担**更长的建设周期**的投入。",
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+      preserveStructure: true,
+    });
+    const clause = prompt.slice(prompt.indexOf("，并且"), prompt.indexOf("：\n\n"));
+
+    expect(clause).toContain("加粗");
+    // Hy-MT2 echoes literal mark examples into the body, so the clause must
+    // never quote the syntax it is describing.
+    expect(clause).not.toMatch(/[*=^`]/);
+  });
+
+  it("combines the annotation and formatting clauses when both apply", () => {
+    const prompt = buildTranslatePrompt({
+      sourceText: "承担**更长的建设周期**，==red|风险== 见 ^[批注]。",
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+      preserveMarks: true,
+      preserveStructure: true,
+    });
+
+    expect(prompt).toContain("行内标记");
+    expect(prompt).toContain("加粗");
   });
 
   it("names a headline style for titles instead of translating them literally", () => {
@@ -425,5 +478,263 @@ describe("unguarded translation failures", () => {
 
   it("rejects an empty body", () => {
     expect(() => validateActuallyTranslated("   \n  ", "en")).toThrow(/正文为空/);
+  });
+});
+
+describe("fence markers are compared, not just counted", () => {
+  it("accepts a body whose fence markers came back byte-identical", () => {
+    const source = "Intro\n\n```text\n公式\n```\n\nOutro";
+    expect(() =>
+      validateFencesPreserved(source, "Intro\n\n```text\nformula\n```\n\nOutro")
+    ).not.toThrow();
+  });
+
+  it("rejects a marker that came back as a longer backtick run", () => {
+    const source = "Intro\n\n```text\n公式\n```\n\nOutro";
+    expect(() =>
+      validateFencesPreserved(source, "Intro\n\n````text\nformula\n````\n\nOutro")
+    ).toThrow(/第 1 个代码围栏的标记被改动/);
+  });
+
+  it("rejects an info string the model rewrote", () => {
+    const source = "Intro\n\n```text\n公式\n```\n\nOutro";
+    expect(() =>
+      validateFencesPreserved(source, "Intro\n\n```txt\nformula\n```\n\nOutro")
+    ).toThrow(/标记被改动/);
+  });
+
+  it("rejects a tilde fence the model added to prose", () => {
+    const source = "Intro\n\n```text\n公式\n```\n\nOutro";
+    const translated = "Intro\n\n~~~\nstray\n~~~\n\n```text\nformula\n```\n\nOutro";
+    expect(() => validateFencesPreserved(source, translated)).toThrow(/代码围栏数量/);
+  });
+
+  it("rejects a fence added to a body that had none", () => {
+    expect(() => validateFencesPreserved("只有正文。", "只有正文。\n\n```\n")).toThrow(/代码围栏数量/);
+  });
+
+  it("does not count a fence-looking line inside a tilde block", () => {
+    expect(listFenceMarkers("~~~\n```\n~~~")).toEqual(["~~~", "~~~"]);
+  });
+
+  it("refuses to split a fence that never closes", () => {
+    expect(splitFenceBlock("```text\n没有收尾")).toBeNull();
+  });
+
+  it("keeps an indented html fence indented through extract and restore", () => {
+    const source = "Intro\n\n  ```html\n  <figure>\n    <text>云</text>\n  </figure>\n  ```\n\nOutro";
+    const { body, blocks } = extractHtmlBlocks(source);
+
+    expect(body).toBe("Intro\n\n[[html-block-1]]\n\nOutro");
+
+    const restored = restoreHtmlBlocks(body, blocks, { "1.1": "Cloud" });
+
+    expect(restored).toBe(source.replace("云", "Cloud"));
+    expect(() => validateFencesPreserved(source, restored)).not.toThrow();
+  });
+
+  it("treats a tilde fence as a fence when chunking", () => {
+    const chunk = chunkMarkdownBody("~~~text\n每百万 Token 成本\n~~~")[0];
+
+    expect(chunk.kind).toBe("fenced");
+    expect(chunk.prefix).toBe("~~~text\n");
+    expect(chunk.suffix).toBe("\n~~~");
+    expect(chunk.inner).toBe("每百万 Token 成本");
+  });
+});
+
+describe("inline markup conservation", () => {
+  it("rejects a bold span that lost its markers", () => {
+    expect(() =>
+      validateInlineStructurePreserved(
+        "它们也承担**更长的建设周期**与更重的资本投入。",
+        "They also involve longer construction periods and heavier capital investment."
+      )
+    ).toThrow(/粗体 \*\* 数量/);
+  });
+
+  it("accepts a translation that keeps every marker", () => {
+    expect(() =>
+      validateInlineStructurePreserved(
+        "承担**更长的建设周期**，详见 [报告](https://example.com/a)。",
+        "It carries **longer construction cycles**, see the [report](https://example.com/a)."
+      )
+    ).not.toThrow();
+  });
+
+  it("rejects a rewritten link target", () => {
+    expect(() =>
+      validateInlineStructurePreserved(
+        "详见 [报告](https://example.com/a)。",
+        "See the [report](https://example.com/b)."
+      )
+    ).toThrow(/链接地址/);
+  });
+
+  it("rejects a dropped inline code span", () => {
+    expect(() =>
+      validateInlineStructurePreserved("设置 `num_ctx` 参数。", "Set the num_ctx parameter.")
+    ).toThrow(/行内代码/);
+  });
+
+  it("rejects a changed heading level", () => {
+    expect(() => validateInlineStructurePreserved("## 标题\n\n正文。", "### Title\n\nBody.")).toThrow(
+      /标题层级/
+    );
+  });
+
+  it("rejects a list that was flattened into prose", () => {
+    expect(() =>
+      validateInlineStructurePreserved("- 第一项\n- 第二项", "The first item and the second item.")
+    ).toThrow(/列表项数量/);
+  });
+
+  it("ignores marker characters that live inside a code fence", () => {
+    expect(() =>
+      validateInlineStructurePreserved(
+        "正文。\n\n```text\n** 不是标记 **\n```",
+        "Body.\n\n```text\n** not a marker **\n```"
+      )
+    ).not.toThrow();
+  });
+
+  it("counts an italic span but not a spaced asterisk pair", () => {
+    expect(summariseInlineStructure("这是 *强调* 文字").italic).toBe(1);
+    expect(summariseInlineStructure("成本 = 单价 * 数量 * 折扣").italic).toBe(0);
+  });
+});
+
+describe("output hygiene", () => {
+  const label = "译文正文";
+
+  it("rejects a replacement character", () => {
+    expect(() =>
+      validateTextHygiene({ text: "Broken \uFFFD text", targetLanguage: "en", label })
+    ).toThrow(/乱码或控制字符/);
+  });
+
+  it("rejects a control character", () => {
+    expect(() =>
+      validateTextHygiene({ text: "Broken \u0000 text", targetLanguage: "en", label })
+    ).toThrow(/乱码或控制字符/);
+  });
+
+  it("rejects an HTML entity the source never had", () => {
+    expect(() =>
+      validateTextHygiene({ text: "a &amp; b", sourceText: "a & b", targetLanguage: "en", label })
+    ).toThrow(/HTML 实体泄漏/);
+  });
+
+  it("keeps an HTML entity the author wrote", () => {
+    expect(() =>
+      validateTextHygiene({
+        text: "a &amp; b",
+        sourceText: "a &amp; b",
+        targetLanguage: "en",
+        label,
+      })
+    ).not.toThrow();
+  });
+
+  it("rejects Chinese sentence punctuation left in an English line", () => {
+    expect(() =>
+      validateTextHygiene({
+        text: "Profit does not stay evenly。",
+        targetLanguage: "en",
+        label,
+      })
+    ).toThrow(/中文标点/);
+  });
+
+  it("allows the same punctuation when the target is Chinese", () => {
+    expect(() =>
+      validateTextHygiene({ text: "利润不会平均留在所有环节。", targetLanguage: "zh", label })
+    ).not.toThrow();
+  });
+
+  it("rejects text the model repeated until it ran out of room", () => {
+    expect(() =>
+      validateTextHygiene({ text: "the same clause ".repeat(4), targetLanguage: "en", label })
+    ).toThrow(/重复退化/);
+  });
+
+  it("rejects prompt wording leaking into the output", () => {
+    expect(() =>
+      validateTextHygiene({
+        text: "只需要输出翻译后的结果",
+        sourceText: "原文正文",
+        targetLanguage: "zh",
+        label,
+      })
+    ).toThrow(/提示词/);
+  });
+
+  it("keeps that wording when the source itself discusses it", () => {
+    expect(() =>
+      validateTextHygiene({
+        text: "把它翻译为英文",
+        sourceText: "把它翻译为英文",
+        targetLanguage: "zh",
+        label,
+      })
+    ).not.toThrow();
+  });
+});
+
+describe("translated header fields", () => {
+  it("rejects a title that came back with a newline", () => {
+    expect(() =>
+      validateTranslatedField({
+        text: "Title\nSecond line",
+        sourceText: "标题",
+        targetLanguage: "en",
+        label: "标题",
+      })
+    ).toThrow(/换行/);
+  });
+
+  it("rejects a title that is still in the source language", () => {
+    expect(() =>
+      validateTranslatedField({
+        text: "Agent 时代的推理算力",
+        sourceText: "Agent 时代的推理算力",
+        targetLanguage: "en",
+        label: "标题",
+      })
+    ).toThrow(/判定为未翻译/);
+  });
+
+  it("rejects a leftover placeholder in a field", () => {
+    expect(() =>
+      validateTranslatedField({
+        text: "Title [[html-block-1]]",
+        sourceText: "标题",
+        targetLanguage: "en",
+        label: "标题",
+      })
+    ).toThrow(/结构标记/);
+  });
+
+  it("accepts a translated title", () => {
+    expect(() =>
+      validateTranslatedField({
+        text: "Computing Power for Reasoning in the Agent Era",
+        sourceText: "Agent 时代的推理算力",
+        targetLanguage: "en",
+        label: "标题",
+      })
+    ).not.toThrow();
+  });
+
+  it("accepts an untranslated tag when translation is not required", () => {
+    expect(() =>
+      validateTranslatedField({
+        text: "GPU",
+        sourceText: "GPU",
+        targetLanguage: "en",
+        label: "标签 1",
+        requireTranslated: false,
+      })
+    ).not.toThrow();
   });
 });
