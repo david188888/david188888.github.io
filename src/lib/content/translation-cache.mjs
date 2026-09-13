@@ -38,20 +38,21 @@ import { createHash } from "node:crypto";
 import { TRANSLATION_GLOSSARY_VERSION } from "./translation-glossary.mjs";
 
 /**
- * Cache format version: the shape of the cache document.
+ * Version of the cache document this pipeline writes.
  *
- * Bumped only when the loader can no longer read an older file, because the
- * check below rejects a cache whose version differs. It is NOT part of the unit
- * keys, so an additive field never needs a bump and never forces a
- * retranslation.
+ * Bumped whenever the shape changes, additive fields included — not because the
+ * loader could not read the older file, but because nothing else would make the
+ * writer notice one. A cache that is merely "fresh" is skipped, so a field the
+ * current writer always records would otherwise never appear in a file written
+ * before that field existed. The check lives in the shared freshness function,
+ * so both sides reject a file from another shape.
  *
- * Migration path when it does have to move: bump this constant, then run
- * `npm run translate:content`. The script treats a cache it cannot read as an
- * empty one (it never trusts a foreign shape), retranslates the post and
- * rewrites the file; until then the target-language page fails the build with a
- * message pointing at the script.
+ * Migration: bump this, then run `npm run translate:content`. Every unit is
+ * reused, because the version is not part of the unit keys, so it costs no model
+ * calls; until it is re-run the target-language page fails the build, which is
+ * the intended signal rather than a silent gap.
  */
-export const TRANSLATION_CACHE_VERSION = 2;
+export const TRANSLATION_CACHE_VERSION = 3;
 
 /**
  * Pipeline version. Bump it whenever the prompts, the unit segmentation, or the

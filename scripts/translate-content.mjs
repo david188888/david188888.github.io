@@ -477,6 +477,31 @@ function withTerminology(prompt, terms, sourceLanguage) {
 }
 
 /**
+ * The glossary provenance recorded on a cached unit.
+ *
+ * A translation changes either because its source changed or because a glossary
+ * term did, and the committed cache is the artifact a reviewer actually reads:
+ * without this, a glossary edit appears as an unexplained new English sentence.
+ * Recording what the prompt was given — plus the hash that is part of the unit
+ * key — lets `git diff` say which terms a unit was translated under.
+ *
+ * `termsHash` also covers an entry's `enforce` and `forbid` rules, so a
+ * rule-only edit moves the hash while the terms stay readable. That is the case
+ * which otherwise looks as though nothing changed.
+ *
+ * Returns nothing for a unit with no matching terms: a field that is always
+ * empty would add noise to every cache file and every diff.
+ */
+export function describeUnitTerms(terms) {
+  if (!Array.isArray(terms) || terms.length === 0) return {};
+
+  return {
+    termsHash: createTermsHash(terms),
+    terms: terms.map(({ source, target }) => ({ source, target })),
+  };
+}
+
+/**
  * Basic-mode Hy-MT2 prompt. `preserveMarks` appends the blog-specific
  * annotation clause, `preserveStructure` the inline-formatting clause, and
  * `context` the enclosing section path. Each is attached only where it applies,
@@ -1147,6 +1172,7 @@ async function translatePost({ sourcePath, baseUrl, model, modelDigest, force, d
       source: unit.source,
       context: unit.context,
       translation,
+      ...describeUnitTerms(unit.terms),
     };
   };
 

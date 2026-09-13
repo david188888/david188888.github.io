@@ -37,6 +37,11 @@ Next.js 15 App Router、React 19、TypeScript(strict)、Tailwind 3、Vitest。
   生成身份（采样参数 + 本地模型 digest，任一改动都会让全篇自动重译，不靠人记得升版本）、
   以及每条单元的译文是否真的出现在它发布到的字段里。脚本写入前跑同一套校验，
   所以坏缓存写不进去。
+  缓存还记下「凭据」：`generation`（采样参数 + 模型 digest）、每条单元当时注入的
+  `terms` 与 `termsHash`。改词表或换模型后的缓存 diff 能自解释，不需要回头看运行日志。
+  注意 `TRANSLATION_CACHE_VERSION` 在**任何形状变化（包括新增字段）时都要升**：
+  缓存一旦「新鲜」就会被跳过，不升版本的话新字段永远补不进旧文件；升版本会让站点
+  在重跑脚本前构建失败，这正是要的信号。
 - `content/drafts/`：草稿区，不参与构建；写作与发布约定见 `content/drafts/README.md`。
 - `docs/insights-markup.md`：正文行内标记（`==red|文字==`、`^[批注]`）的唯一权威定义。
   渲染器、Notion 转换脚本、翻译校验三处都按它实现，改规则必须同步改三处。

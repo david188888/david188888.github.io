@@ -9,6 +9,7 @@ import {
   buildTranslatePrompt,
   createSourceHash as createScriptSourceHash,
   decodeHtmlEntities,
+  describeUnitTerms,
   extractBodyUnits,
   extractHtmlBlocks,
   extractTextNodes,
@@ -631,6 +632,42 @@ describe("model digest lookup", () => {
     expect(findModelDigest([{ name: "other:latest", digest: "zz" }], "hy-mt2-7b")).toBeNull();
     expect(findModelDigest([{ name: "hy-mt2-7b:latest" }], "hy-mt2-7b")).toBeNull();
     expect(findModelDigest(undefined, "hy-mt2-7b")).toBeNull();
+  });
+});
+
+describe("unit provenance", () => {
+  it("records the terms a unit was translated under", () => {
+    const terms = selectGlossaryTerms("端侧设备形成的第二条需求曲线", "zh");
+
+    expect(describeUnitTerms(terms)).toEqual({
+      termsHash: createTermsHash(terms),
+      terms: [
+        { source: "端侧设备", target: "on-device hardware" },
+        { source: "端侧", target: "on-device" },
+      ],
+    });
+  });
+
+  it("records what the prompt saw, not the validation rules", () => {
+    // enforce/forbid shape the hash, but the readable part stays the two fields
+    // the model was actually given.
+    const record = describeUnitTerms(selectGlossaryTerms("长鑫", "zh"));
+
+    expect(Object.keys(record).sort()).toEqual(["terms", "termsHash"]);
+    expect(JSON.stringify(record)).not.toContain("GigaDevice");
+  });
+
+  it("records nothing for a unit with no matching terms", () => {
+    expect(describeUnitTerms([])).toEqual({});
+    expect(describeUnitTerms(undefined)).toEqual({});
+  });
+
+  it("moves the recorded hash when only a rule changed", () => {
+    const terms = selectGlossaryTerms("长鑫", "zh");
+    const stricter = terms.map((term) => ({ ...term, forbid: [...term.forbid, "Changxin"] }));
+
+    expect(describeUnitTerms(stricter).terms).toEqual(describeUnitTerms(terms).terms);
+    expect(describeUnitTerms(stricter).termsHash).not.toBe(describeUnitTerms(terms).termsHash);
   });
 });
 

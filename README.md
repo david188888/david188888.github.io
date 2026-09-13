@@ -249,15 +249,24 @@ translation is re-run instead of silently republishing old output.
 
 Beyond the unit keys, a cache records what produced it:
 
-- `version` (`TRANSLATION_CACHE_VERSION`) — the shape of the document. A loader
-  that sees a version it does not know rejects the file instead of guessing at
-  it, so a breaking shape change is a loud "re-run the script", not a misread.
+- `version` (`TRANSLATION_CACHE_VERSION`) — the shape of the document. It is
+  bumped for additive fields too, not only for breaking ones: a cache that is
+  merely "fresh" is skipped, so without a bump a field the writer now always
+  records would never appear in a file written before that field existed.
+  Bumping costs no model calls — the version is not part of the unit keys — but
+  the target-language page fails the build until the script has rewritten the
+  cache.
 - `generation.parameters` and `generation.modelDigest` — the sampling parameters
   and the digest Ollama reports for the model. A model re-created from an edited
   Modelfile, or replaced by a different GGUF, keeps its name and changes its
   digest, so the name alone is not identity. The script compares this once per
   post and retranslates the whole post when it moved. The site cannot see a
   digest, which is why that comparison lives in the script.
+- `units[].terms` and `units[].termsHash` — the glossary terms that unit's prompt
+  was given. A glossary edit then reads as "this unit changed under these terms"
+  instead of as an unexplained new sentence, and the hash also covers the
+  entry's `enforce` / `forbid` rules, which is what makes a rule-only edit
+  visible. Units with no matching terms omit both fields.
 - `glossary` — the glossary identity, described below.
 
 Reading the digest is a metadata call to Ollama's `/api/tags`, so `--check`
