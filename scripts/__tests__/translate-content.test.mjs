@@ -1,20 +1,27 @@
 import { describe, expect, it } from "vitest";
 import {
   applyTextTranslations,
+  assembleBody,
   buildHtmlTextPrompt,
   buildTagsPrompt,
   buildTitlePrompt,
   buildTranslatePrompt,
-  chunkMarkdownBody,
   createSourceHash as createScriptSourceHash,
+  decodeHtmlEntities,
+  extractBodyUnits,
   extractHtmlBlocks,
   extractTextNodes,
   hasInlineMarks,
   hasInlineStructure,
   listFenceMarkers,
+  orderUnitsByPlan,
   parseFrontmatter,
+  parseCliOptions,
+  planHtmlTextUnits,
   restoreHtmlBlocks,
   splitFenceBlock,
+  splitOversizedBlock,
+  splitProseBlocks,
   splitTranslatedTags,
   summariseInlineMarks,
   summariseInlineStructure,
@@ -29,6 +36,11 @@ import {
   validateTranslatedField,
 } from "../translate-content.mjs";
 import { createSourceHash as createRuntimeSourceHash } from "../../src/lib/content/cache.ts";
+import {
+  createUnitKey,
+  isTranslationCacheFresh,
+  TRANSLATION_PIPELINE_VERSION,
+} from "../../src/lib/content/translation-cache.mjs";
 import { renderMarkdownToHtml } from "../../src/lib/content/posts.ts";
 import { splitMarkdownSegments } from "../../src/lib/content/markdown-segments.mjs";
 
@@ -303,32 +315,115 @@ describe("Hy-MT2 prompt builders", () => {
   });
 });
 
-describe("body chunking for the Hy-MT2 context window", () => {
-  it("rejoins chunked content exactly and carries code fences separately", () => {
-    const body = "开头段落。\n\n```python\n# 注释\nprint('hi')\n```\n\n结尾段落。";
-    const chunks = chunkMarkdownBody(body);
+describe("body units for incremental reuse", () => {
+  it("reassembles a body byte-for-byte from its units", () => {
+    const body = [
+      "开头段落。",
+      "",
+      "```python",
+      "print('hi')",
+      "```",
+      "",
+      "```text",
+      "每百万 Token 成本",
+      "```",
+      "",
+      "## 小节",
+      "",
+      "结尾段落。",
+    ].join("\n");
+    const plan = extractBodyUnits(body);
 
-    expect(chunks.map((chunk) => chunk.content).join("\n")).toBe(body);
-
-    // A fence holding CJK is reader-facing text (comments, formulas) and is
-    // translated under the fenced-prompt rules; a CJK-free fence is untouched.
-    const cjkFence = chunks.find((chunk) => chunk.content.includes("print('hi')"));
-    expect(cjkFence.kind).toBe("fenced");
-
-    const pureCode = "```python\nprint('hi')\n```";
-    expect(chunkMarkdownBody(pureCode)[0].kind).toBe("verbatim");
+    expect(assembleBody(plan.units, plan.trailing)).toBe(body);
+    // A CJK-bearing fence carries reader-facing text; a CJK-free one does not.
+    expect(plan.units.some((unit) => unit.kind === "fenced")).toBe(true);
+    expect(plan.units.some((unit) => unit.kind === "verbatim")).toBe(true);
   });
 
-  it("keeps fence markers out of the prompt for a fenced formula", () => {
-    const chunks = chunkMarkdownBody("```text\n每百万 Token 成本 = 成本 ÷ 产出\n```");
-    const chunk = chunks[0];
+  it("keeps fence markers out of the unit source for a fenced formula", () => {
+    const plan = extractBodyUnits("```text\n每百万 Token 成本 = 成本 ÷ 产出\n```");
+    const unit = plan.units[0];
 
-    expect(chunk.kind).toBe("fenced");
-    expect(chunk.prefix).toBe("```text\n");
-    expect(chunk.suffix).toBe("\n```");
-    expect(chunk.inner).toContain("每百万 Token 成本");
-    expect(chunk.inner).not.toContain("```");
-    expect(`${chunk.prefix}${chunk.inner}${chunk.suffix}`).toBe(chunk.content);
+    expect(unit.kind).toBe("fenced");
+    expect(unit.prefix).toBe("```text\n");
+    expect(unit.suffix).toBe("\n```");
+    expect(unit.source).toContain("每百万 Token 成本");
+    expect(unit.source).not.toContain("```");
+  });
+
+  it("carries a CJK-free fence over verbatim", () => {
+    const plan = extractBodyUnits("```python\nprint('hi')\n```");
+    expect(plan.units[0].kind).toBe("verbatim");
+  });
+
+  it("keeps an html placeholder out of prose so the model cannot rewrite it", () => {
+    const body = "前段。\n\n[[html-block-1]]\n\n后段。";
+    const plan = extractBodyUnits(body);
+    const placeholder = plan.units.find((unit) => unit.text.includes("[[html-block-1]]"));
+
+    expect(placeholder.kind).toBe("verbatim");
+    expect(plan.units.filter((unit) => unit.kind === "prose")).toHaveLength(2);
+    expect(assembleBody(plan.units, plan.trailing)).toBe(body);
+  });
+
+  it("splits an oversized block into pieces that concatenate exactly", () => {
+    const paragraphs = Array.from({ length: 6 }, (_v, index) => `第${index}段 ` + "字".repeat(120));
+    const block = paragraphs.join("\n\n");
+    const pieces = splitOversizedBlock(block, 300);
+
+    expect(pieces.length).toBeGreaterThan(1);
+    expect(pieces.every((piece) => piece.text.length <= 300)).toBe(true);
+    expect(pieces.map((piece) => piece.text + piece.separator).join("")).toBe(block);
+  });
+
+  it("keeps every other paragraph's unit identity when one is edited", () => {
+    // The old greedy packer broke exactly this: inserting text shifted every
+    // later chunk boundary, so a one-paragraph edit invalidated the whole tail.
+    const before = extractBodyUnits("第一段。\n\n第二段。\n\n第三段。\n\n第四段。").units;
+    const after = extractBodyUnits("第一段。\n\n第二段改长了，加了一句话。\n\n第三段。\n\n第四段。").units;
+    const identity = (unit) =>
+      createUnitKey({ kind: unit.kind, source: unit.source, context: unit.context, model: "m" });
+
+    const beforeKeys = new Set(before.filter((unit) => unit.kind !== "verbatim").map(identity));
+    const untouched = after.filter((unit) => unit.source === "第三段。" || unit.source === "第四段。");
+
+    expect(untouched).toHaveLength(2);
+    for (const unit of untouched) {
+      expect(beforeKeys.has(identity(unit))).toBe(true);
+    }
+  });
+
+  it("folds the enclosing section path into a unit's context", () => {
+    const plan = extractBodyUnits("## 利润来源\n\n### 上游制造\n\n晶圆与封装决定供给。");
+    const prose = plan.units.find((unit) => unit.source.startsWith("晶圆"));
+
+    expect(prose.context).toBe("利润来源 › 上游制造");
+    // A heading only carries its parent as context, never itself.
+    expect(plan.units.find((unit) => unit.source === "## 利润来源").context).toBe("");
+    expect(plan.units.find((unit) => unit.source === "### 上游制造").context).toBe("利润来源");
+  });
+
+  it("splits one markdown region on blank lines and keeps the separators", () => {
+    const content = "甲\n\n乙\n\n\n丙\n";
+    const { blocks, trailing } = splitProseBlocks(content);
+
+    expect(blocks.map((block) => block.text)).toEqual(["甲", "乙", "丙"]);
+    expect(blocks.map((block) => block.leading + block.text).join("") + trailing).toBe(content);
+  });
+
+  it("commits units in document order, not completion order", () => {
+    // Concurrency makes the commit order arbitrary; the cache file must not
+    // reshuffle its keys when nothing meaningful changed.
+    const committed = {
+      c: { translation: "3" },
+      a: { translation: "1" },
+      b: { translation: "2" },
+    };
+
+    expect(Object.keys(orderUnitsByPlan(committed, ["a", "b", "c"]))).toEqual(["a", "b", "c"]);
+    // A repeated key keeps its first slot; a key that never committed is skipped.
+    expect(Object.keys(orderUnitsByPlan(committed, ["a", "a", "missing", "c"]))).toEqual(["a", "c"]);
+    expect(orderUnitsByPlan(committed, [])).toEqual({});
   });
 
   it("flags only prose that actually carries annotation marks", () => {
@@ -336,25 +431,148 @@ describe("body chunking for the Hy-MT2 context window", () => {
     expect(hasInlineMarks("一处 ==red|风险==")).toBe(true);
     expect(hasInlineMarks("正文\n\n^[一条批注]")).toBe(true);
   });
+});
 
-  it("packs small segments together but never crosses the character budget", () => {
-    const segments = ["a".repeat(100), "b".repeat(100), "c".repeat(100)];
-    const body = segments.join("\n\n");
-    const chunks = chunkMarkdownBody(body, 250);
+describe("translation cache contract", () => {
+  const base = {
+    sourceHash: "abc",
+    targetLanguage: "en",
+    pipeline: TRANSLATION_PIPELINE_VERSION,
+    model: "hy-mt2-7b",
+    body: "text",
+  };
 
-    expect(chunks).toHaveLength(2);
-    expect(chunks.every((chunk) => chunk.content.length <= 250)).toBe(true);
-    expect(chunks.map((chunk) => chunk.content).join("\n")).toBe(body);
+  it("accepts a cache written by the current pipeline", () => {
+    expect(isTranslationCacheFresh(base, { sourceHash: "abc", targetLanguage: "en" })).toBe(true);
+    expect(
+      isTranslationCacheFresh(base, { sourceHash: "abc", targetLanguage: "en", model: "hy-mt2-7b" })
+    ).toBe(true);
   });
 
-  it("splits a single oversized segment on paragraph boundaries, byte-exact", () => {
-    const paragraphs = Array.from({ length: 6 }, (_v, index) => `第${index}段 ` + "字".repeat(120));
-    const body = paragraphs.join("\n\n");
-    const chunks = chunkMarkdownBody(body, 300);
+  it("rejects a cache written by an older pipeline", () => {
+    expect(isTranslationCacheFresh({ ...base, pipeline: "hy-mt2-v1" }, {
+      sourceHash: "abc",
+      targetLanguage: "en",
+    })).toBe(false);
+    // A v1 cache has no pipeline field at all and must not be trusted.
+    const { pipeline: _dropped, ...v1 } = base;
+    expect(isTranslationCacheFresh(v1, { sourceHash: "abc", targetLanguage: "en" })).toBe(false);
+  });
 
-    expect(chunks.length).toBeGreaterThan(1);
-    expect(chunks.every((chunk) => chunk.content.length <= 300)).toBe(true);
-    expect(chunks.map((chunk) => chunk.content).join("\n")).toBe(body);
+  it("rejects a cache produced by a different model when the caller names one", () => {
+    expect(
+      isTranslationCacheFresh(base, { sourceHash: "abc", targetLanguage: "en", model: "other-model" })
+    ).toBe(false);
+  });
+
+  it("rejects stale, empty or malformed caches", () => {
+    expect(isTranslationCacheFresh(base, { sourceHash: "changed", targetLanguage: "en" })).toBe(false);
+    expect(isTranslationCacheFresh(base, { sourceHash: "abc", targetLanguage: "zh" })).toBe(false);
+    expect(isTranslationCacheFresh({ ...base, body: "" }, { sourceHash: "abc", targetLanguage: "en" })).toBe(false);
+    expect(isTranslationCacheFresh(null, { sourceHash: "abc", targetLanguage: "en" })).toBe(false);
+  });
+
+  it("moves a unit key when the model, the context, or the pipeline changes", () => {
+    const unit = { kind: "prose", source: "正文", context: "小节", model: "hy-mt2-7b" };
+    const key = createUnitKey(unit);
+
+    expect(createUnitKey({ ...unit })).toBe(key);
+    expect(createUnitKey({ ...unit, model: "other" })).not.toBe(key);
+    expect(createUnitKey({ ...unit, context: "别的小节" })).not.toBe(key);
+    expect(createUnitKey({ ...unit, source: "别的正文" })).not.toBe(key);
+    expect(createUnitKey({ ...unit, pipelineVersion: "old" })).not.toBe(key);
+  });
+});
+
+describe("embedded HTML diagram text", () => {
+  it("decodes entities before the model sees them and escapes exactly once", () => {
+    const html = "<text>R&amp;D 投入</text>";
+
+    // The model must receive the logical text, not the markup that encodes it.
+    expect(extractTextNodes(html)).toEqual(["R&D 投入"]);
+
+    // Whether the model answers with the decoded or the encoded form, the
+    // published markup carries the entity exactly once.
+    expect(applyTextTranslations(html, ["R&D investment"])).toBe("<text>R&amp;D investment</text>");
+    expect(applyTextTranslations(html, ["R&amp;D investment"])).toBe("<text>R&amp;D investment</text>");
+  });
+
+  it("round-trips an entity-bearing diagram without drift", () => {
+    const body = '前段。\n\n<figure><text>R&amp;D 投入</text></figure>\n';
+    const { body: placeholder, blocks } = extractHtmlBlocks(body);
+    const nodes = planHtmlTextUnits(blocks);
+    const translations = Object.fromEntries(nodes.map((node) => [node.slot, node.source]));
+
+    expect(restoreHtmlBlocks(placeholder, blocks, translations)).toBe(body);
+  });
+
+  it("never hands a <style> or <script> body to the model", () => {
+    const html = '<svg><style>.a > .b { fill: red }</style><script>const x = 1;</script><text>标签</text></svg>';
+
+    expect(extractTextNodes(html)).toEqual(["标签"]);
+    expect(applyTextTranslations(html, ["Label"])).toBe(
+      '<svg><style>.a > .b { fill: red }</style><script>const x = 1;</script><text>Label</text></svg>'
+    );
+  });
+
+  it("still translates the accessible title and description of a diagram", () => {
+    const html = '<svg><title>架构图</title><desc>从左到右</desc><text>节点</text></svg>';
+    expect(extractTextNodes(html)).toEqual(["架构图", "从左到右", "节点"]);
+  });
+
+  it("keeps <title>/<desc> indices aligned when a <style> block sits between them", () => {
+    const html = '<svg><title>架构图</title><style>text{fill:red}</style><text>节点</text></svg>';
+    expect(extractTextNodes(html)).toEqual(["架构图", "节点"]);
+    expect(applyTextTranslations(html, ["Architecture", "Node"])).toBe(
+      '<svg><title>Architecture</title><style>text{fill:red}</style><text>Node</text></svg>'
+    );
+  });
+
+  it("decodes numeric character references too", () => {
+    expect(decodeHtmlEntities("&#65;&#x42;&amp;&unknown;")).toBe("AB&&unknown;");
+  });
+
+  it("normalises an entity the model invents instead of publishing it literally", () => {
+    // Because the value is decoded before it is escaped, an "&amp;" from the
+    // model lands in the markup as a real "&" — never the visible "&amp;" the
+    // previous single-escape pipeline could publish.
+    expect(applyTextTranslations("<text>甲乙</text>", ["A &amp; B"])).toBe("<text>A &amp; B</text>");
+  });
+
+  it("runs the same hygiene rules on diagram labels as on body prose", () => {
+    expect(() => validateHtmlText({ "1.1": "GPU\uFFFD" }, { "1.1": "核心部件" }, "en")).toThrow(/乱码/);
+    expect(() => validateHtmlText({ "1.1": "GPU\uFF0CASIC" }, { "1.1": "核心部件" }, "en")).toThrow(
+      /中文标点/
+    );
+  });
+});
+
+describe("translation CLI options", () => {
+  it("defaults to a plain run at the documented concurrency", () => {
+    expect(parseCliOptions(["node", "translate-content.mjs"])).toEqual({
+      force: false,
+      dryRun: false,
+      only: null,
+      concurrency: 4,
+    });
+  });
+
+  it("recognises --force and both spellings of the dry run", () => {
+    expect(parseCliOptions(["node", "s", "--force"]).force).toBe(true);
+    expect(parseCliOptions(["node", "s", "--check"]).dryRun).toBe(true);
+    expect(parseCliOptions(["node", "s", "--dry-run"]).dryRun).toBe(true);
+  });
+
+  it("accepts --only and --concurrency with a space or an equals sign", () => {
+    expect(parseCliOptions(["node", "s", "--only", "post-a"]).only).toBe("post-a");
+    expect(parseCliOptions(["node", "s", "--only=post-b"]).only).toBe("post-b");
+    expect(parseCliOptions(["node", "s", "--concurrency", "8"]).concurrency).toBe(8);
+    expect(parseCliOptions(["node", "s", "--concurrency=2"]).concurrency).toBe(2);
+  });
+
+  it("ignores a nonsensical concurrency instead of hanging on zero runners", () => {
+    expect(parseCliOptions(["node", "s", "--concurrency", "0"]).concurrency).toBe(4);
+    expect(parseCliOptions(["node", "s", "--concurrency", "many"]).concurrency).toBe(4);
   });
 });
 
@@ -533,13 +751,13 @@ describe("fence markers are compared, not just counted", () => {
     expect(() => validateFencesPreserved(source, restored)).not.toThrow();
   });
 
-  it("treats a tilde fence as a fence when chunking", () => {
-    const chunk = chunkMarkdownBody("~~~text\n每百万 Token 成本\n~~~")[0];
+  it("treats a tilde fence as a fence when extracting units", () => {
+    const unit = extractBodyUnits("~~~text\n每百万 Token 成本\n~~~").units[0];
 
-    expect(chunk.kind).toBe("fenced");
-    expect(chunk.prefix).toBe("~~~text\n");
-    expect(chunk.suffix).toBe("\n~~~");
-    expect(chunk.inner).toBe("每百万 Token 成本");
+    expect(unit.kind).toBe("fenced");
+    expect(unit.prefix).toBe("~~~text\n");
+    expect(unit.suffix).toBe("\n~~~");
+    expect(unit.source).toBe("每百万 Token 成本");
   });
 });
 

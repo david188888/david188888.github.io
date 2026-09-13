@@ -1,9 +1,20 @@
-import { createHash } from "node:crypto";
 import type { Locale } from "@/i18n/locales";
+import {
+  createSourceHash,
+  isTranslationCacheFresh,
+  TRANSLATION_CACHE_VERSION,
+  TRANSLATION_PIPELINE_VERSION,
+} from "./translation-cache.mjs";
 
+/**
+ * Shape of the fields the site loader reads out of a translation cache. The
+ * script writes more than this (per-unit provenance, model, source language);
+ * the loader only needs enough to decide freshness and to render the page.
+ */
 export interface TranslationCacheSummary {
   sourceHash?: string;
   targetLanguage?: Locale;
+  pipeline?: string;
   body?: string;
 }
 
@@ -12,17 +23,9 @@ export interface TranslationCacheExpectation {
   targetLanguage: Locale;
 }
 
-export function createSourceHash(source: string): string {
-  return createHash("sha256").update(source).digest("hex");
-}
-
-export function isTranslationCacheFresh(
-  cache: TranslationCacheSummary | null | undefined,
-  expected: TranslationCacheExpectation
-): boolean {
-  return Boolean(
-    cache?.sourceHash === expected.sourceHash &&
-      cache.targetLanguage === expected.targetLanguage &&
-      cache.body
-  );
-}
+export {
+  createSourceHash,
+  isTranslationCacheFresh,
+  TRANSLATION_CACHE_VERSION,
+  TRANSLATION_PIPELINE_VERSION,
+};

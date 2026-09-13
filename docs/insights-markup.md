@@ -53,6 +53,8 @@ Markdown 行内解析由 markdown-it 完成，所以 `**` 与 `==` 可以互相�
 
 翻译侧沿用同一条原则：译文里的行内标记必须与原文一一对应，对不上就拒绝写入翻译缓存，而不是把标记的标点渲染到页面上。逐项比对的是 `**`、`*`、`~~`、行内代码内容、链接地址（逐字节）、标题层级和列表符号；代码围栏与行内代码里的 `==` 同样先被排除，不参与计数。代码围栏另有一道更严的检查：围栏标记必须逐字节相同（数量、顺序、反引号或波浪线的个数、info string），因为一个漂移的围栏标记会把后面的正文整段吞成代码。
 
+嵌入的 HTML 图表（例如 ```` ```html ```` 里包的内联 SVG）不走行内标记这条路径：翻译脚本先把整块换成 `[[html-block-N]]` 占位符，只把元素之间的可见文本节点交给模型。节点里的字符实体先解码再送模型，写回时只转义一次，所以标签里写的 `R&amp;D` 会稳定地保持成 `R&amp;D`，不会变成页面上可见的 `R&amp;amp;D`。`<style>` 与 `<script>` 的内容永远不当作正文、也不翻译；`<title>` / `<desc>` 这类无障碍文本照常翻译。图表文本节点按内容逐条缓存，改一个标签只重译那一个标签。
+
 ---
 
 ## 4. Notion 侧写法与映射
@@ -136,7 +138,8 @@ Markdown 行内解析由 markdown-it 完成，所以 `**` 与 `==` 可以互相�
 | `src/lib/content/annotation-ids.mjs` | 内容哈希与稳定 id 生成 |
 | `src/lib/content/posts.ts` | 块级组装、行内渲染接入 markdown-it、页边注配对 |
 | `scripts/notion-to-mdx.mjs` | Notion 增强 Markdown → MDX 的确定性转换 |
-| `scripts/translate-content.mjs` | 翻译 + 行内标记、围栏与乱码保全校验 |
+| `scripts/translate-content.mjs` | 分段增量翻译 + 行内标记、围栏、乱码与 HTML 图表文本保全校验 |
+| `src/lib/content/translation-cache.mjs` | 翻译缓存契约：pipeline 版本、单元内容寻址键、新鲜度判定（脚本与站点共用） |
 | `src/components/insights/AnnotationControls.tsx` | 页面上的隐藏/恢复与本地标注 |
 | `src/lib/annotations/` | 标注状态与引文锚定的纯逻辑 |
 

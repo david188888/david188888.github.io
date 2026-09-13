@@ -1,6 +1,6 @@
 # 博客草稿区
 
-放在这里的 `.md` / `.mdx` 文件**不会出现在网站上**——构建链路(velite、posts.ts、翻译脚本)只扫描 `content/posts/`,不碰本目录。
+放在这里的 `.md` / `.mdx` 文件**不会出现在网站上**——构建链路（`src/lib/content/posts.ts` 与翻译脚本）只扫描 `content/posts/`，不碰本目录。
 
 ## 写作约定
 
@@ -23,9 +23,11 @@ language: zh   # 可省略,会自动检测;检测失败时必须显式声明
 ## 发布流程(告诉 agent "发布 xxx" 即可)
 
 1. 校验/补全 frontmatter(date、permalink、tags、language)
-2. 移动到 `content/posts/<date>-<slug>.mdx`(命名沿用现有惯例,如 `2012-08-14-blog-post-1.mdx`)
-3. 运行 `npm run translate:content` 生成另一语言的翻译缓存（校验不通过会拒绝写入，按报错重跑；旧缓存保持不变，不会发出半成品译文）
+2. 移动到 `content/posts/<date>-<slug>.mdx`（文件名直接决定 URL，例如 `2026-09-05-ai-chip-infrastructure-token-economics.mdx`；frontmatter 里的 `permalink` 不参与路由）
+3. 翻译走增量缓存：先 `npm run translate:content -- --check` 看要重译几个单元，再 `npm run translate:content`。只改动一段时只有那一段会重译，其余按内容寻址复用（校验不通过会拒绝写入，按报错重跑；旧缓存保持不变，不会发出半成品译文）
 4. 构建验证后提交
+
+已发布文章的 Notion 回同步流程见 `README.md` 的 “Syncing An Existing Post From Notion”。
 
 ## 内嵌 HTML 可视化
 

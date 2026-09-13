@@ -1,17 +1,31 @@
 #!/usr/bin/env node
 
-import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { splitMarkdownSegments } from "../src/lib/content/markdown-segments.mjs";
+import {
+  createSourceHash,
+  createUnitKey,
+  isTranslationCacheFresh,
+  TRANSLATION_CACHE_VERSION,
+  TRANSLATION_PIPELINE_VERSION,
+} from "../src/lib/content/translation-cache.mjs";
+
+// Re-exported so the test suite can assert it matches the runtime hash.
+export { createSourceHash };
 
 const DEFAULT_BASE_URL = "http://localhost:11434/v1";
 const DEFAULT_MODEL = "hy-mt2-7b";
 const POSTS_DIR = "content/posts";
 const TRANSLATION_DIR = "content/generated/translations/posts";
 const DIAGNOSTICS_PATH = "local/translation-diagnostics/last-invalid-response.txt";
+
+// How many independent unit translations may be in flight at once. Ollama
+// serialises them unless OLLAMA_NUM_PARALLEL is raised, but keeping the queue
+// full still removes the idle gaps between sequential requests.
+const DEFAULT_CONCURRENCY = 4;
 
 // Hy-MT2 max_context is 8192 tokens. A 2400-char Chinese chunk is roughly
 // 1.5-2.5k tokens in, leaving room for the English output under num_predict
@@ -50,14 +64,6 @@ export function parseFrontmatter(source) {
     frontmatter: parseSimpleYaml(rawFrontmatter),
     body: source.slice(bodyStart),
   };
-}
-
-export function createSourceHash(source) {
-  if (typeof source !== "string") {
-    throw new TypeError("createSourceHash expects a raw source string.");
-  }
-
-  return crypto.createHash("sha256").update(source).digest("hex");
 }
 
 export function toCachePath(sourcePath) {
@@ -197,16 +203,97 @@ export function extractHtmlBlocks(body) {
 const TEXT_NODE_PATTERN = />([^<]+)</;
 
 /**
+ * Elements whose content is machine-readable rather than reader-facing prose.
+ *
+ * A `<style>` rule or a `<script>` body inside an SVG diagram must never reach
+ * the translation model: it is not prose, and the model would happily rewrite
+ * CSS selectors or JavaScript identifiers into the target language.
+ */
+const OPAQUE_ELEMENT_PATTERN = /<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+
+/**
+ * Half-open [start, end) ranges covering every opaque element.
+ *
+ * Extraction and application both classify a text node by its offset in the
+ * *original* markup, so the two walks agree on which nodes are translatable and
+ * their indices stay aligned.
+ */
+function opaqueRanges(html) {
+  const ranges = [];
+  const pattern = new RegExp(OPAQUE_ELEMENT_PATTERN.source, "gi");
+  let match;
+
+  while ((match = pattern.exec(html)) !== null) {
+    ranges.push([match.index, match.index + match[0].length]);
+  }
+
+  return ranges;
+}
+
+function isOpaque(ranges, offset) {
+  return ranges.some(([start, end]) => offset >= start && offset < end);
+}
+
+const NAMED_ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: "\u00A0",
+};
+
+/**
+ * Turns character references back into the characters they stand for.
+ *
+ * The model must see the *logical* text (`R&D`), never the markup that encodes
+ * it (`R&amp;D`): otherwise it translates the entity and the writer escapes the
+ * result a second time, publishing a literal `&amp;`.
+ */
+export function decodeHtmlEntities(value) {
+  return String(value).replace(
+    /&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z][a-zA-Z0-9]*));/g,
+    (full, decimal, hex, name) => {
+      if (decimal !== undefined) {
+        const codePoint = Number(decimal);
+        return Number.isFinite(codePoint) && codePoint > 0 && codePoint <= 0x10ffff
+          ? String.fromCodePoint(codePoint)
+          : full;
+      }
+
+      if (hex !== undefined) {
+        const codePoint = Number.parseInt(hex, 16);
+        return Number.isFinite(codePoint) && codePoint > 0 && codePoint <= 0x10ffff
+          ? String.fromCodePoint(codePoint)
+          : full;
+      }
+
+      const key = String(name).toLowerCase();
+      return key in NAMED_ENTITIES ? NAMED_ENTITIES[key] : full;
+    }
+  );
+}
+
+/**
  * Visible text between tags inside an embedded HTML block (node labels,
- * legends, figcaption). Attributes are intentionally left untouched.
+ * legends, figcaption). Attributes are intentionally left untouched, and so is
+ * the content of opaque elements.
+ *
+ * Returned text is decoded, so callers that hand it to the model see prose
+ * while `applyTextTranslations` escapes it exactly once on the way back.
  */
 export function extractTextNodes(html) {
+  const ranges = opaqueRanges(html);
   const nodes = [];
   const pattern = new RegExp(TEXT_NODE_PATTERN.source, "g");
   let match;
 
   while ((match = pattern.exec(html)) !== null) {
-    const text = match[1].trim();
+    if (isOpaque(ranges, match.index)) {
+      continue;
+    }
+
+    const text = decodeHtmlEntities(match[1]).trim();
     if (text) {
       nodes.push(text);
     }
@@ -216,25 +303,33 @@ export function extractTextNodes(html) {
 }
 
 /**
- * Flat map of "blockIndex.nodeIndex" -> source text, mirroring the order that
- * extractTextNodes produces for each block. The model must return the same
- * keys so translations can be re-applied by position.
+ * Flattens every translatable text node of every embedded HTML block into
+ * cacheable units.
+ *
+ * `slot` is the `block.node` address the model's JSON response is keyed by;
+ * `source` is the decoded visible text, which is also what the unit key hashes —
+ * so editing one diagram label retranslates only that label.
  */
-export function buildHtmlTextPayload(blocks) {
-  const htmlText = {};
+export function planHtmlTextUnits(blocks) {
+  const nodes = [];
 
   for (const [blockIndex, block] of blocks.entries()) {
     for (const [nodeIndex, text] of extractTextNodes(block.html).entries()) {
-      htmlText[`${blockIndex + 1}.${nodeIndex + 1}`] = text;
+      nodes.push({
+        slot: `${blockIndex + 1}.${nodeIndex + 1}`,
+        source: text,
+      });
     }
   }
 
-  return Object.keys(htmlText).length > 0 ? htmlText : undefined;
+  return nodes;
 }
 
 function escapeXmlText(value) {
   return value
-    .replace(/\s+/g, " ")
+    // Only real layout whitespace is collapsed; a decoded &nbsp; keeps its
+    // non-breaking space instead of silently becoming a normal one.
+    .replace(/[ \t\r\n]+/g, " ")
     .trim()
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -245,11 +340,21 @@ function escapeXmlText(value) {
  * Applies per-node translations back into the HTML while preserving the
  * original indentation whitespace around each text node. Nodes without a
  * translation keep their source text.
+ *
+ * The replacement is decoded first and escaped once, so a model that answers
+ * with `R&amp;D` and one that answers with `R&D` both publish `R&amp;D` — never
+ * the double-escaped `R&amp;amp;D`.
  */
 export function applyTextTranslations(html, translations) {
+  const ranges = opaqueRanges(html);
   let nodeIndex = 0;
-  return html.replace(new RegExp(TEXT_NODE_PATTERN.source, "g"), (full, text) => {
-    const core = text.trim();
+
+  return html.replace(new RegExp(TEXT_NODE_PATTERN.source, "g"), (full, text, offset) => {
+    if (isOpaque(ranges, offset)) {
+      return full;
+    }
+
+    const core = decodeHtmlEntities(text).trim();
     if (!core) {
       return full;
     }
@@ -262,7 +367,7 @@ export function applyTextTranslations(html, translations) {
 
     const leading = text.slice(0, text.length - text.trimStart().length);
     const trailing = text.slice(text.trimEnd().length);
-    return `>${leading}${escapeXmlText(replacement)}${trailing}<`;
+    return `>${leading}${escapeXmlText(decodeHtmlEntities(replacement))}${trailing}<`;
   });
 }
 
@@ -301,7 +406,8 @@ export function restoreHtmlBlocks(translatedBody, blocks, htmlText) {
 //
 // Hy-MT2 is a dedicated translation model: it has no system prompt and is
 // instruction-tuned for a fixed family of translation templates (see the
-// Hy-MT2-Translator skill vendored under .claude/skills/hy-mt2-translator).
+// Hy-MT2-Translator skill in .claude/skills and its DSH-visible mirror in
+// .agents/skills; scripts/__tests__/hy-mt2-skill.test.mjs keeps them identical).
 // Prompts use the Chinese instruction wording when the source is Chinese and
 // the English wording otherwise, mirroring the official examples.
 // ---------------------------------------------------------------------------
@@ -332,9 +438,23 @@ const STRUCTURE_CLAUSE_EN =
   "and translate the text they wrap exactly like ordinary prose; never add, drop or rewrite the marker characters themselves.";
 
 /**
+ * Optional section-context clause.
+ *
+ * A paragraph translated on its own loses the terminology its surrounding
+ * section established, so the enclosing heading path is offered as context. The
+ * clause must say explicitly that the heading is context only: Hy-MT2 echoes
+ * literal instruction text into the body when a clause is worded loosely.
+ */
+const CONTEXT_CLAUSE_ZH =
+  "这段话属于小节「{context}」。该小节标题仅供理解语境，不要翻译、改写或输出它。";
+const CONTEXT_CLAUSE_EN =
+  'This passage belongs to the section "{context}". That heading is context only: do not translate, rewrite, or output it.';
+
+/**
  * Basic-mode Hy-MT2 prompt. `preserveMarks` appends the blog-specific
- * annotation clause, `preserveStructure` the inline-formatting clause. Both are
- * attached only to chunks that actually carry such markup.
+ * annotation clause, `preserveStructure` the inline-formatting clause, and
+ * `context` the enclosing section path. Each is attached only where it applies,
+ * so a plain paragraph is not handed examples it might echo.
  */
 export function buildTranslatePrompt({
   sourceText,
@@ -342,12 +462,21 @@ export function buildTranslatePrompt({
   targetLanguage,
   preserveMarks = false,
   preserveStructure = false,
+  context = "",
 }) {
   const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
-  const clausesZh = [preserveMarks ? MARKS_CLAUSE_ZH : "", preserveStructure ? STRUCTURE_CLAUSE_ZH : ""]
+  const clausesZh = [
+    preserveMarks ? MARKS_CLAUSE_ZH : "",
+    preserveStructure ? STRUCTURE_CLAUSE_ZH : "",
+    context ? CONTEXT_CLAUSE_ZH.replace("{context}", context) : "",
+  ]
     .filter(Boolean)
     .join("");
-  const clausesEn = [preserveMarks ? MARKS_CLAUSE_EN : "", preserveStructure ? STRUCTURE_CLAUSE_EN : ""]
+  const clausesEn = [
+    preserveMarks ? MARKS_CLAUSE_EN : "",
+    preserveStructure ? STRUCTURE_CLAUSE_EN : "",
+    context ? CONTEXT_CLAUSE_EN.replace("{context}", context) : "",
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -459,82 +588,73 @@ export function buildFencedPrompt({ sourceText, sourceLanguage, targetLanguage }
 }
 
 const CODE_FENCE_START = /^[ \t]*(?:`{3,}|~{3,})/;
+const PLACEHOLDER_LINE_PATTERN = /^[ \t]*\[\[html-block-\d+\]\][ \t]*$/;
+const HEADING_LINE_PATTERN = /^(#{1,6})[ \t]+(.*)$/;
 
 /**
- * Groups the placeholder body into translation chunks of at most maxChars.
- * Segment boundaries (including fenced code blocks) are never crossed, so
- * markdown structure survives reassembly. Fenced code blocks are returned as
- * `verbatim` chunks: a specialised translation model is more likely to mangle
- * code than to help it, so code is carried over untranslated (callers should
- * surface contained CJK so nothing is silently left behind). Fenced blocks
- * tagged `html` never reach this function — extractHtmlBlocks lifts them out
- * first, so only genuine sample code is carried over verbatim.
+ * Splits one markdown region into blocks on blank lines.
+ *
+ * A block is either a maximal run of non-blank lines or a lone
+ * `[[html-block-N]]` placeholder line, which is carried over verbatim rather
+ * than mixed into prose the model might rewrite. `leading` is the exact
+ * whitespace that preceded each block and `trailing` the whitespace after the
+ * last one, so `blocks.map(b => b.leading + b.text).join("") + trailing`
+ * reproduces the region byte for byte.
  */
+export function splitProseBlocks(content) {
+  const lines = (typeof content === "string" ? content : "").split("\n");
+  const blocks = [];
+  let index = 0;
 
-export function chunkMarkdownBody(body, maxChars = MAX_CHUNK_CHARS) {
-  const segments = splitMarkdownSegments(body);
-  const chunks = [];
-  let buffer = [];
-
-  const flush = () => {
-    if (buffer.length > 0) {
-      chunks.push({ kind: "translate", content: buffer.join("\n") });
-      buffer = [];
-    }
-  };
-
-  for (const segment of segments) {
-    if (CODE_FENCE_START.test(segment.content)) {
-      flush();
-      const fenced = splitFenceBlock(segment.content);
-      // A fence with no CJK has nothing to translate and is carried over
-      // untouched; one with CJK holds reader-facing text (formula, table,
-      // comment) that must not be left in the source language. The fence
-      // markers themselves stay out of the prompt \u2014 a small model will drop a
-      // backtick and break the block, so only the body is sent.
-      chunks.push(
-        fenced && /[\u3400-\u9fff]/.test(fenced.inner)
-          ? { kind: "fenced", content: segment.content, prefix: fenced.prefix, suffix: fenced.suffix, inner: fenced.inner }
-          : { kind: "verbatim", content: segment.content }
-      );
+  while (index < lines.length) {
+    if (lines[index].trim() === "") {
+      index += 1;
       continue;
     }
 
-    const candidate = [...buffer, segment.content].join("\n");
-    if (buffer.length > 0 && candidate.length > maxChars) {
-      flush();
-    }
-
-    if (segment.content.length > maxChars) {
-      // A single oversized prose segment is split on blank lines, then on
-      // single newlines as a last resort, so no chunk exceeds the budget.
-      for (const piece of splitOversizedSegment(segment.content, maxChars)) {
-        if (buffer.length > 0 && [...buffer, piece].join("\n").length > maxChars) {
-          flush();
-        }
-        buffer.push(piece);
-      }
+    if (PLACEHOLDER_LINE_PATTERN.test(lines[index])) {
+      blocks.push({ kind: "placeholder", text: lines[index] });
+      index += 1;
       continue;
     }
 
-    buffer.push(segment.content);
+    const start = index;
+    while (
+      index < lines.length &&
+      lines[index].trim() !== "" &&
+      !PLACEHOLDER_LINE_PATTERN.test(lines[index])
+    ) {
+      index += 1;
+    }
+
+    blocks.push({ kind: "prose", text: lines.slice(start, index).join("\n") });
   }
 
-  flush();
-  return chunks;
+  let cursor = 0;
+  for (const block of blocks) {
+    const found = content.indexOf(block.text, cursor);
+    block.leading = content.slice(cursor, found);
+    cursor = found + block.text.length;
+  }
+
+  return { blocks, trailing: content.slice(cursor) };
 }
 
-function splitOversizedSegment(content, maxChars) {
+/**
+ * Splits an oversized block into pieces that concatenate back exactly.
+ *
+ * Each piece carries the separator that followed it, so even a hard cut through
+ * one enormous line rejoins without inventing whitespace the source never had.
+ */
+export function splitOversizedBlock(content, maxChars = MAX_CHUNK_CHARS) {
   const pieces = [];
   let remaining = content;
 
   while (remaining.length > maxChars) {
-    // Cut boundaries keep their newlines on the left piece so that joining
-    // the final chunks with "\n" reproduces the source byte structure: a
-    // paragraph break cut leaves "\n" on the left and the join adds the other.
     let pieceEnd;
     let nextStart;
     const paragraphCut = remaining.lastIndexOf("\n\n", maxChars);
+
     if (paragraphCut >= maxChars * 0.5) {
       pieceEnd = paragraphCut + 1;
       nextStart = paragraphCut + 2;
@@ -544,21 +664,185 @@ function splitOversizedSegment(content, maxChars) {
         pieceEnd = lineCut;
         nextStart = lineCut + 1;
       } else {
-        // No usable newline (a single huge line): hard cut. The rejoin adds
-        // one newline that was not in the source — acceptable for this edge.
         pieceEnd = maxChars;
         nextStart = maxChars;
       }
     }
-    pieces.push(remaining.slice(0, pieceEnd));
+
+    pieces.push({
+      text: remaining.slice(0, pieceEnd),
+      separator: remaining.slice(pieceEnd, nextStart),
+    });
     remaining = remaining.slice(nextStart);
   }
 
   if (remaining.length > 0) {
-    pieces.push(remaining);
+    pieces.push({ text: remaining, separator: "" });
   }
 
   return pieces;
+}
+
+/**
+ * Orders a body into translation units.
+ *
+ * A unit is the smallest piece that can be reused on its own: one paragraph,
+ * one heading, one CJK-bearing code fence, or one placeholder line carried over
+ * verbatim. Units are content-addressed rather than positional, so inserting a
+ * paragraph does not invalidate the units after it. Each records the enclosing
+ * section path as `context`, which joins the cache key: editing a heading
+ * invalidates that section and nothing else.
+ *
+ * Every unit also records the exact separator that preceded it (`leading`), so
+ * `assembleBody` rebuilds the markdown byte for byte. Fenced code blocks that
+ * contain no CJK have nothing to translate and stay verbatim; a CJK-bearing
+ * fence keeps its markers out of the prompt and only sends its body.
+ */
+export function extractBodyUnits(body) {
+  const segments = splitMarkdownSegments(body);
+  const units = [];
+  const headingStack = [];
+  let pending = "";
+
+  const currentContext = () => headingStack.map((entry) => entry.text).join(" › ");
+
+  /** Pushes an oversized-aware prose block; returns the gap that follows it. */
+  const pushProse = (text, leading, context) => {
+    let gap = leading;
+    for (const piece of splitOversizedBlock(text)) {
+      units.push({ kind: "prose", text: piece.text, source: piece.text, context, leading: gap });
+      gap = piece.separator;
+    }
+    return gap;
+  };
+
+  for (const [segmentIndex, segment] of segments.entries()) {
+    if (CODE_FENCE_START.test(segment.content)) {
+      const fenced = splitFenceBlock(segment.content);
+      const carriesCjk = Boolean(fenced) && /[\u3400-\u9fff]/.test(fenced.inner);
+
+      units.push(
+        carriesCjk
+          ? {
+              kind: "fenced",
+              text: segment.content,
+              source: fenced.inner,
+              context: currentContext(),
+              prefix: fenced.prefix,
+              suffix: fenced.suffix,
+              leading: pending,
+            }
+          : { kind: "verbatim", text: segment.content, source: "", context: "", leading: pending }
+      );
+      pending = "";
+    } else {
+      const { blocks, trailing } = splitProseBlocks(segment.content);
+      let gap = pending;
+
+      for (const block of blocks) {
+        const blockLeading = gap + block.leading;
+        gap = "";
+
+        if (block.kind === "placeholder") {
+          units.push({
+            kind: "verbatim",
+            text: block.text,
+            source: "",
+            context: "",
+            leading: blockLeading,
+          });
+          continue;
+        }
+
+        const lines = block.text.split("\n");
+        const heading = lines[0].match(HEADING_LINE_PATTERN);
+
+        if (heading) {
+          const level = heading[1].length;
+          const parentContext = headingStack
+            .filter((entry) => entry.level < level)
+            .map((entry) => entry.text)
+            .join(" › ");
+
+          units.push({
+            kind: "prose",
+            text: lines[0],
+            source: lines[0],
+            context: parentContext,
+            leading: blockLeading,
+          });
+
+          while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= level) {
+            headingStack.pop();
+          }
+          headingStack.push({ level, text: heading[2].trim() });
+
+          // A heading is its own unit; only push a trailing block if the
+          // heading shared its block with following lines.
+          const rest = lines.slice(1).join("\n");
+          if (rest !== "") {
+            gap = pushProse(rest, "\n", currentContext());
+          }
+          continue;
+        }
+
+        gap = pushProse(block.text, blockLeading, currentContext());
+      }
+
+      pending = gap + trailing;
+    }
+
+    if (segmentIndex < segments.length - 1) {
+      pending += "\n";
+    }
+  }
+
+  return { units, trailing: pending };
+}
+
+/**
+ * Rebuilds the placeholder body from its units.
+ *
+ * Identity translations must reproduce the source exactly; that property is
+ * what lets the pipeline round-trip a cached body without drift. Fence markers
+ * come from the unit, never from the model.
+ */
+export function assembleBody(units, trailing) {
+  let result = "";
+
+  for (const unit of units) {
+    if (unit.kind === "verbatim") {
+      result += unit.leading + unit.text;
+      continue;
+    }
+
+    const translation = typeof unit.translation === "string" ? unit.translation : unit.source;
+    const text = unit.prefix !== undefined ? `${unit.prefix}${translation}${unit.suffix}` : translation;
+    result += unit.leading + text;
+  }
+
+  return result + trailing;
+}
+
+/**
+ * Orders committed units the way their sources appear in the document.
+ *
+ * Units are translated concurrently, so the order in which they finish is
+ * arbitrary. Writing that order into a git-committed cache would reshuffle the
+ * file's keys whenever nothing meaningful changed, so the map is rebuilt from
+ * the plan instead. A key that was never committed is skipped, and a key used
+ * by two units keeps its first position.
+ */
+export function orderUnitsByPlan(committed, orderedKeys) {
+  const result = {};
+
+  for (const key of orderedKeys) {
+    if (committed[key] !== undefined && !(key in result)) {
+      result[key] = committed[key];
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -578,45 +862,125 @@ export function splitTranslatedTags(translated, expectedCount) {
   return parts;
 }
 
+export function parseCliOptions(argv) {
+  const args = argv.slice(2);
+  const force = args.includes("--force");
+  const dryRun = args.includes("--check") || args.includes("--dry-run");
+  let only = null;
+  let concurrency = DEFAULT_CONCURRENCY;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === "--only" || arg.startsWith("--only=")) {
+      only = arg.startsWith("--only=") ? arg.slice("--only=".length) : args[index + 1] ?? "";
+      if (!arg.startsWith("--only=")) index += 1;
+    } else if (arg === "--concurrency" || arg.startsWith("--concurrency=")) {
+      const raw = arg.startsWith("--concurrency=")
+        ? arg.slice("--concurrency=".length)
+        : args[index + 1] ?? "";
+      if (!arg.startsWith("--concurrency=")) index += 1;
+      const parsed = Number.parseInt(raw, 10);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        concurrency = parsed;
+      }
+    }
+  }
+
+  return { force, dryRun, only: only || null, concurrency };
+}
+
+/**
+ * Runs `worker` over every item with at most `limit` in flight.
+ *
+ * Units are independent, so a bounded pool is enough to keep the model busy.
+ * The first failure stops the queue and is rethrown only after every in-flight
+ * unit has settled, so no rejection escapes unobserved.
+ */
+async function mapWithConcurrency(items, limit, worker) {
+  const queue = [...items];
+  const size = Math.max(1, Math.min(limit, queue.length));
+  let failure = null;
+
+  const runners = Array.from({ length: size }, async () => {
+    while (failure === null && queue.length > 0) {
+      const item = queue.shift();
+      try {
+        await worker(item);
+      } catch (error) {
+        failure = failure ?? error;
+      }
+    }
+  });
+
+  await Promise.all(runners);
+
+  if (failure !== null) {
+    throw failure;
+  }
+}
+
 async function main() {
-  const force = process.argv.includes("--force");
+  const { force, dryRun, only, concurrency } = parseCliOptions(process.argv);
   const baseUrl = process.env.HY_MT2_BASE_URL || DEFAULT_BASE_URL;
   const model = process.env.HY_MT2_MODEL || DEFAULT_MODEL;
-  const sourcePaths = await listPostPaths();
+
+  const allPaths = await listPostPaths();
+  const sourcePaths = only
+    ? allPaths.filter(
+        (sourcePath) => path.posix.basename(sourcePath, ".mdx") === only || sourcePath === only
+      )
+    : allPaths;
 
   if (sourcePaths.length === 0) {
-    console.log("No content posts found.");
+    if (only) {
+      console.error(`No post matches --only ${only}.`);
+      process.exitCode = 1;
+    } else {
+      console.log("No content posts found.");
+    }
     return;
   }
 
-  let translatedCount = 0;
-  let skippedCount = 0;
   const failures = [];
+  const summary = { written: 0, fresh: 0, skipped: 0, reused: 0, translated: 0, pending: 0 };
 
   for (const sourcePath of sourcePaths) {
     let outcome;
     try {
-      outcome = await translatePost({ sourcePath, baseUrl, model, force });
+      outcome = await translatePost({ sourcePath, baseUrl, model, force, dryRun, concurrency });
     } catch (error) {
       failures.push(`${sourcePath}: ${error.message}`);
       console.error(`Failed ${sourcePath}: ${error.message}`);
       continue;
     }
 
-    if (outcome === "translated") {
-      translatedCount += 1;
-    } else {
-      skippedCount += 1;
-    }
+    summary.reused += outcome.reused;
+    summary.translated += outcome.translated;
+    summary.pending += outcome.pending;
+
+    if (outcome.status === "translated") summary.written += 1;
+    else if (outcome.status === "fresh") summary.fresh += 1;
+    else if (outcome.status === "skipped") summary.skipped += 1;
   }
 
-  console.log(`Translation cache complete: ${translatedCount} written, ${skippedCount} skipped, ${failures.length} failed.`);
+  const label = dryRun ? "check" : "run";
+  const scope = only ? ` (--only ${only})` : "";
+  console.log(
+    `Translation ${label}${scope} complete: ${summary.written} written, ${summary.fresh} fresh, ` +
+      `${summary.skipped} skipped, ${failures.length} failed; units ${summary.reused} reused, ` +
+      `${summary.translated} translated, ${summary.pending} pending.`
+  );
+
   if (failures.length > 0) {
+    process.exitCode = 1;
+  } else if (dryRun && summary.pending > 0) {
+    // `--check` exists to gate CI: a stale cache is a failure, not a note.
     process.exitCode = 1;
   }
 }
 
-async function translatePost({ sourcePath, baseUrl, model, force }) {
+async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concurrency }) {
   const source = await fs.readFile(sourcePath, "utf8");
   const parsed = parseFrontmatter(source);
   const title = normalizeString(parsed.frontmatter.title);
@@ -627,58 +991,197 @@ async function translatePost({ sourcePath, baseUrl, model, force }) {
 
   if (!sourceLanguage) {
     console.warn(`Skipping ${sourcePath}: unable to detect source language.`);
-    return "skipped";
+    return { status: "skipped", reused: 0, translated: 0, pending: 0 };
   }
 
   const targetLanguage = getTargetLanguage(sourceLanguage);
   const sourceHash = createSourceHash(source);
   const cachePath = toCachePath(sourcePath);
+  const previousCache = await readTranslationCache(cachePath);
+  const previousUnits =
+    previousCache && typeof previousCache.units === "object" && previousCache.units !== null
+      ? previousCache.units
+      : {};
 
-  if (!force && (await isFreshCache(cachePath, { sourceHash, targetLanguage }))) {
+  if (!force && !dryRun && isTranslationCacheFresh(previousCache, { sourceHash, targetLanguage, model })) {
     console.log(`Skipping ${sourcePath}: fresh translation cache exists.`);
-    return "skipped";
+    return { status: "fresh", reused: 0, translated: 0, pending: 0 };
   }
 
-  const { body: placeholderBody, blocks } = extractHtmlBlocks(body);
-  const htmlText = buildHtmlTextPayload(blocks);
-  const chunks = chunkMarkdownBody(placeholderBody);
-
   const request = { baseUrl, model, sourceLanguage, targetLanguage };
+  const nextUnits = {};
 
-  console.log(`${sourcePath}: translating title, excerpt, ${tags.length} tags, ${chunks.length} body chunks with ${model}.`);
+  const keyOf = (kind, unitSource, context = "") =>
+    createUnitKey({ kind, source: unitSource, context, model });
 
-  const translatedTitle = await translateField(request, buildTitlePrompt({
-    sourceText: title,
-    sourceLanguage,
-    targetLanguage,
-  }), "title");
+  const cachedByKey = (key) => {
+    if (force) return null;
+    const cached = previousUnits[key];
+    return cached && typeof cached.translation === "string" && cached.translation.trim() !== ""
+      ? cached.translation
+      : null;
+  };
 
-  const translatedExcerpt = excerpt
-    ? await translateField(request, buildTranslatePrompt({
+  const commit = (unit, translation) => {
+    nextUnits[unit.key] = {
+      kind: unit.kind,
+      source: unit.source,
+      context: unit.context,
+      translation,
+    };
+  };
+
+  // ---- plan every unit ----------------------------------------------------
+  const { body: placeholderBody, blocks } = extractHtmlBlocks(body);
+  const bodyPlan = extractBodyUnits(placeholderBody);
+  const htmlNodes = planHtmlTextUnits(blocks);
+
+  const headerUnits = [
+    {
+      key: keyOf("title", title),
+      kind: "title",
+      source: title,
+      context: "",
+      label: "title",
+      prompt: buildTitlePrompt({ sourceText: title, sourceLanguage, targetLanguage }),
+    },
+  ];
+
+  if (excerpt) {
+    headerUnits.push({
+      key: keyOf("excerpt", excerpt),
+      kind: "excerpt",
+      source: excerpt,
+      context: "",
+      label: "excerpt",
+      prompt: buildTranslatePrompt({
         sourceText: excerpt,
         sourceLanguage,
         targetLanguage,
         preserveMarks: hasInlineMarks(excerpt),
         preserveStructure: hasInlineStructure(excerpt),
-      }), "excerpt")
-    : "";
+      }),
+    });
+  }
 
-  const translatedTags = tags.length > 0
-    ? splitTranslatedTags(
-        await translateField(request, buildTagsPrompt({ tags, sourceLanguage, targetLanguage }), "tags"),
-        tags.length
-      )
-    : [];
+  const tagsSource = tags.join(" @@ ");
+  if (tags.length > 0) {
+    headerUnits.push({
+      key: keyOf("tags", tagsSource),
+      kind: "tags",
+      source: tagsSource,
+      context: "",
+      label: "tags",
+      prompt: buildTagsPrompt({ tags, sourceLanguage, targetLanguage }),
+    });
+  }
 
-  // Header fields are cheap to check and expensive to get wrong: a title that
-  // came back in the source language would only surface after the body has been
-  // translated for minutes, so it is validated here instead.
-  validateTranslatedField({
-    text: translatedTitle,
-    sourceText: title,
-    targetLanguage,
-    label: "标题",
+  const htmlUnits = htmlNodes.map((node) => ({
+    key: keyOf("htmltext", node.source),
+    kind: "htmltext",
+    source: node.source,
+    context: "",
+    slot: node.slot,
+  }));
+
+  const bodyUnits = bodyPlan.units
+    .map((unit, index) => {
+      if (unit.kind === "verbatim") return null;
+
+      return {
+        index,
+        key: keyOf(unit.kind, unit.source, unit.context),
+        kind: unit.kind,
+        source: unit.source,
+        context: unit.context,
+        label: `body unit ${index + 1}/${bodyPlan.units.length}`,
+        prompt:
+          unit.kind === "fenced"
+            ? buildFencedPrompt({ sourceText: unit.source, sourceLanguage, targetLanguage })
+            : buildTranslatePrompt({
+                sourceText: unit.source,
+                sourceLanguage,
+                targetLanguage,
+                // The clause names the literal mark syntax, and Hy-MT2 otherwise
+                // echoes those examples into the output as if they were body
+                // text. Only units that actually carry marks get it, and the
+                // formatting clause rides along only where there is formatting.
+                preserveMarks: hasInlineMarks(unit.source),
+                preserveStructure: hasInlineStructure(unit.source),
+                context: unit.context,
+              }),
+      };
+    })
+    .filter(Boolean);
+
+  // ---- separate cache hits from work --------------------------------------
+  const reusedKeys = new Set();
+  const pendingHeader = [];
+  const pendingHtml = new Map();
+  const pendingBody = new Map();
+
+  const resolve = (unit, pendingMap) => {
+    const cached = cachedByKey(unit.key);
+    if (cached !== null) {
+      commit(unit, cached);
+      reusedKeys.add(unit.key);
+      return;
+    }
+
+    if (pendingMap === undefined) {
+      pendingHeader.push(unit);
+    } else if (!pendingMap.has(unit.key)) {
+      pendingMap.set(unit.key, unit);
+    }
+  };
+
+  for (const unit of headerUnits) resolve(unit);
+  for (const unit of htmlUnits) resolve(unit, pendingHtml);
+  for (const unit of bodyUnits) resolve(unit, pendingBody);
+
+  const pendingTotal = pendingHeader.length + pendingHtml.size + pendingBody.size;
+  const totalCalls = pendingHeader.length + (pendingHtml.size > 0 ? 1 : 0) + pendingBody.size;
+  let callsDone = 0;
+
+  // A full retranslation of a long post is minutes of local model time with no
+  // other output, so every model call reports as it lands.
+  const noteCall = (label, chars) => {
+    callsDone += 1;
+    console.log(`  [${callsDone}/${totalCalls}] ${label} (${chars} chars)`);
+  };
+
+  if (dryRun) {
+    console.log(
+      `${sourcePath}: ${reusedKeys.size} units reusable, ${pendingTotal} to translate ` +
+        `(header ${pendingHeader.length}, diagram ${pendingHtml.size}, body ${pendingBody.size}; ` +
+        `${totalCalls} calls).`
+    );
+    return { status: "check", reused: reusedKeys.size, translated: 0, pending: pendingTotal };
+  }
+
+  console.log(
+    `${sourcePath}: ${reusedKeys.size} units reused, ${pendingTotal} to translate with ${model} ` +
+      `(${totalCalls} calls, concurrency ${concurrency}).`
+  );
+
+  // ---- translate what is missing ------------------------------------------
+  // Header fields are cheap to check and expensive to get wrong: a bad title
+  // must fail in seconds, not after the whole body has been retranslated.
+  await mapWithConcurrency(pendingHeader, concurrency, async (unit) => {
+    commit(unit, await translateField(request, unit.prompt, unit.label));
+    noteCall(unit.label, unit.source.length);
   });
+
+  const headerTranslation = (unit) => String(nextUnits[unit.key]?.translation ?? "");
+  const titleUnit = headerUnits[0];
+  const excerptUnit = excerpt ? headerUnits[1] : null;
+  const tagsUnit = tags.length > 0 ? headerUnits[headerUnits.length - 1] : null;
+  const translatedTitle = headerTranslation(titleUnit).trim();
+  const translatedExcerpt = excerptUnit ? headerTranslation(excerptUnit).trim() : "";
+  const translatedTags =
+    tagsUnit !== null ? splitTranslatedTags(headerTranslation(tagsUnit), tags.length) : [];
+
+  validateTranslatedField({ text: translatedTitle, sourceText: title, targetLanguage, label: "标题" });
   if (translatedExcerpt) {
     validateTranslatedField({
       text: translatedExcerpt,
@@ -697,55 +1200,55 @@ async function translatePost({ sourcePath, baseUrl, model, force }) {
     });
   }
 
-  const translatedChunks = [];
-  for (const [index, chunk] of chunks.entries()) {
-    if (chunk.kind === "verbatim") {
-      translatedChunks.push(chunk.content);
-      continue;
-    }
-
-    console.log(`  [${index + 1}/${chunks.length}] translating ${chunk.content.length} chars...`);
-
-    if (chunk.kind === "fenced") {
-      const translatedInner = await translateField(
-        request,
-        buildFencedPrompt({ sourceText: chunk.inner, sourceLanguage, targetLanguage }),
-        `body chunk ${index + 1}`
-      );
-      translatedChunks.push(`${chunk.prefix}${translatedInner}${chunk.suffix}`);
-      continue;
-    }
-
-    translatedChunks.push(
-      await translateField(request, buildTranslatePrompt({
-        sourceText: chunk.content,
-        sourceLanguage,
-        targetLanguage,
-        // The clause names the literal mark syntax, and Hy-MT2 otherwise
-        // echoes those examples into the output as if they were body text.
-        // Only chunks that actually carry marks get it, and the formatting
-        // clause rides along only where there is formatting to keep.
-        preserveMarks: hasInlineMarks(chunk.content),
-        preserveStructure: hasInlineStructure(chunk.content),
-      }), `body chunk ${index + 1}`)
-    );
-  }
-
+  // Diagram labels travel as one JSON batch, but only the missing nodes are
+  // sent: changing one label costs one small call, not a whole-diagram one.
   let translatedHtmlText;
-  if (htmlText) {
-    const rawHtmlText = await translateField(
-      request,
-      buildHtmlTextPrompt({ htmlText, sourceLanguage, targetLanguage }),
-      "htmlText"
-    );
-    translatedHtmlText = parseJsonObject(rawHtmlText);
-    if (!translatedHtmlText) {
-      throw new Error("Hy-MT2 returned non-JSON htmlText. Diagnostics saved for inspection.");
+  if (htmlUnits.length > 0) {
+    if (pendingHtml.size > 0) {
+      const missPayload = {};
+      for (const unit of pendingHtml.values()) {
+        missPayload[unit.slot] = unit.source;
+      }
+
+      const rawHtmlText = await translateField(
+        request,
+        buildHtmlTextPrompt({ htmlText: missPayload, sourceLanguage, targetLanguage }),
+        "htmlText"
+      );
+      const parsedHtmlText = parseJsonObject(rawHtmlText);
+      if (!parsedHtmlText) {
+        throw new Error("Hy-MT2 returned non-JSON htmlText. Diagnostics saved for inspection.");
+      }
+      validateHtmlText(parsedHtmlText, missPayload, targetLanguage);
+
+      for (const unit of pendingHtml.values()) {
+        commit(unit, decodeHtmlEntities(String(parsedHtmlText[unit.slot]).trim()));
+      }
+      noteCall(`diagram (${pendingHtml.size} labels)`, Object.values(missPayload).join("").length);
     }
-    validateHtmlText(translatedHtmlText, htmlText);
+
+    translatedHtmlText = {};
+    for (const unit of htmlUnits) {
+      translatedHtmlText[unit.slot] = nextUnits[unit.key].translation;
+    }
   }
 
-  const finalBody = restoreHtmlBlocks(translatedChunks.join("\n"), blocks, translatedHtmlText);
+  // ---- body ---------------------------------------------------------------
+  await mapWithConcurrency([...pendingBody.values()], concurrency, async (unit) => {
+    commit(unit, await translateField(request, unit.prompt, unit.label));
+    noteCall(unit.label, unit.source.length);
+  });
+
+  for (const unit of bodyUnits) {
+    const translation = nextUnits[unit.key]?.translation;
+    if (typeof translation !== "string") {
+      throw new Error(`Missing translation for body unit ${unit.index + 1}.`);
+    }
+    bodyPlan.units[unit.index].translation = translation;
+  }
+
+  const assembledBody = assembleBody(bodyPlan.units, bodyPlan.trailing);
+  const finalBody = restoreHtmlBlocks(assembledBody, blocks, translatedHtmlText);
   validateNoLeftoverPlaceholders(finalBody);
   validateFencesPreserved(body, finalBody);
   validateInlineMarksPreserved(body, finalBody);
@@ -753,23 +1256,34 @@ async function translatePost({ sourcePath, baseUrl, model, force }) {
   validateTextHygiene({ text: finalBody, sourceText: body, targetLanguage, label: "译文正文" });
   validateActuallyTranslated(finalBody, targetLanguage);
 
+  // Emit the unit map in document order, not commit order. Under concurrency
+  // the commit order depends on which request lands first, and a cache that is
+  // committed to git must not churn its key order when nothing else changed.
+  const orderedUnits = orderUnitsByPlan(
+    nextUnits,
+    [...headerUnits, ...htmlUnits, ...bodyUnits].map((unit) => unit.key)
+  );
+
   const cache = {
+    version: TRANSLATION_CACHE_VERSION,
+    pipeline: TRANSLATION_PIPELINE_VERSION,
     sourcePath,
     sourceHash,
     sourceLanguage,
     targetLanguage,
     model,
     mode: "hy-mt2",
-    title: translatedTitle.trim(),
-    excerpt: translatedExcerpt.trim(),
+    title: translatedTitle,
+    excerpt: translatedExcerpt,
     tags: translatedTags,
     body: finalBody,
+    units: orderedUnits,
   };
 
   await fs.mkdir(path.dirname(cachePath), { recursive: true });
   await fs.writeFile(cachePath, `${JSON.stringify(cache, null, 2)}\n`);
-  console.log(`Wrote ${cachePath}.`);
-  return "translated";
+  console.log(`Wrote ${cachePath} (${Object.keys(orderedUnits).length} units cached).`);
+  return { status: "translated", reused: reusedKeys.size, translated: pendingTotal, pending: 0 };
 }
 
 function parseSimpleYaml(source) {
@@ -868,20 +1382,18 @@ async function listPostPaths() {
     .sort();
 }
 
-async function isFreshCache(cachePath, { sourceHash, targetLanguage }) {
+/**
+ * Reads a cache document, tolerating absence and corruption.
+ *
+ * A missing or unparsable cache is simply "no reusable units": the post gets
+ * retranslated rather than failing, which is what makes a hand-edited or
+ * half-committed cache recoverable.
+ */
+async function readTranslationCache(cachePath) {
   try {
-    const cache = JSON.parse(await fs.readFile(cachePath, "utf8"));
-    return (
-      cache.sourceHash === sourceHash &&
-      cache.targetLanguage === targetLanguage &&
-      typeof cache.body === "string" &&
-      cache.body.length > 0
-    );
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      return false;
-    }
-    return false;
+    return JSON.parse(await fs.readFile(cachePath, "utf8"));
+  } catch {
+    return null;
   }
 }
 
@@ -952,7 +1464,7 @@ export async function translateField({ baseUrl, model, sourceLanguage, targetLan
   return content.trim();
 }
 
-export function validateHtmlText(htmlText, expected) {
+export function validateHtmlText(htmlText, expected, targetLanguage) {
   if (!htmlText || typeof htmlText !== "object") {
     throw new Error("Hy-MT2 response is missing translated htmlText for embedded HTML blocks.");
   }
@@ -963,6 +1475,18 @@ export function validateHtmlText(htmlText, expected) {
 
   if (missing.length > 0) {
     throw new Error(`Hy-MT2 response is missing htmlText translations for keys: ${missing.join(", ")}.`);
+  }
+
+  // Diagram labels are reader-facing text, so they get the same hygiene rules as
+  // body prose. Entities are compared after decoding on both sides: the writer
+  // escapes each value exactly once, so a decoded entity is never a defect.
+  for (const key of Object.keys(expected)) {
+    validateTextHygiene({
+      text: decodeHtmlEntities(htmlText[key]),
+      sourceText: decodeHtmlEntities(expected[key]),
+      targetLanguage,
+      label: `图表文本 ${key}`,
+    });
   }
 }
 
@@ -1166,9 +1690,13 @@ const INSTRUCTION_LEAK_PHRASES = [
   "只需要输出",
   "翻译为",
   "以下是翻译",
+  "这段话属于小节",
+  "该小节标题仅供",
   "Translate the following",
   "only output the translated",
   "Here is the translation",
+  "belongs to the section",
+  "That heading is context only",
 ];
 
 /** Fenced blocks, removed so their contents are not read as author markup. */

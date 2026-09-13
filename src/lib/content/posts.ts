@@ -4,7 +4,7 @@ import MarkdownIt from "markdown-it";
 import type { Locale } from "@/i18n/locales";
 import { defaultLocale } from "@/i18n/locales";
 import { createAnnotationIdFactory } from "./annotation-ids.mjs";
-import { createSourceHash } from "./cache";
+import { createSourceHash, isTranslationCacheFresh } from "./cache";
 import { extractInlineMarks, restoreInlineMarks } from "./inline-marks.mjs";
 import { splitMarkdownSegments } from "./markdown-segments.mjs";
 import { detectSourceLanguage, getTargetLanguage } from "./language";
@@ -74,10 +74,12 @@ interface ParsedPost {
 interface TranslationCache {
   sourceHash?: string;
   targetLanguage?: Locale;
+  pipeline?: string;
   title?: string;
   excerpt?: string;
   tags?: string[];
   body?: string;
+  units?: Record<string, unknown>;
 }
 
 export function getPostSlugs(): string[] {
@@ -250,12 +252,9 @@ function readTranslationCache(slug: string): TranslationCache {
 }
 
 function isFreshCache(cache: TranslationCache, sourceHash: string, targetLanguage: Locale): boolean {
-  return Boolean(
-    cache.sourceHash === sourceHash &&
-      cache.targetLanguage === targetLanguage &&
-      typeof cache.body === "string" &&
-      cache.body.length > 0
-  );
+  // The pipeline version is part of freshness: a prompt or validator change
+  // must invalidate old caches instead of silently republishing them.
+  return isTranslationCacheFresh(cache, { sourceHash, targetLanguage });
 }
 
 function createPost({
