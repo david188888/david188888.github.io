@@ -7,10 +7,36 @@ describe("aligned page CSS contracts", () => {
   it("defines the shared grid, sticky rail, and active marker", () => {
     expect(css).toMatch(/\.aligned-section-row\s*\{/);
     expect(css).toMatch(
-      /grid-template-columns:\s*minmax\(0,\s*0\.78fr\)\s+minmax\(0,\s*2fr\)/
+      /grid-template-columns:\s*var\(--aligned-rail\)\s+minmax\(0,\s*1fr\)/
     );
     expect(css).toMatch(/\.aligned-section-marker\s*\{[\s\S]*?position:\s*sticky/);
     expect(css).toMatch(/\[data-active="true"\]/);
+  });
+
+  it("keeps the rail a narrow fixed gutter rather than a content column", () => {
+    // 左栏只承载章节标记；固定宽度（而不是按比例分栏）才能保证正文拿到绝大部分宽度。
+    expect(css).toMatch(/\.aligned-page-shell\s*\{[\s\S]*?--aligned-rail:\s*11rem/);
+    expect(css).not.toMatch(/grid-template-columns:\s*minmax\(0,\s*0\.78fr\)/);
+  });
+
+  it("caps the reading measure so the wider article column does not widen body text", () => {
+    expect(css).toMatch(
+      /\.aligned-article-prose\s+\.insight-body\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*39rem\)\s+minmax\(11rem,\s*1fr\)/
+    );
+    expect(css).toMatch(/\.aligned-article-prose\s+\.side-note\s*\{[\s\S]*?max-width:/);
+  });
+
+  it("widens the rail only on the insights list page, whose rail label is a two-word phrase", () => {
+    // 该覆盖与基础值同特异度（都是单类选择器），所以必须定义在基础值之后。
+    const override = css.indexOf(".aligned-page-shell--insights-list");
+    expect(override).toBeGreaterThan(css.indexOf("--aligned-rail: 11rem"));
+    expect(css).toMatch(/\.aligned-page-shell--insights-list\s*\{[\s\S]*?--aligned-rail:\s*14rem/);
+  });
+
+  it("uses one compact rail-label treatment at every breakpoint", () => {
+    expect(css).toMatch(
+      /\.aligned-section-link\s*\{[\s\S]*?gap:\s*0\.5rem[\s\S]*?letter-spacing:\s*0\.1em/
+    );
   });
 
   it("switches to one content column below 768px", () => {

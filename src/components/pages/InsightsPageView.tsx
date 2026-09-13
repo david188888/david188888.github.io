@@ -65,6 +65,7 @@ export function InsightsPageView({ locale = defaultLocale }: InsightsPageViewPro
   return (
     <AlignedPageShell
       locale={locale}
+      className="aligned-page-shell--insights-list"
       sections={buildInsightsSections(locale, getPublishedPosts(locale))}
     />
   );

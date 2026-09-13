@@ -506,6 +506,19 @@ html[data-theme="dark"] {
   .aligned-page-shell {
     overflow-x: clip;
     overflow-y: visible;
+    /* 左栏是章节标记槽，不是内容列：固定成一条窄槽，把宽度让给正文。
+       这几个变量是整页的几何旋钮，断点和以后可能出现的按页覆盖都只改这里。 */
+    --aligned-rail: 11rem;
+    --aligned-rail-line: 2.1rem;
+    --aligned-rail-label: 3.1rem;
+    --aligned-content-pad-x: clamp(1.2rem, 2.4vw, 2.4rem);
+  }
+
+  /* 列表页左栏的标签是 "PUBLISHED ESSAYS" 这种两个词的短语，比文章页的
+     "ARTICLE" / "READING" 长得多。缩窄左栏之后它会被迫折行，所以这一页的
+     左栏单独放宽一点（正文仍然拿走 1280px 里的 1022px）。 */
+  .aligned-page-shell--insights-list {
+    --aligned-rail: 14rem;
   }
 
   .aligned-page-container {
@@ -533,7 +546,7 @@ html[data-theme="dark"] {
 
   .aligned-section-row {
     display: grid;
-    grid-template-columns: minmax(0, 0.78fr) minmax(0, 2fr);
+    grid-template-columns: var(--aligned-rail) minmax(0, 1fr);
     scroll-margin-top: 5.5rem;
     border-bottom: 1px solid rgba(220, 225, 235, 0.13);
   }
@@ -549,7 +562,7 @@ html[data-theme="dark"] {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: clamp(1.25rem, 3vw, 2.1rem);
+    left: var(--aligned-rail-line);
     width: 1px;
     background: rgba(220, 225, 235, 0.12);
   }
@@ -557,19 +570,19 @@ html[data-theme="dark"] {
   .aligned-section-marker {
     position: sticky;
     top: calc(3.2rem + 1.6rem);
-    padding: clamp(1.7rem, 4vw, 2.4rem) clamp(1rem, 3vw, 2.2rem)
-      clamp(2.2rem, 5vw, 3.2rem) clamp(2.7rem, 6vw, 4.2rem);
+    padding: clamp(1.7rem, 4vw, 2.4rem) clamp(0.6rem, 2vw, 1.4rem)
+      clamp(2.2rem, 5vw, 3.2rem) var(--aligned-rail-label);
   }
 
   .aligned-section-link {
     position: relative;
     display: inline-flex;
     align-items: baseline;
-    gap: 0.8rem;
+    gap: 0.5rem;
     color: #687386;
     font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.1em;
     line-height: 1.4;
     text-decoration: none;
     text-transform: uppercase;
@@ -579,7 +592,7 @@ html[data-theme="dark"] {
   .aligned-section-link::before {
     content: "";
     position: absolute;
-    left: calc(clamp(1.25rem, 3vw, 2.1rem) - clamp(2.7rem, 6vw, 4.2rem) - 0.22rem);
+    left: calc(var(--aligned-rail-line) - var(--aligned-rail-label) - 0.22rem);
     top: 0.2rem;
     width: 0.48rem;
     height: 0.48rem;
@@ -622,16 +635,12 @@ html[data-theme="dark"] {
 
   .aligned-section-content {
     min-width: 0;
-    padding: clamp(1.7rem, 4vw, 2.4rem) clamp(1.2rem, 4vw, 3.4rem)
+    padding: clamp(1.7rem, 4vw, 2.4rem) var(--aligned-content-pad-x)
       clamp(2.7rem, 7vw, 4.8rem);
   }
 
   .aligned-section-content > :first-child {
     margin-top: 0;
-  }
-
-  .aligned-article-prose {
-    max-width: 48rem;
   }
 
   .insight-body > :first-child {
@@ -640,16 +649,15 @@ html[data-theme="dark"] {
 
   /* ── Insight 正文：阅读列 + 页边批注双栏 ──
      文章段落占第一列，批注占第二列。默认所有块跨两列，所以内嵌 SVG 图不会
-     被挤窄；只有连续正文被收进阅读列。 */
+     被挤窄；只有连续正文被收进阅读列。
 
-  .insight-reading-section .aligned-section-content {
-    padding-left: clamp(1.2rem, 2vw, 2rem);
-    padding-right: clamp(1.2rem, 2vw, 2rem);
-  }
+     `.aligned-article-prose` 本身不设 max-width（页面上的 `max-w-none` 也是为此），
+     宽度由内容列决定：左栏收窄后腾出的空间归跨列图表，而正文列在这里封顶，
+     免得行长跟着一起涨到 85+ 字符。 */
 
   .aligned-article-prose .insight-body {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(11rem, 22%, 14rem);
+    grid-template-columns: minmax(0, 39rem) minmax(11rem, 1fr);
     column-gap: clamp(1.25rem, 2vw, 2rem);
     align-content: start;
   }
@@ -703,6 +711,8 @@ html[data-theme="dark"] {
        prose 的段落上外边距是 1.25em（基字号 1rem），再加约 2px 补偿小字号的
        半行距，让批注首行墨迹与段落首行墨迹对齐。 */
     margin-top: 1.375rem;
+    /* 左栏收窄后批注槽变宽，但页边批注不该宽到能当正文读。 */
+    max-width: 15rem;
     padding-left: 0.72rem;
     border-left: 1px solid rgba(176, 196, 224, 0.32);
     color: rgba(160, 174, 195, 0.94);
@@ -1214,13 +1224,8 @@ html[data-theme="dark"] {
   }
 
   @media (min-width: 768px) and (max-width: 1023px) {
-    .aligned-section-row {
-      grid-template-columns: minmax(0, 0.6fr) minmax(0, 2fr);
-    }
-
-    .aligned-section-link {
-      gap: 0.5rem;
-      letter-spacing: 0.1em;
+    .aligned-page-shell {
+      --aligned-rail: 9.5rem;
     }
   }
 
