@@ -8,6 +8,7 @@ import { createSourceHash, isTranslationCacheFresh } from "./cache";
 import { extractInlineMarks, restoreInlineMarks } from "./inline-marks.mjs";
 import { splitMarkdownSegments } from "./markdown-segments.mjs";
 import { detectSourceLanguage, getTargetLanguage } from "./language";
+import { fitEmbeddedSvgText } from "./svg-text-fit.mjs";
 
 /**
  * Per-document id factory for author-authored marks. Reset at the start of
@@ -384,17 +385,29 @@ function renderMarkdownBlock(trimmed: string): string {
  * javascript: URLs. Everything else (svg, figure, div, class/style attrs) is
  * preserved so embedded diagrams keep working with the site stylesheet.
  */
+/**
+ * Author-authored block HTML is rendered verbatim, but executable content is
+ * stripped first: <script> blocks, inline event handler attributes, and
+ * javascript: URLs. Everything else (svg, figure, div, class/style attrs) is
+ * preserved so embedded diagrams keep working with the site stylesheet.
+ *
+ * Diagram labels are then fitted to their boxes: the drawings are authored in
+ * Chinese, so translated labels routinely overrun the rectangles they sit in.
+ * See `svg-text-fit.mjs` for why that happens at render time.
+ */
 function sanitizeEmbeddedHtml(html: string): string {
-  return html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "")
-    .replace(/<script\b[^>]*\/>/gi, "")
-    .replace(/<script\b[^>]*>/gi, "")
-    .replace(/<\/script\s*>/gi, "")
-    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(
-      /\s(href|src|xlink:href)\s*=\s*(?:"\s*javascript:[^"]*"|'\s*javascript:[^']*'|javascript:[^\s>]*)/gi,
-      ""
-    );
+  return fitEmbeddedSvgText(
+    html
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "")
+      .replace(/<script\b[^>]*\/>/gi, "")
+      .replace(/<script\b[^>]*>/gi, "")
+      .replace(/<\/script\s*>/gi, "")
+      .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+      .replace(
+        /\s(href|src|xlink:href)\s*=\s*(?:"\s*javascript:[^"]*"|'\s*javascript:[^']*'|javascript:[^\s>]*)/gi,
+        ""
+      )
+  );
 }
 
 
