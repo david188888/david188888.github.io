@@ -1,6 +1,8 @@
 {
+  "version": 2,
+  "pipeline": "hy-mt2-v2",
   "sourcePath": "content/posts/2026-09-05-ai-chip-infrastructure-token-economics.mdx",
-  "sourceHash": "2e927d31053a19987bc830c3609ed6f87efac962727e36c25b03c2449d68d19a",
+  "sourceHash": "95e1dca9c095f31ef6ff2b1584c662e0a0e1cc5b5b128245aefd67421f8c4d88",
   "sourceLanguage": "zh",
   "targetLanguage": "en",
   "model": "hy-mt2-7b",
@@ -12,5 +14,529 @@
     "Chips",
     "Strategy"
   ],
-  "body": "The way Agents work is shifting the competition in AI chips from individual chips to entire systems. An Agent plans steps, invokes tools, reads results, and then proceeds with further reasoning. With each step taken, the model may need to reprocess the context, read from and write to the KV Cache, and utilize computing, memory, and network resources. Therefore, compared to token consumption, what is more important to track currently is the **Effective Token Ratio** and the **cost per inference call required to achieve a certain level of value**.\n\nAgents will continue to drive demand for cloud-based inference, and this demand will also spread upstream to GPU, HBM, advanced packaging, servers, networks, power supply, and liquid cooling solutions. Profits will not be evenly distributed across all these areas of expansion. Those that have a better chance of gaining higher profits are those that either possess scarce production capacity, high yield rates, and customer certifications, or can integrate chips, software scheduling, and customer billing into a stable delivery system. At the same time, long-term contracts, upfront payments, and debt financing turn future usage expectations into current investments in data centers and equipment. Once demand falls below the assumptions made during procurement, pressure will first show up in price signals such as rental costs, with utilization rates and asset returns reflecting these changes later on.\n\nThe edge side represents a second demand curve. Automotive and home devices indeed require lower latency, offline functionality, and on-device data processing, but this curve still needs to be validated through factors such as usage frequency, device cost, and product margin. The cloud sector is already in a phase of large-scale development, while the edge side remains more of a concept that awaits validation through actual product performance.\n\n## Agents turn task completion into a new cost factor\n\nTypical question-answering interactions involve only one round of input and output. An Agent, however, breaks down a goal into multiple steps, invokes external tools, retrieves results, and then decides on the next step. A single task may involve multiple rounds of model invocation, with different steps requiring models of varying sizes. The total cost is determined by the number of invocations, the length of the context, the cache hit rate, and the number of retry attempts.\n\nInference using large models typically involves Prefill and Decode phases. Prefill processes the already provided input, allowing for parallel computation. Decode generates new tokens one by one, requiring repeated access to model weights and the previously generated KV Cache, making it more susceptible to memory bandwidth limitations. As the context length increases, the amount of space occupied by the KV Cache also rises with the batch size and sequence length. In such cases, the peak computing capacity remains important, while memory capacity, bandwidth, inter-card communication, and scheduling efficiency directly affect throughput.\n\nI will use the following comparison to illustrate the differences between various inference systems.\n```text\nCost per million valid tokens = Total system cost per hour ÷ Valid tokens generated per hour × 1,000,000\n```\nThe total cost of a complete system includes accelerators, HBM, servers, networking infrastructure, power supply, liquid cooling systems, software, hosting services, and depreciation.\n\nThe effective number of tokens generated per hour needs to be calculated under fixed model parameters, average input and output lengths, concurrency levels, as well as specific requirements regarding latency and quality. Results resulting from queue timeouts, failed retries, or those that do not meet quality standards should not be counted as part of the output. Input tokens, output tokens, and cache hits also need to be recorded separately.\n\nOnly when the cost per task decreases can tasks that previously could not cover the costs associated with model invocation, software integration, and manual oversight become feasible for inclusion in a product. Further reductions in price may lead to an increase in usage. However, such growth is contingent on both high task completion rates and high value of the results. Simply generating more tokens will only increase equipment usage without necessarily creating sustainable demand.\n\n## How an Agent Task Contributes to Infrastructure Profitability\n\nA chargeable task first generates demands for model invocation and context processing, which in turn lead to the need for computing power, memory, networking capabilities, and data center resources. The diagram below illustrates these layers of demand transmission, the secondary curve related to end-user operations, and financial risks. Moving from left to right, the stages closer to the user make it easier to manage scheduling and billing, while those further upstream rely more on production capacity, quality levels, and certification to establish bargaining power.\n\n```html\n<figure class=\"supply-chain-diagram\">\n  <div class=\"supply-chain-diagram-scroll\">\n    <svg\n      aria-labelledby=\"supply-chain-diagram-title supply-chain-diagram-description\"\n      class=\"supply-chain-diagram-svg\"\n      role=\"img\"\n      viewBox=\"0 0 1120 720\"\n      xmlns=\"http://www.w3.org/2000/svg\"\n    >\n      <title id=\"supply-chain-diagram-title\">How Agent tasks translate into profits and risks for AI infrastructure</title>\n      <desc id=\"supply-chain-diagram-description\">\n        The upper section starts with valid tasks to illustrate how demand flows to cloud platforms, system facilities, core components, and upstream manufacturing, while also highlighting the value sources of each stage. The middle part shows a second demand curve generated by edge devices. The lower section demonstrates how contracts and financing drive ahead-of-schedule construction, as well as asset risks when utilization is insufficient.\n      </desc>\n      <defs>\n        <marker id=\"supply-chain-arrow\" markerHeight=\"8\" markerWidth=\"8\" orient=\"auto-start-reverse\" refX=\"8\" refY=\"4\" viewBox=\"0 0 8 8\">\n          <path class=\"supply-chain-arrow\" d=\"M 0 0 L 8 4 L 0 8 z\" />\n        </marker>\n        <marker id=\"supply-chain-risk-arrow\" markerHeight=\"8\" markerWidth=\"8\" orient=\"auto-start-reverse\" refX=\"8\" refY=\"4\" viewBox=\"0 0 8 8\">\n          <path class=\"supply-chain-risk-arrow\" d=\"M 0 0 L 8 4 L 0 8 z\" />\n        </marker>\n      </defs>\n\n      <text class=\"supply-chain-heading\" x=\"50\" y=\"44\">Demand flowing upstream</text>\n      <text class=\"supply-chain-subheading\" x=\"50\" y=\"70\">From paid tasks to chips, memory, packaging, and data center construction</text>\n\n      <path class=\"supply-chain-flow\" d=\"M 234 152 H 266\" marker-end=\"url(#supply-chain-arrow)\" />\n      <path class=\"supply-chain-flow\" d=\"M 444 152 H 476\" marker-end=\"url(#supply-chain-arrow)\" />\n      <path class=\"supply-chain-flow\" d=\"M 654 152 H 686\" marker-end=\"url(#supply-chain-arrow)\" />\n      <path class=\"supply-chain-flow\" d=\"M 864 152 H 896\" marker-end=\"url(#supply-chain-arrow)\" />\n\n      <g class=\"supply-chain-node supply-chain-node-demand\">\n        <rect height=\"130\" rx=\"16\" width=\"184\" x=\"50\" y=\"87\" />\n        <text x=\"142\" y=\"126\">Valid tasks</text>\n        <text class=\"supply-chain-node-small\" x=\"142\" y=\"156\">Completion rate and task revenue</text>\n        <text class=\"supply-chain-node-small\" x=\"142\" y=\"181\">Verifying whether the demand is valid</text>\n      </g>\n      <g class=\"supply-chain-node supply-chain-node-demand\">\n        <rect height=\"130\" rx=\"16\" width=\"178\" x=\"266\" y=\"87\" />\n        <text x=\"355\" y=\"126\">Agent and cloud platforms</text>\n        <text class=\"supply-chain-node-small\" x=\"355\" y=\"156\">Planning, scheduling, and billing</text>\n        <text class=\"supply-chain-node-small\" x=\"355\" y=\"181\">Customer access and utilization rates</text>\n      </g>\n      <g class=\"supply-chain-node\">\n        <rect height=\"130\" rx=\"16\" width=\"178\" x=\"476\" y=\"87\" />\n        <text x=\"565\" y=\"126\">Systems and data centers</text>\n        <text class=\"supply-chain-node-small\" x=\"565\" y=\"156\">Servers, networks, and power supply</text>\n        <text class=\"supply-chain-node-small\" x=\"565\" y=\"181\">Delivery speed and reliability</text>\n      </g>\n      <g class=\"supply-chain-node supply-chain-node-bottleneck\">\n        <rect height=\"130\" rx=\"16\" width=\"178\" x=\"686\" y=\"87\" />\n        <text x=\"775\" y=\"126\">Core components</text>\n        <text class=\"supply-chain-node-small\" x=\"775\" y=\"156\">GPU / ASIC, HBM</text>\n        <text class=\"supply-chain-node-small\" x=\"775\" y=\"181\">Ecosystem, bandwidth, and energy efficiency</text>\n      </g>\n      <g class=\"supply-chain-node supply-chain-node-bottleneck\">\n        <rect height=\"130\" rx=\"16\" width=\"174\" x=\"896\" y=\"87\" />\n        <text x=\"983\" y=\"126\">Upstream manufacturing</text>\n        <text class=\"supply-chain-node-small\" x=\"983\" y=\"156\">Wafers and advanced packaging</text>\n        <text class=\"supply-chain-node-small\" x=\"983\" y=\"181\">Production capacity, yield, and certification</text>\n      </g>\n\n      <path class=\"supply-chain-scene-flow\" d=\"M 355 217 V 268\" marker-end=\"url(#supply-chain-arrow)\" />\n      <g class=\"supply-chain-scene-node\">\n        <rect height=\"88\" rx=\"15\" width=\"632\" x=\"244\" y=\"268\" />\n        <text x=\"560\" y=\"301\">The second edge curve</text>\n        <text class=\"supply-chain-node-small\" x=\"560\" y=\"329\">SoC, memory, and device manufacturers handle local inference; the frequency of use and product gross margin determine whether the demand can be fulfilled</text>\n      </g>\n\n      <text class=\"supply-chain-heading supply-chain-risk-heading\" x=\"50\" y=\"430\">Financial amplification and risk verification</text>\n      <text class=\"supply-chain-subheading\" x=\"50\" y=\"456\">Contracts and financing enable ahead-of-schedule construction, but asset returns still need to be verified after the devices are deployed</text>\n\n      <path class=\"supply-chain-risk-flow\" d=\"M 278 558 H 328\" marker-end=\"url(#supply-chain-risk-arrow)\" />\n      <path class=\"supply-chain-risk-flow\" d=\"M 538 558 H 588\" marker-end=\"url(#supply-chain-risk-arrow)\" />\n      <path class=\"supply-chain-risk-flow\" d=\"M 798 558 H 848\" marker-end=\"url(#supply-chain-risk-arrow)\" />\n\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"228\" x=\"50\" y=\"500\" />\n        <text x=\"164\" y=\"540\">Contracts and financing</text>\n        <text class=\"supply-chain-node-small\" x=\"164\" y=\"570\">Long-term leasing, debt, and advance payments</text>\n        <text class=\"supply-chain-node-small\" x=\"164\" y=\"593\">Bringing future revenue into the present</text>\n      </g>\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"210\" x=\"328\" y=\"500\" />\n        <text x=\"433\" y=\"540\">Ahead-of-schedule construction</text>\n        <text class=\"supply-chain-node-small\" x=\"433\" y=\"570\">Expanding GPU, memory, and data center capacity</text>\n        <text class=\"supply-chain-node-small\" x=\"433\" y=\"593\">Supply may exceed demand</text>\n      </g>\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"210\" x=\"588\" y=\"500\" />\n        <text x=\"693\" y=\"540\">Operational verification</text>\n        <text class=\"supply-chain-node-small\" x=\"693\" y=\"570\">Valid tasks, utilization rates, and contract renewals</text>\n        <text class=\"supply-chain-node-small\" x=\"693\" y=\"593\">Whether revenue can cover capital costs</text>\n      </g>\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"222\" x=\"848\" y=\"500\" />\n        <text x=\"959\" y=\"540\">Pressure transmission</text>\n        <text class=\"supply-chain-node-small\" x=\"959\" y=\"570\">Leasing prices, residual values, and inventory levels</text>\n        <text class=\"supply-chain-node-small\" x=\"959\" y=\"593\">Indicators of a reversal in supply</text>\n      </g>\n\n      <text class=\"supply-chain-subheading\" x=\"50\" y=\"680\">From left to right indicates the transmission of demand signals upstream. Ultimately, upstream supply still needs to tie back to valid tasks, utilization rates, and cash returns.</text>\n    </svg>\n  </div>\n  <figcaption>\n    Agents perform multiple rounds of inference and context processing, which in turn sends demand to cloud platforms, data centers, core components, and upstream manufacturing. Profits come from customer access, system delivery, or constrained supply, while contracts and financing may cause construction speeds to exceed actual usage levels.\n  </figcaption>\n</figure>\n```\n\n**GPUs, ASICs, and Software Stack**\n\nThe profitability of GPUs stems from their versatility, mature software ecosystems, and ability to quickly adapt to new models. Even as model architectures and request patterns continue to evolve, customers can use the same hardware and tools for training, development, and various inference tasks, keeping migration costs relatively manageable.\n\nASICs allow for cost and energy efficiency optimization by being tailored to specific models, precision levels, and consistent request patterns. Their economic viability depends on three conditions: sufficient workload volume to cover the costs of chip development and deployment, software that can integrate existing customer models, operators, and maintenance processes. For example, AWS combines Trainium with its Neuron software stack, servers, networking infrastructure, and cloud services into one comprehensive product suite, while Google uses TPUs, networking solutions, and Pathways to support large-scale inference. These examples show that the competitive unit for specialized chips has expanded to include entire systems. It’s difficult to determine whether a chip can generate sustained profits based solely on its theoretical performance.\n\n**HBM and Advanced Packaging**\n\nLong contexts and concurrent requests increase memory usage for weights and KV caches, while decoding requires continuous data transfer. As a result, the capacity and bandwidth of HBM affect the utilization rate of accelerators. Advanced packaging is responsible for combining computing chips with multiple HBM modules, while also meeting requirements related to quality, power consumption, and customer certifications. When supply is limited in the short term, suppliers who can consistently deliver qualified products are more likely to command higher prices.\n\nThere are clear conditions under which these premium prices may decline. New production capacity comes online, quality improves, alternative solutions gain certification, or customers start diversifying their suppliers, thereby reducing the bargaining power resulting from supply constraints (for example, with the emergence of companies like GigaDevice). As of September 2026, TSMC has raised its annual capital expenditure target to between $60 billion and $64 billion, attributing this to customer-driven demand for increased production. SK hynix has announced that HBM4 production began in the second quarter of 2026, with further increases planned for the second half of the year, and the company has already signed long-term agreements with around ten key customers. While these announcements indicate growing demand and expansion efforts, they do not guarantee that current premium prices will persist in the long term.\n\n**Servers, Networking, Power Supply, and Liquid Cooling**\n\nGPUs and HBM can only become deployable computing resources when installed in servers, connected to low-latency networks, and supplied with stable power. Google provides its Ironwood system with liquid cooling capable of handling up to 9,216 chips, resulting in a system power consumption of nearly 10 MW. Although this example does not represent all server clusters, it shows that procurement considerations now extend beyond just the chips themselves.\n\nProfitability in these areas typically comes from factors such as access to power, delivery speed, system integration, and reliability. These areas also involve longer construction periods and higher capital investments. Even after a data center is built, depreciation, maintenance costs, and power contracts continue to apply. Revenue can grow rapidly with new construction orders, but capital returns depend on whether equipment is deployed on schedule, whether utilization rates meet expectations, and whether contracts cover the asset recovery period.\n\n**Scheduling Software and Cloud Platforms**\n\nCloud providers control access points for customers, model deployment, task routing, and billing. Scheduling software can improve batch processing efficiency, reuse caches, reduce idle time and failed retries, allowing the same hardware to handle more tasks. Cloud platforms can also distribute workloads between GPUs and custom ASICs, translating changes in hardware costs into adjustments to customer prices or platform margins.\n\nProfitability in this area depends on customer usage levels, software compatibility, and migration costs, and it is also affected by price competition and capital expenditures. Only when cloud providers increase their equipment purchases and see corresponding increases in task revenue and cash flow can their operational advantages translate into sustainable profits.\n\n## Financing Enables Earlier Supply Development Than Actual Revenue Generation\n\nAI infrastructure requires a long procurement and construction timeline. Cloud providers plan computing capacity based on customer demands, GPU cloud service providers build data centers according to contracts, and server, memory, and packaging manufacturers expand production based on orders. Each stage relies on early procurement signals, but it often takes until the equipment is deployed to determine whether end-users will continue to pay.\n\nIn the second-quarter 2026 earnings call, TSMC’s management mentioned that while the demands submitted by customers may be legitimate, further evaluation is still needed after summing up all these requests. The company also monitors the progress of data center construction, location selection, and rack setup to avoid inventory buildup after chips are delivered. This indicates that upstream manufacturers are aware of the gap between orders and actual deployment.\n\nAt the same time, NVIDIA is collaborating with financial institutions to package chips as financial assets and use them to invest in small startups. By doing so, it not only increases its own sales but also indirectly supports investment in cutting-edge technologies while establishing strong partnerships. These startups are required to continue purchasing chips from NVIDIA on a periodic basis according to agreed terms and demands. Alternatively, Meta has established shell companies to participate in data center construction. Although this does not affect the parent company’s financial results on paper, such financial engineering practices could have disruptive effects if industry conditions deteriorate or other uncertainties arise.\n\nBoth approaches rely on the same mechanism: financing shifts the decision-making timeline forward and transfers risks away from decision-makers. When cloud providers and GPU cloud service providers purchase equipment, the assets and depreciation are recorded on their balance sheets, while debts and leasing obligations remain fixed. Once the equipment is deployed, depreciation, power costs, and interest continue to accrue, regardless of whether tasks are being processed. The only things that can be postponed are payments, depending on whether end-users are willing to continue paying.\nPurchase orders are then sent down through the same chain, layer by layer. Cloud service providers allocate computing power according to the contracts, GPU cloud service providers build data centers based on those contracts, and server, memory, and packaging manufacturers expand production in response to these orders. Each layer receives definite signals from the layer above; no single layer can see the total actual usage across all layers. Contracts convert expected usage over several years into orders today, and the combined supply from these orders may exceed current demand. While each layer’s assessment seems valid on its own, the total might still exceed actual usage.\n\nNone of these phenomena prove that a bubble has formed, but they consistently indicate that leverage is increasing. They show that long-term contracts and financing can convert future revenue into servers, GPUs, and data centers today. As valid workloads continue to grow, building in advance can shorten delivery times and improve asset utilization. Even if demand growth, renewal rates, or utilization fall short of procurement assumptions, costs such as leasing, depreciation, electricity, and interest will still persist.\n\nPressure does not appear across all metrics simultaneously nor is it evenly distributed. Even if the total amount of work processed by models continues to rise, as long as supply grows faster, price-related indicators will be affected first, including GPU rental prices, residual values of used devices, server inventory, and certain memory prices. Utilization and renewal rates are operational outcomes that lag behind; asset returns become apparent only after a full cycle of depreciation and interest. Suppliers may continue to receive orders before end-demand slows down, until a point is reached where new revenue is no longer sufficient to cover capital costs. At that point, the financial amplification effect will work in reverse, creating a bullwhip effect.\n\n## The edge side is the second curve awaiting validation through actual usage\n\nCar assistants and home control hubs need to respond quickly and still be able to perform certain tasks in low-network conditions. Information about vehicle status, home sensors, and personal habits involves privacy concerns, so local processing can reduce the amount of data that needs to be uploaded. The edge side is well-suited for tasks such as activation, sensing, simple decision-making, and frequent control, while complex reasoning and long-context processing can remain in the cloud.\n\nLocal processing consumes power from the user’s device, so manufacturers still have to bear upfront costs. Higher-specification SoCs, memory, and storage increase the bill of materials, and engineering resources are needed for cooling, model adaptation, security, OTA updates, and long-term after-sales support. Manufacturers will only continue to bear these costs in the long term if local inference can enable higher prices, reduce cloud usage expenses, improve the user experience, or meet privacy and offline requirements.\n\nEdge chips must also handle model updates while operating with limited power consumption. Techniques such as low-bit computing, more efficient memory architectures, and edge-cloud scheduling can help overcome these limitations. The ability to deploy models does not necessarily mean there will be stable demand. The actual usage frequency of cars and home devices, the proportion of tasks handled locally, incremental hardware costs, and product gross margins remain the most important indicators for validating this curve.\n\nOnce edge devices become more frequently used, demand will become more dispersed and better reflect users’ daily behavior. Current available information is not sufficient to prove that this stage has arrived, so I will consider it the second curve and avoid assuming large-scale chip orders at this point.\n\n## What signals will I wait for?\n\nFor cloud demand, I will look at the volume of paid tasks, task completion rates, and revenue per task. Effective tokens can help compare inference systems, but they need to be considered alongside latency, quality, and failure rates. Cloud providers’ capital expenditures must translate into revenue from AI cloud services, cash flow, and higher output per megawatt.\n\nFor the supply chain, I will examine whether there is a divergence in prices and inventory levels between HBM and standard DRAM, whether the delivery times for advanced packaging are shortening, and whether GPU rental prices and residual values of used GPUs are starting to decline. Profits resulting from supply constraints only become sustainable advantages if manufacturers can maintain high yields, certification advantages, and customer loyalty even after expanding production.\n\nRegarding the financial structure, I will consider whether contract terms, debt maturities, and the economic lifespan of GPUs are aligned. Customer renewals, the progress of data center deployments, and utilization rates can help determine whether long-term contracts are locking in actual demand or simply bringing future demand into today’s investments.\n\nFor the edge side, I will focus on the average daily usage of assistants, the proportion of tasks completed locally, and device gross margins. Only when cars and home devices start handling frequent tasks will demand for edge chips shift from competition over specifications to product capabilities that users are willing to use consistently.\n\nIf valid workloads and revenue can keep up with computing power supply, there is still room for expansion in GPUs, ASICs, HBM, packaging, and data centers. Profits will primarily accrue to those who can reduce costs per task, control limited supply, or manage customers and scheduling processes. When leading indicators such as rental prices and residual values continue to weaken, and utilization rates, renewals, and asset returns remain below procurement assumptions, even if the agent-based narrative still holds, expectations for infrastructure investment will need to be lowered.\n\n## Key Sources\n\n- [NVIDIA Inference Optimization Guide](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/), Prefill, Decode, KV Cache, and memory bandwidth\n- [AWS Trainium Official Documentation](https://aws.amazon.com/ai/machine-learning/trainium/), system design for chips, Neuron software stack, servers, networks, and cloud services\n- [Google Ironwood Official Overview](https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/ironwood-tpu-age-of-inference/), computing, memory, interconnection, and liquid cooling configurations for large-scale inference\n- [TSMC Q2 2026 Earnings Call](https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2026-07/547d1696765e05ce3adb81c108ce1c8c1682b80c/TSMC+2Q26+Transcript.pdf), capital expenditures, expansion decisions, and end-market deployment status\n- [SK hynix Q2 2026 Earnings Report](https://news.skhynix.com/en/q2-2026-business-results), HBM4 shipments, long-term agreements, and expansion plans"
+  "body": "\nThe way agents work is shifting the competition in AI chips from individual chips to entire systems. Agents plan steps, invoke tools, read results, and then proceed with further reasoning. With each additional step, the model may need to reprocess the context, read from and write to the KV Cache, thereby consuming computational, memory, and network resources. Therefore, rather than focusing on token usage, it is more relevant to track currently: ==blue|**Effective Token Ratio**====blue| versus ====blue|**Cost per Inference Call Required for Unit Payment Value**====blue|. ==\n\nAgents will continue to drive up demand for cloud-based inference services, and this demand will also spread upstream to areas such as GPUs, HBM, advanced packaging, servers, networks, power supply, and liquid cooling. Profits will not be distributed evenly across all stages of capacity expansion. The areas that are more likely to earn premium prices are those that either possess scarce production capacity, high yields, and customer certifications, or are able to integrate chips, software scheduling, and customer billing into a stable delivery system. ==blue|At the same time, long-term contracts, upfront payments, and debt financing turn future usage expectations into current investments in data centers and equipment. Once actual demand falls below the assumptions made during procurement, pressure will first show up in price indicators such as rental costs, with utilization rates and asset returns reflecting these changes later on.==\n\nThe edge side forms the second demand curve. Cars and home devices indeed require lower latency, offline capabilities, and local data processing, but this curve still needs to be validated based on usage frequency, device cost, and product gross margin. The cloud sector is already in a phase of large-scale development, while the edge side is currently more of a concept that awaits proof through actual product performance.\n\n## Agent turns task completion into a new cost unit\n\nIn ordinary Q&A sessions, there is usually only one round of input and output. The Agent breaks a goal down into multiple steps, invokes external tools, retrieves the results, and then decides on the next step. A single task may involve multiple rounds of model invocation, with different steps using models of varying sizes. The total cost is determined by the number of invocations, the length of the context, the cache hit rate, and the attempts to retry in case of failures.\n\nLarge model inference typically involves Prefill and Decode. Prefill processes the already provided input, allowing for relatively efficient parallel computation. Decode generates new tokens one by one, requiring repeated access to the model weights and the previously generated KV Cache, making it more susceptible to memory bandwidth constraints. As the context length increases, the amount of space occupied by the KV Cache also grows with the batch size and sequence length. At this point, the computational peak remains important, while memory capacity, bandwidth, inter-card communication, and scheduling efficiency also directly limit throughput.\n\nI will use the account below to compare different reasoning systems.\n\n```text\nCost per million valid tokens = Total system cost per hour ÷ Valid tokens generated per hour × 1,000,000\n```\n\nThe total system cost includes accelerators, HBM, servers, networking, power, liquid cooling, software, hosting, and depreciation.\n\nThe hourly effective Token output needs to be calculated under fixed models, average input and output lengths, concurrency levels, latency, and quality requirements. Results caused by queue timeouts, failed retries, or those that do not meet quality standards should not be counted as output. Input Tokens, output Tokens, and cache hits also need to be recorded separately.\n\nOnce the cost per unit of work decreases, more tasks and ideas that can generate potential revenue can be incorporated into various products and processes. As prices fall further, usage levels may also increase. This growth is contingent on two conditions: the task completion rate and the value of the results must both meet the required standards. Simply generating more tokens will only increase device usage without automatically creating healthy demand.\n\n## How an Agent task translates into infrastructure profits\n\nA billable task first generates requirements for model invocation and context processing, before giving rise to needs for computing power, memory, networking capabilities, and data center resources. The diagram below presents these requirements, the secondary curve on the client side, and financial risks as three distinct layers. Moving from left to right, the stages closer to the user make it easier to manage scheduling and billing processes, while the stages further upstream rely more on production capacity, quality standards, and certification to establish bargaining power.\n\n```html\n<figure class=\"supply-chain-diagram\">\n  <div class=\"supply-chain-diagram-scroll\">\n    <svg\n      aria-labelledby=\"supply-chain-diagram-title supply-chain-diagram-description\"\n      class=\"supply-chain-diagram-svg\"\n      role=\"img\"\n      viewBox=\"0 0 1120 720\"\n      xmlns=\"http://www.w3.org/2000/svg\"\n    >\n      <title id=\"supply-chain-diagram-title\">How Agent tasks influence AI infrastructure profits and risks</title>\n      <desc id=\"supply-chain-diagram-description\">\n        The upper section starts with valid tasks to illustrate how demand flows to cloud platforms, system infrastructure, core components, and upstream manufacturing, while highlighting the value sources for each stage. The middle part shows a second demand curve generated by edge devices. The lower section demonstrates how contracts and financing drive ahead-of-schedule construction, as well as asset risks when utilization is insufficient.\n      </desc>\n      <defs>\n        <marker id=\"supply-chain-arrow\" markerHeight=\"8\" markerWidth=\"8\" orient=\"auto-start-reverse\" refX=\"8\" refY=\"4\" viewBox=\"0 0 8 8\">\n          <path class=\"supply-chain-arrow\" d=\"M 0 0 L 8 4 L 0 8 z\" />\n        </marker>\n        <marker id=\"supply-chain-risk-arrow\" markerHeight=\"8\" markerWidth=\"8\" orient=\"auto-start-reverse\" refX=\"8\" refY=\"4\" viewBox=\"0 0 8 8\">\n          <path class=\"supply-chain-risk-arrow\" d=\"M 0 0 L 8 4 L 0 8 z\" />\n        </marker>\n      </defs>\n\n      <text class=\"supply-chain-heading\" x=\"50\" y=\"44\">Demand flowing upstream</text>\n      <text class=\"supply-chain-subheading\" x=\"50\" y=\"70\">From paid tasks to chips, memory, packaging, and data center construction</text>\n\n      <path class=\"supply-chain-flow\" d=\"M 234 152 H 266\" marker-end=\"url(#supply-chain-arrow)\" />\n      <path class=\"supply-chain-flow\" d=\"M 444 152 H 476\" marker-end=\"url(#supply-chain-arrow)\" />\n      <path class=\"supply-chain-flow\" d=\"M 654 152 H 686\" marker-end=\"url(#supply-chain-arrow)\" />\n      <path class=\"supply-chain-flow\" d=\"M 864 152 H 896\" marker-end=\"url(#supply-chain-arrow)\" />\n\n      <g class=\"supply-chain-node supply-chain-node-demand\">\n        <rect height=\"130\" rx=\"16\" width=\"184\" x=\"50\" y=\"87\" />\n        <text x=\"142\" y=\"126\">Valid tasks</text>\n        <text class=\"supply-chain-node-small\" x=\"142\" y=\"156\">Completion rate and task revenue</text>\n        <text class=\"supply-chain-node-small\" x=\"142\" y=\"181\">Verifying whether the demand is valid</text>\n      </g>\n      <g class=\"supply-chain-node supply-chain-node-demand\">\n        <rect height=\"130\" rx=\"16\" width=\"178\" x=\"266\" y=\"87\" />\n        <text x=\"355\" y=\"126\">Agent and cloud platforms</text>\n        <text class=\"supply-chain-node-small\" x=\"355\" y=\"156\">Planning, scheduling, and billing</text>\n        <text class=\"supply-chain-node-small\" x=\"355\" y=\"181\">Customer access and utilization rates</text>\n      </g>\n      <g class=\"supply-chain-node\">\n        <rect height=\"130\" rx=\"16\" width=\"178\" x=\"476\" y=\"87\" />\n        <text x=\"565\" y=\"126\">Systems and data centers</text>\n        <text class=\"supply-chain-node-small\" x=\"565\" y=\"156\">Servers, networks, and power supply</text>\n        <text class=\"supply-chain-node-small\" x=\"565\" y=\"181\">Delivery speed and reliability</text>\n      </g>\n      <g class=\"supply-chain-node supply-chain-node-bottleneck\">\n        <rect height=\"130\" rx=\"16\" width=\"178\" x=\"686\" y=\"87\" />\n        <text x=\"775\" y=\"126\">Core components</text>\n        <text class=\"supply-chain-node-small\" x=\"775\" y=\"156\">GPU / ASIC, HBM</text>\n        <text class=\"supply-chain-node-small\" x=\"775\" y=\"181\">Ecosystem, bandwidth, and energy efficiency</text>\n      </g>\n      <g class=\"supply-chain-node supply-chain-node-bottleneck\">\n        <rect height=\"130\" rx=\"16\" width=\"174\" x=\"896\" y=\"87\" />\n        <text x=\"983\" y=\"126\">Upstream manufacturing</text>\n        <text class=\"supply-chain-node-small\" x=\"983\" y=\"156\">Wafers and advanced packaging</text>\n        <text class=\"supply-chain-node-small\" x=\"983\" y=\"181\">Production capacity, yield rate, and certification</text>\n      </g>\n\n      <path class=\"supply-chain-scene-flow\" d=\"M 355 217 V 268\" marker-end=\"url(#supply-chain-arrow)\" />\n      <g class=\"supply-chain-scene-node\">\n        <rect height=\"88\" rx=\"15\" width=\"632\" x=\"244\" y=\"268\" />\n        <text x=\"560\" y=\"301\">The second edge curve</text>\n        <text class=\"supply-chain-node-small\" x=\"560\" y=\"329\">SoC, memory, and device manufacturers handle local inference; the frequency of use and product gross margin determine whether the demand can be fulfilled</text>\n      </g>\n\n      <text class=\"supply-chain-heading supply-chain-risk-heading\" x=\"50\" y=\"430\">Financial amplification and risk verification</text>\n      <text class=\"supply-chain-subheading\" x=\"50\" y=\"456\">Contracts and financing enable ahead-of-schedule construction, but asset returns still need to be verified after the devices are deployed</text>\n\n      <path class=\"supply-chain-risk-flow\" d=\"M 278 558 H 328\" marker-end=\"url(#supply-chain-risk-arrow)\" />\n      <path class=\"supply-chain-risk-flow\" d=\"M 538 558 H 588\" marker-end=\"url(#supply-chain-risk-arrow)\" />\n      <path class=\"supply-chain-risk-flow\" d=\"M 798 558 H 848\" marker-end=\"url(#supply-chain-risk-arrow)\" />\n\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"228\" x=\"50\" y=\"500\" />\n        <text x=\"164\" y=\"540\">Contracts and financing</text>\n        <text class=\"supply-chain-node-small\" x=\"164\" y=\"570\">Long-term leasing, debt, and upfront payments</text>\n        <text class=\"supply-chain-node-small\" x=\"164\" y=\"593\">Bringing future revenue into the present</text>\n      </g>\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"210\" x=\"328\" y=\"500\" />\n        <text x=\"433\" y=\"540\">Ahead-of-schedule construction</text>\n        <text class=\"supply-chain-node-small\" x=\"433\" y=\"570\">Expanding GPU, memory, and data center capacities</text>\n        <text class=\"supply-chain-node-small\" x=\"433\" y=\"593\">Supply may exceed demand</text>\n      </g>\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"210\" x=\"588\" y=\"500\" />\n        <text x=\"693\" y=\"540\">Operational verification</text>\n        <text class=\"supply-chain-node-small\" x=\"693\" y=\"570\">Valid tasks, utilization rates, and contract renewals</text>\n        <text class=\"supply-chain-node-small\" x=\"693\" y=\"593\">Whether revenue can cover capital costs</text>\n      </g>\n      <g class=\"supply-chain-risk-node\">\n        <rect height=\"116\" rx=\"16\" width=\"222\" x=\"848\" y=\"500\" />\n        <text x=\"959\" y=\"540\">Pressure transmission</text>\n        <text class=\"supply-chain-node-small\" x=\"959\" y=\"570\">Leasing prices, residual values, and inventory levels</text>\n        <text class=\"supply-chain-node-small\" x=\"959\" y=\"593\">Indicators of a supply reversal</text>\n      </g>\n\n      <text class=\"supply-chain-subheading\" x=\"50\" y=\"680\">From left to right indicates the transmission of demand signals upstream. Ultimately, upstream supply still needs to tie back to valid tasks, utilization rates, and cash returns.</text>\n    </svg>\n  </div>\n  <figcaption>\n    Agents perform multiple rounds of inference and context processing, which in turn drives demand to cloud platforms, data centers, core components, and upstream manufacturing. Profits come from customer access, system delivery, or constrained supply, while contracts and financing may cause construction speeds to exceed actual usage levels.\n  </figcaption>\n</figure>\n```\n\n**GPUs, ASICs, and software stacks**\n\nThe profit foundation for GPUs lies in their versatility, mature software ecosystem, and ability to quickly adapt to new models. As model architectures and request formats continue to evolve, customers can use the same hardware and tools for training, development, and various inference tasks, keeping migration costs relatively under control.\n\nASICs can optimize costs and energy efficiency by leveraging fixed models, fixed precision, and stable request patterns. Their economic viability depends on three conditions being met: the workload must be large enough so that long-term utilization can cover the costs associated with chip development and deployment; the software must be able to integrate the customer’s existing models, operators, and operational processes. For example, AWS combines the Trainium and Neuron software stacks with servers, networking, and cloud services under one product suite, while Google uses TPUs, interconnects, and Pathways to support large-scale inference. This shows that the competitive unit for specialized chips has expanded to include entire systems. It is difficult to determine whether a single chip can generate sustainable profits by merely comparing its theoretical performance.\n\n**HBM and Advanced Packaging**\n\nLong contexts and concurrent requests increase the weight and memory usage of the KV Cache, while decoding requires continuous data transfer. As a result, the capacity and bandwidth of HBM affect the utilization rate of accelerators. Advanced packaging is responsible for combining computing chips with multiple HBM modules, while also meeting requirements regarding yield, power consumption, and customer certifications. When supply is limited in the short term, suppliers who can deliver qualified products consistently are more likely to receive premium prices.\n\n==blue|Such premiums have clear conditions for a decline. With the introduction of new production capacity, improvements in yield, the approval of alternative solutions, or customers starting to source from multiple suppliers, the bargaining power resulting from supply constraints will weaken== (for example, with the emergence of many companies like GigaDevice). As of September 2026, TSMC has raised its full-year capital expenditure target to $60 billion to $64 billion, citing customer-driven capacity expansion as the main reason. SK hynix has announced that HBM4 production began in the second quarter of 2026, with further increases in output expected in the second half of the year, and it has already signed long-term agreements with around ten key customers. While these companies indicate that demand and capacity expansion are occurring simultaneously, this is not sufficient to prove that current premiums can be maintained in the long term.\n\n**Servers, Networks, Power, and Liquid Cooling**\n\nOnly when GPUs and HBM are installed in servers, connected to low-latency networks, and supplied with stable power can they form deployable computing power. Google provides Ironwood with a liquid-cooling setup featuring up to 9,216 chips, and the entire system consumes nearly 10 MW of power. While this product specification does not represent all clusters, it shows that the scope of procurement has expanded beyond just chips.\n\nThe profits from these aspects typically come from power access, delivery speed, system integration, and reliability. They also entail ==blue|**longer construction periods and higher capital investment**==. Even after the data center is built, depreciation, maintenance, and power contracts continue to exist. Revenue can grow rapidly with new construction orders, while capital returns depend on whether the equipment is deployed on schedule, whether the utilization rate meets expectations, and whether the contracts cover the asset recovery period.\n\n**Scheduling Software and Cloud Platforms**\n\nCloud providers control customer access points, model deployment, task routing, and billing. Scheduling software can improve batch processing efficiency, reuse caches, reduce idle time and failed retries, allowing the same hardware to handle more tasks. Cloud platforms can also distribute workloads between GPUs and custom ASICs, turning changes in hardware costs into customer prices or platform gross margins.\n\nThis portion of the profit depends on the scale of customer usage, software compatibility, and migration costs; it is also influenced by price competition and capital expenditures. Only when task-related revenue and cash flow keep up can the advantages of the system be translated into sustainable returns, after cloud service providers have purchased more equipment.\n\n## Financing allows supply construction to precede final revenue\n\nAI infrastructure has a long procurement and construction cycle. Cloud providers plan computing power based on customer needs, GPU cloud service providers build data centers according to contracts, and server, memory, and packaging manufacturers expand production based on orders. At each stage, procurement decisions are made relatively early, but it is often only after the equipment is available that it can be determined whether end-users will continue to pay for it.\n\nTSMC’s management mentioned during the earnings call for the second quarter of 2026 that the demands submitted by each customer may be legitimate, but it is still necessary to make a judgment after adding up all those demands. The company will also monitor the progress of data center construction, location selection, and rack setup to prevent chips from ending up in inventory after delivery. This statement indicates that upstream manufacturers are already aware of the gap between orders and actual deployment.\n\nAt the same time, NVIDIA is already working with financial institutions to package its chips as financial assets in order to invest in small startups. By doing so, it can expand its sales while indirectly participating in investments in cutting-edge technologies and establishing strong relationships with these companies. Under the terms of the agreements, these startups are required to continue purchasing chips from NVIDIA on a periodic basis. Alternatively, Meta sets up shell companies to engage in data center construction; although this does not affect the parent company’s financial results on paper, such financial structuring can have destructive consequences due to subsequent industry instability or other factors.\n\nThese two things point to the same mechanism. Financing shifts the decision-making point forward and also moves the risks away from the decision-makers. When cloud providers and GPU cloud service providers purchase equipment, the assets and depreciation are recorded in their own accounts, while the debts and leasing obligations remain fixed. Once the equipment is in use, depreciation, electricity costs, and interest continue to accrue, regardless of whether there are tasks running on it; the only things they can lock in ahead of time are contracts and upfront payments, while the only thing that can be postponed is whether the end-users are willing to keep paying.\n\nPurchase orders are then issued layer by layer along the same chain. Cloud service providers allocate computing power according to the contracts, while GPU cloud service providers build data centers based on those same contracts. Server, memory, and packaging manufacturers then expand their production in response to these orders. Each level relies on the definite signals provided by the level above; no single level can see the total actual usage across all levels. Contracts convert the expected usage over the next few years into orders today, and the combined supply resulting from these orders may exceed the current payment requirements. Although each level’s decision is valid on its own, the sum of them may still exceed the actual usage.\n\nNone of these phenomena prove that a bubble has formed, but they consistently indicate that the level of leverage is increasing. They show that long-term contracts and financing can convert future revenues into servers, GPUs, and data centers today. As legitimate workloads continue to grow, preemptive construction can shorten delivery times and improve asset utilization. Even if demand growth, renewal rates, or utilization fall short of the assumptions made during procurement, costs such as leasing, depreciation, electricity, and interest will still continue to arise.\n\n==blue|Pressure does not appear across all metrics at the same time, nor is it distributed evenly. Even as the total number of model invocations continues to rise, if supply grows faster, price-related indicators are the first to be affected, including GPU rental prices, residual values of used devices, server inventory, and certain memory prices. Utilization rates and renewal rates are outcomes of operational performance and lag behind; asset returns become apparent only after a full cycle of depreciation and interest has passed. Suppliers may continue to receive orders before demand at the end of the chain slows down, until a certain point where it becomes clear that new revenue is not sufficient to cover capital costs. Only then does the financial amplification effect work in reverse, causing a bullwhip effect.==\n\n## The client side is the second curve where behavior verification is awaited\n\nCar assistants and home control hubs need to respond quickly, and they must still be able to perform certain tasks even in low-network conditions. Information related to the status inside the vehicle, household sensors, and personal habits involves privacy issues, and local processing can reduce the amount of data that needs to be uploaded. The edge side is well-suited for tasks such as activation, sensing, simple decision-making, and frequent control, while complex reasoning and tasks that require extensive context can still be handled by the cloud.\n\n^[It is also more suitable for future capabilities such as memory and continuous learning in on-device intelligent assistants]\n\nLocal execution consumes power from the user’s device, and device manufacturers still have to bear the initial investment costs. Higher-specification SoCs, memory, and storage increase the BOM cost, while cooling, model adaptation, security, OTA updates, and long-term after-sales support also require engineering resources. Manufacturers will only have reason to bear these costs in the long term if local inference enables higher pricing, reduces cloud-based service expenses, improves the user experience, or meets privacy and offline requirements.\n\nEdge-side chips also need to process model updates while maintaining low power consumption. Low-bit computing, more efficient memory architectures, and edge-cloud scheduling can help alleviate these constraints, but the ability to deploy such systems does not necessarily mean there will be a stable demand for them. The actual usage frequency of automotive and home devices, the proportion of operations performed locally, the additional hardware costs, and the gross profit of the products remain the most important indicators for validating this trend.\n\nOnce edge devices become high-frequency devices, the demands will be more diversified and closer to users’ actual daily behaviors. The available information to date is not sufficient to prove that this stage has been reached, so I will keep it as the second curve, without anticipating large-scale chip orders in the product demonstrations.\n\n## Signals for Ongoing Monitoring in the Future\n\nFor cloud demand, one needs to consider the volume of paid tasks, task completion rates, and revenue per task. Valid Tokens can assist in comparing reasoning systems, but they should be evaluated alongside latency, quality, and failure rates. Cloud service providers’ capital expenditures must also translate into revenue from AI cloud services, improved cash flow, and higher output per megawatt.\n\nIn terms of the supply chain, it is necessary to observe whether there is a divergence in prices and inventory levels between HBM and standard DRAM, whether the delivery times for advanced packaging are shortening, and whether GPU rental prices and second-hand residual values are starting to decline. The profits resulting from supply constraints can only be considered a sustainable advantage if good yield rates, certification advantages, and customer loyalty can be maintained even after capacity expansion.\n\nIn terms of the financial structure, it is necessary to consider whether the contract duration, debt maturity period, and the economic lifespan of GPUs are compatible with each other. Customer renewals, the progress of deploying servers in data centers, and their utilization rates can help determine whether long-term contracts reflect actual demand or represent the anticipation of future demand being factored into today’s investments.\n\nOn the device side, it is necessary to consider the average daily usage frequency of the assistant, the proportion of tasks completed locally, and the gross profit margin of the device. Only after cars and home devices start handling frequent tasks will the demand for device-side chips shift from a competition based on specifications to product capabilities that users are willing to use consistently.\n\nIf effective tasks and revenue can keep up with the supply of computing power, there is still room for growth in GPUs, ASICs, HBM, packaging, and data centers. Profits will remain with those who can reduce the cost per task, gain control over limited supplies, or manage customers and scheduling processes. When leading indicators such as rental prices and residual values continue to decline, and utilization rates, contract renewals, and asset returns remain below the assumptions made at the time of acquisition, even if the Agent narrative holds true, expectations for this round of infrastructure investment need to be lowered.\n\n## Key Sources\n\n- [NVIDIA Inference Optimization Guide](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/), Prefill, Decode, KV Cache, and memory bandwidth\n- [AWS Trainium Official Documentation](https://aws.amazon.com/ai/machine-learning/trainium/), system design for chips, Neuron software stack, servers, networks, and cloud services\n- [Google Ironwood Official Introduction](https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/ironwood-tpu-age-of-inference/), computing, memory, interconnection, and liquid cooling configurations for large-scale inference\n- [TSMC’s Q2 2026 Earnings Call](https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2026-07/547d1696765e05ce3adb81c108ce1c8c1682b80c/TSMC+2Q26+Transcript.pdf), capital expenditure, expansion plans, and end-use deployment considerations\n- [SK hynix’s Q2 2026 Earnings Results](https://news.skhynix.com/en/q2-2026-business-results), HBM4 shipments, long-term agreements, and expansion plans\n",
+  "units": {
+    "13563ee9343f716c938fa52db360b50e1a4e327e00a935bb5c62381bd84d45d1": {
+      "kind": "title",
+      "source": "Agent 时代的推理算力：GPU、HBM 与计算芯片的钱流向哪里",
+      "context": "",
+      "translation": "Computing Power for Reasoning in the Agent Era: Where Are GPU, HBM, and Compute Chip Funds Flowing?"
+    },
+    "218e3df71c4ebfcbcc898fe245214de7c005ed74b25d21ee70373b9b6227f2f1": {
+      "kind": "excerpt",
+      "source": "Agent 正在把 AI 芯片竞争从单颗芯片推向整套系统。本文沿一项有效任务拆解云平台、机房、GPU、HBM 与先进封装的利润来源，也考察合同和融资怎样放大建设，并把端侧 AI 作为第二条待验证的需求曲线。",
+      "context": "",
+      "translation": "Agents are shifting the competition in AI chips from individual chips to entire systems. This article breaks down the sources of profit for cloud platforms, data centers, GPUs, HBM, and advanced packaging by examining a specific task, and it also looks at how contracts and financing can accelerate development, considering edge AI as a second demand curve that needs to be verified."
+    },
+    "c466772865567cca9b832a6097d27acb6a4dfa14c4034cdf4e199b51ab640202": {
+      "kind": "tags",
+      "source": "AI @@ Chips @@ Strategy",
+      "context": "",
+      "translation": "AI @@ Chips @@ Strategy"
+    },
+    "9c19ffabddf6fb9a29f565027872e11acbf9237fae19989c0772dcd31aafaa69": {
+      "kind": "htmltext",
+      "source": "Agent 任务如何传导到 AI 基建利润与风险",
+      "context": "",
+      "translation": "How Agent tasks influence AI infrastructure profits and risks"
+    },
+    "06aab49393be9ba79345fe442a052591b5077d6a9966d47bc084983bbea2c3db": {
+      "kind": "htmltext",
+      "source": "上半部分从有效任务出发，展示需求如何传到云平台、系统设施、核心部件与上游制造，并标出各环节的价值来源。中间展示端侧设备形成的第二条需求曲线。下半部分展示合同和融资如何推动提前建设，以及利用率不足时的资产风险。",
+      "context": "",
+      "translation": "The upper section starts with valid tasks to illustrate how demand flows to cloud platforms, system infrastructure, core components, and upstream manufacturing, while highlighting the value sources for each stage. The middle part shows a second demand curve generated by edge devices. The lower section demonstrates how contracts and financing drive ahead-of-schedule construction, as well as asset risks when utilization is insufficient."
+    },
+    "1fdfc27d3110e572d0d2120861717290663e0ded9072bb4a34e8ebaf2a4a3a08": {
+      "kind": "htmltext",
+      "source": "需求向上游传导",
+      "context": "",
+      "translation": "Demand flowing upstream"
+    },
+    "7a78b14bd3a85839b7731524e67401e131e7299842b65c98752954f229b53cd9": {
+      "kind": "htmltext",
+      "source": "从付费任务走向芯片、内存、封装与机房建设",
+      "context": "",
+      "translation": "From paid tasks to chips, memory, packaging, and data center construction"
+    },
+    "cc90eca6b1f611c167e87e4872f954f8933040e2e5b17d1e41d41adabceb7a02": {
+      "kind": "htmltext",
+      "source": "有效任务",
+      "context": "",
+      "translation": "Valid tasks"
+    },
+    "9674880cca313ef441c5995ee029ded5a16986a5219f48efac1a80819ae5f07f": {
+      "kind": "htmltext",
+      "source": "完成率与任务收入",
+      "context": "",
+      "translation": "Completion rate and task revenue"
+    },
+    "58d64d4c1fa293ad9fb0152199f5758026b6f9313152c96c1d669f2623edac14": {
+      "kind": "htmltext",
+      "source": "验证需求是否成立",
+      "context": "",
+      "translation": "Verifying whether the demand is valid"
+    },
+    "f4517c503e04d832ed0f1bb1a2e8b7c25c0b8d766822d445d155c83d02defb50": {
+      "kind": "htmltext",
+      "source": "Agent 与云平台",
+      "context": "",
+      "translation": "Agent and cloud platforms"
+    },
+    "f9ba5654620a58ad2989069f4d1c4c5f3059a8e6813316accd2ad6f7afe1bfe8": {
+      "kind": "htmltext",
+      "source": "规划、调度、计费",
+      "context": "",
+      "translation": "Planning, scheduling, and billing"
+    },
+    "e8327c413e90380f85b6a72b570479357fa04b3747c0b960a5e2c693de9f19be": {
+      "kind": "htmltext",
+      "source": "客户入口与利用率",
+      "context": "",
+      "translation": "Customer access and utilization rates"
+    },
+    "a4fb1ada1e7befc6c6593f6954e13e2f2f99774124a65e0b088d958ad10cfe29": {
+      "kind": "htmltext",
+      "source": "系统与机房",
+      "context": "",
+      "translation": "Systems and data centers"
+    },
+    "9737c4b38d82bb9f6e7409d2e5fe1fd52982cac0b4a6b529d091367c24d5057a": {
+      "kind": "htmltext",
+      "source": "服务器、网络、电力",
+      "context": "",
+      "translation": "Servers, networks, and power supply"
+    },
+    "f14b432307fc7615e39c7b771f5da2d88e83e3e4a89e85ec6b1e0a3cf606a79a": {
+      "kind": "htmltext",
+      "source": "交付速度与可靠性",
+      "context": "",
+      "translation": "Delivery speed and reliability"
+    },
+    "9a518d7570eb675460eb8d88610145978c885198eda38698ebcd4f049d18c712": {
+      "kind": "htmltext",
+      "source": "核心部件",
+      "context": "",
+      "translation": "Core components"
+    },
+    "1bbf44b1b8b624694f87a0ad7bf3f3dd9748aea0fde6d02da5e07bd50cb3fec7": {
+      "kind": "htmltext",
+      "source": "GPU / ASIC、HBM",
+      "context": "",
+      "translation": "GPU / ASIC, HBM"
+    },
+    "cd33bd6475bab9dd6ef91b2a2efde7ae092f9f2a6ab0fb395a05cf432e8f3b2e": {
+      "kind": "htmltext",
+      "source": "生态、带宽与能效",
+      "context": "",
+      "translation": "Ecosystem, bandwidth, and energy efficiency"
+    },
+    "e8c0586554caaaf4d136af1892385921f3c80badf0286f5587715afe0663ad4a": {
+      "kind": "htmltext",
+      "source": "上游制造",
+      "context": "",
+      "translation": "Upstream manufacturing"
+    },
+    "9810dac120f6eb804cc3fbd88d65c6b1de4e95e6645ade59534fcd3d0b53eaf4": {
+      "kind": "htmltext",
+      "source": "晶圆与先进封装",
+      "context": "",
+      "translation": "Wafers and advanced packaging"
+    },
+    "92064f3d63ef2f60a87d77eab62eab5852542a9e0d89de58af0eb9818f3478a9": {
+      "kind": "htmltext",
+      "source": "产能、良率与认证",
+      "context": "",
+      "translation": "Production capacity, yield rate, and certification"
+    },
+    "9cf5b9fa1722fa3b363ce1976cb61d3fe160b792ba7bdff58e840eb5ac333222": {
+      "kind": "htmltext",
+      "source": "端侧第二曲线",
+      "context": "",
+      "translation": "The second edge curve"
+    },
+    "5469ad85af32f2b369b04abd2d4296534db0b02ec49ed35ae6e2b9ec522db0f7": {
+      "kind": "htmltext",
+      "source": "SoC、内存与设备厂商承担本地推理，使用频率和产品毛利决定需求能否兑现",
+      "context": "",
+      "translation": "SoC, memory, and device manufacturers handle local inference; the frequency of use and product gross margin determine whether the demand can be fulfilled"
+    },
+    "d245bfa7046ddf14de6f13f4d535e28c15695ac032f73cb70d69505e894fda5d": {
+      "kind": "htmltext",
+      "source": "金融放大与风险验证",
+      "context": "",
+      "translation": "Financial amplification and risk verification"
+    },
+    "1054a84f7c8fae456059fc234060669c7e10ce01c4824a4ed5548d04bc6b9b83": {
+      "kind": "htmltext",
+      "source": "合同和融资让建设提前，资产回报仍要等设备上架后验证",
+      "context": "",
+      "translation": "Contracts and financing enable ahead-of-schedule construction, but asset returns still need to be verified after the devices are deployed"
+    },
+    "bcc33f8cfcebf00150e8e69086423cfb43487de8e49c9db20581a51952e1af56": {
+      "kind": "htmltext",
+      "source": "合同与融资",
+      "context": "",
+      "translation": "Contracts and financing"
+    },
+    "749f052573dead2e4de124799bd7e21f4d0071f517ef16213ecc7ef5afa09389": {
+      "kind": "htmltext",
+      "source": "长期租赁、债务、预付款",
+      "context": "",
+      "translation": "Long-term leasing, debt, and upfront payments"
+    },
+    "aaee8ae01292ba3abee073369de866f0e838fbc7518d1b1362de0adca6e5ff23": {
+      "kind": "htmltext",
+      "source": "把未来收入带到今天",
+      "context": "",
+      "translation": "Bringing future revenue into the present"
+    },
+    "5dc8cc1f5d887ae48203a3233da20472452a11d8b221f4bce779d3e17a47cd67": {
+      "kind": "htmltext",
+      "source": "提前建设",
+      "context": "",
+      "translation": "Ahead-of-schedule construction"
+    },
+    "eaa8747c862cafeac094206df4d03189e03e63ddc8e61bed18777031547bed0d": {
+      "kind": "htmltext",
+      "source": "GPU、内存与机房扩产",
+      "context": "",
+      "translation": "Expanding GPU, memory, and data center capacities"
+    },
+    "b2352f7e6ae26c2a094446d259ea31cab53dd5db6b29e7daa6f9e834be9bf363": {
+      "kind": "htmltext",
+      "source": "供给可能领先使用量",
+      "context": "",
+      "translation": "Supply may exceed demand"
+    },
+    "4555251470f6ca6a370130b643ce6871896539c7a9e2cec1f31867a89c6f7aeb": {
+      "kind": "htmltext",
+      "source": "经营验证",
+      "context": "",
+      "translation": "Operational verification"
+    },
+    "b82f435f53d485b1d1d97599cb05bfb583902f016bce82373cbb3569c353f29f": {
+      "kind": "htmltext",
+      "source": "有效任务、利用率、续约",
+      "context": "",
+      "translation": "Valid tasks, utilization rates, and contract renewals"
+    },
+    "9495e83c401993ed9aa76fdd0e7da1c28872cc625c5ad0449452d47a498a82b1": {
+      "kind": "htmltext",
+      "source": "收入能否覆盖资本成本",
+      "context": "",
+      "translation": "Whether revenue can cover capital costs"
+    },
+    "59c52fafcfd2d203ea340ec220f83c6319b7e631915d12db9ccaff356cf59901": {
+      "kind": "htmltext",
+      "source": "压力传导",
+      "context": "",
+      "translation": "Pressure transmission"
+    },
+    "d7326f90a2adc4740f31c56d35f7626ced6fb23d5965e8b3daf66c86c800b074": {
+      "kind": "htmltext",
+      "source": "租赁价格、残值、库存",
+      "context": "",
+      "translation": "Leasing prices, residual values, and inventory levels"
+    },
+    "e92811045b7de554b15b9d0a5e45eeaed3c1095c0088f802a2fe9c341327f4ba": {
+      "kind": "htmltext",
+      "source": "供给反转的观察信号",
+      "context": "",
+      "translation": "Indicators of a supply reversal"
+    },
+    "113abf0268996bcdd5886692ca1eea0b9130d535ad8da94728c4eabe161dfc71": {
+      "kind": "htmltext",
+      "source": "左到右表示需求信号向上游传递。上游供给最终仍要回到有效任务、利用率和现金回报。",
+      "context": "",
+      "translation": "From left to right indicates the transmission of demand signals upstream. Ultimately, upstream supply still needs to tie back to valid tasks, utilization rates, and cash returns."
+    },
+    "3553e294e96e184b0c2e04790d88f7a7a1c369b01d2a233d2ee1543c0697aaf8": {
+      "kind": "htmltext",
+      "source": "Agent 增加多轮推理和上下文处理，需求随之传到云平台、机房、核心部件和上游制造。利润来自客户入口、系统交付或受限供给，合同与融资则可能让建设速度领先真实使用量。",
+      "context": "",
+      "translation": "Agents perform multiple rounds of inference and context processing, which in turn drives demand to cloud platforms, data centers, core components, and upstream manufacturing. Profits come from customer access, system delivery, or constrained supply, while contracts and financing may cause construction speeds to exceed actual usage levels."
+    },
+    "8b1c1e4076cadb4bc70d211e0c17bfb1550909592228d3cb95976948965bf3dd": {
+      "kind": "prose",
+      "source": "Agent 的工作方式正在把 AI 芯片的竞争从单颗芯片推向整套系统。Agent 会规划步骤、调用工具、读取结果，再继续推理。每多走一步，模型都可能重新处理上下文、读写 KV Cache，并占用计算、内存和网络资源。因此相比 token 消耗量，当前更值得跟踪的是：==blue|**有效 Token 转化率（Effective Token Ratio）**====blue|与====blue|**单位付费价值所需的推理调用链成本**====blue|。==",
+      "context": "",
+      "translation": "The way agents work is shifting the competition in AI chips from individual chips to entire systems. Agents plan steps, invoke tools, read results, and then proceed with further reasoning. With each additional step, the model may need to reprocess the context, read from and write to the KV Cache, thereby consuming computational, memory, and network resources. Therefore, rather than focusing on token usage, it is more relevant to track currently: ==blue|**Effective Token Ratio**====blue| versus ====blue|**Cost per Inference Call Required for Unit Payment Value**====blue|. =="
+    },
+    "c5078fc1200c7f2566e5a0902a98b59cd423c9a06988b1429c8123714727f393": {
+      "kind": "prose",
+      "source": "Agent 会继续推高云端推理需求，也会让需求沿着 GPU、HBM、先进封装、服务器、网络、电力和液冷向上游传导。利润不会平均留在所有扩产环节。当前更有机会获得溢价的环节，要么掌握稀缺产能、良率和客户认证，要么能把芯片、软件调度和客户计费接成一套可稳定交付的系统。==blue|同时长期合同、预付款和债务融资又把未来的调用预期提前变成今天的机房和设备。最终需求一旦低于采购假设，压力会先在租赁价格这类价格信号上显现，利用率和资产回报随后才反映出来。==",
+      "context": "",
+      "translation": "Agents will continue to drive up demand for cloud-based inference services, and this demand will also spread upstream to areas such as GPUs, HBM, advanced packaging, servers, networks, power supply, and liquid cooling. Profits will not be distributed evenly across all stages of capacity expansion. The areas that are more likely to earn premium prices are those that either possess scarce production capacity, high yields, and customer certifications, or are able to integrate chips, software scheduling, and customer billing into a stable delivery system. ==blue|At the same time, long-term contracts, upfront payments, and debt financing turn future usage expectations into current investments in data centers and equipment. Once actual demand falls below the assumptions made during procurement, pressure will first show up in price indicators such as rental costs, with utilization rates and asset returns reflecting these changes later on.=="
+    },
+    "0c52332887cd98daa7ed9d0fc129bd4551568e182d9b0f23a25b3e3d6b2fb5a7": {
+      "kind": "prose",
+      "source": "端侧构成第二条需求曲线。汽车和家庭设备确实需要更低延迟、离线能力和本地数据处理，但这条曲线还要经过使用频率、设备成本和产品毛利的验证。云端已经进入大规模建设期，端侧目前更接近一项等待产品行为证明的判断。",
+      "context": "",
+      "translation": "The edge side forms the second demand curve. Cars and home devices indeed require lower latency, offline capabilities, and local data processing, but this curve still needs to be validated based on usage frequency, device cost, and product gross margin. The cloud sector is already in a phase of large-scale development, while the edge side is currently more of a concept that awaits proof through actual product performance."
+    },
+    "6eadc94a272e1facbf3e1c4ab630a5494ba507ce3cad959b4e42ab99a9b91231": {
+      "kind": "prose",
+      "source": "## Agent 把任务完成变成新的成本单位",
+      "context": "",
+      "translation": "## Agent turns task completion into a new cost unit"
+    },
+    "d633c72192f9faee1535caf7c51b32845169b37d78c036b90ac427c6a809ae47": {
+      "kind": "prose",
+      "source": "普通问答通常只有一轮输入和输出。Agent 会把一个目标拆成多步，调用外部工具，读回结果，再决定下一步。一次任务可能包含多轮模型调用，不同步骤还会使用不同大小的模型。调用次数、上下文长度、缓存命中率和失败重试共同决定最后的成本。",
+      "context": "Agent 把任务完成变成新的成本单位",
+      "translation": "In ordinary Q&A sessions, there is usually only one round of input and output. The Agent breaks a goal down into multiple steps, invokes external tools, retrieves the results, and then decides on the next step. A single task may involve multiple rounds of model invocation, with different steps using models of varying sizes. The total cost is determined by the number of invocations, the length of the context, the cache hit rate, and the attempts to retry in case of failures."
+    },
+    "ef27c21da2e9c1582d4c8541f9e0b9a5b353dfbe644bb59eca7184d0059d64e0": {
+      "kind": "prose",
+      "source": "大模型推理通常包含 Prefill 和 Decode。Prefill 处理已经给出的输入，可以较充分地并行计算。Decode 逐个生成新 Token，需要反复读取模型权重和此前生成的 KV Cache，更容易受到内存带宽影响。上下文变长以后，KV Cache 占用还会随批量和序列长度增加。此时，计算峰值依然重要，内存容量、带宽、跨卡通信和调度效率也会直接限制吞吐。",
+      "context": "Agent 把任务完成变成新的成本单位",
+      "translation": "Large model inference typically involves Prefill and Decode. Prefill processes the already provided input, allowing for relatively efficient parallel computation. Decode generates new tokens one by one, requiring repeated access to the model weights and the previously generated KV Cache, making it more susceptible to memory bandwidth constraints. As the context length increases, the amount of space occupied by the KV Cache also grows with the batch size and sequence length. At this point, the computational peak remains important, while memory capacity, bandwidth, inter-card communication, and scheduling efficiency also directly limit throughput."
+    },
+    "35275bfa448d1d81992614a9b3809a5ea9e11d605fdb57011ee027e631af02c7": {
+      "kind": "prose",
+      "source": "我会用下面这笔账比较不同推理系统。",
+      "context": "Agent 把任务完成变成新的成本单位",
+      "translation": "I will use the account below to compare different reasoning systems."
+    },
+    "aaf73ae9ad8d805d40b7ce40068fae1761000b9c09ecb6529a49f81a5d81d747": {
+      "kind": "fenced",
+      "source": "每百万有效 Token 成本 = 每小时完整系统成本 ÷ 每小时有效 Token 产出 × 1,000,000",
+      "context": "Agent 把任务完成变成新的成本单位",
+      "translation": "Cost per million valid tokens = Total system cost per hour ÷ Valid tokens generated per hour × 1,000,000"
+    },
+    "474265af8c81b4660e36c605dea657c57e0ebdd43619b4218bf4b85b3e234d5e": {
+      "kind": "prose",
+      "source": "完整系统成本包括加速器、HBM、服务器、网络、电力、液冷、软件、托管和折旧。",
+      "context": "Agent 把任务完成变成新的成本单位",
+      "translation": "The total system cost includes accelerators, HBM, servers, networking, power, liquid cooling, software, hosting, and depreciation."
+    },
+    "a0a805665a949ccab0c99e7f4e50289b0abb77e97ee5df10257555864096aa00": {
+      "kind": "prose",
+      "source": "每小时有效 Token 产出需要放在固定模型、平均输入输出长度、并发数、延迟和质量要求下计算。排队超时、失败重试和未达到质量要求的结果不应计入产出，输入 Token、输出 Token 和缓存命中也要分开记录。",
+      "context": "Agent 把任务完成变成新的成本单位",
+      "translation": "The hourly effective Token output needs to be calculated under fixed models, average input and output lengths, concurrency levels, latency, and quality requirements. Results caused by queue timeouts, failed retries, or those that do not meet quality standards should not be counted as output. Input Tokens, output Tokens, and cache hits also need to be recorded separately."
+    },
+    "206d93d1a3c3590d913fbbe455fc68ffc10dcb435027eedb382075112eeb01aa": {
+      "kind": "prose",
+      "source": "单位任务成本下降以后，更多的工作内容和能带来潜在收入的Idea才可能进入到不同的产品和流程。同时价格进一步下降，使用量也可能增加。这种增长有一个明确前提，任务完成率和结果价值必须同时达标。单纯生成更多 Token，只会增加设备使用量，不会自动形成健康的需求。",
+      "context": "Agent 把任务完成变成新的成本单位",
+      "translation": "Once the cost per unit of work decreases, more tasks and ideas that can generate potential revenue can be incorporated into various products and processes. As prices fall further, usage levels may also increase. This growth is contingent on two conditions: the task completion rate and the value of the results must both meet the required standards. Simply generating more tokens will only increase device usage without automatically creating healthy demand."
+    },
+    "520b6516ddec89417adde1f20d52b2249b085e495df4a7f5ff4335adc1c69aa9": {
+      "kind": "prose",
+      "source": "## 一项 Agent 任务怎样传导到基础设施利润",
+      "context": "",
+      "translation": "## How an Agent task translates into infrastructure profits"
+    },
+    "4348dd9947c707d825e363506f9c7231e63310b61d2bf3a7318dc24bfe11560a": {
+      "kind": "prose",
+      "source": "一项可计费任务先产生模型调用和上下文处理需求，随后才形成对计算、内存、互联和机房的采购。下面这张图把需求传导、端侧第二曲线和金融风险压成三层。左到右看，越靠近用户的环节越容易掌握调度和计费入口，越靠近上游的环节越依赖产能、良率和认证形成议价权。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "A billable task first generates requirements for model invocation and context processing, before giving rise to needs for computing power, memory, networking capabilities, and data center resources. The diagram below presents these requirements, the secondary curve on the client side, and financial risks as three distinct layers. Moving from left to right, the stages closer to the user make it easier to manage scheduling and billing processes, while the stages further upstream rely more on production capacity, quality standards, and certification to establish bargaining power."
+    },
+    "9890a09ad0f847335aca8c5633451101cbd879e0bff98749bfc294f1439c4dfe": {
+      "kind": "prose",
+      "source": "**GPU、ASIC 与软件栈**",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "**GPUs, ASICs, and software stacks**"
+    },
+    "0550f40f4b5cb63bc20391fd5d83dd2aca6f9ae8c75a00f38a435f69cc1f6d9e": {
+      "kind": "prose",
+      "source": "GPU 的利润基础来自通用性、成熟的软件生态和快速适配新模型的能力。模型架构和请求形态仍在变化时，客户可以用同一套硬件和工具处理训练、开发和多类推理任务，迁移成本也相对可控。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "The profit foundation for GPUs lies in their versatility, mature software ecosystem, and ability to quickly adapt to new models. As model architectures and request formats continue to evolve, customers can use the same hardware and tools for training, development, and various inference tasks, keeping migration costs relatively under control."
+    },
+    "c6232fd228485d0a37bdf2988c8ca59e2af7526fc07e4a67921372a74b2b9b9f": {
+      "kind": "prose",
+      "source": "ASIC 可以围绕固定模型、固定精度和稳定请求形态优化成本与能效。它的经济性需要三个条件共同成立。工作负载达到足够规模，长期利用率能够覆盖芯片研发和部署投入，软件还要把客户原有的模型、算子和运维流程接进来。例如 AWS 把 Trainium 与 Neuron 软件栈、服务器、网络和云服务放在同一套产品里，Google 也用 TPU、互联和 Pathways 共同支撑大规模推理。这些说明，专用芯片的竞争单位已经扩展到整套系统。只比较单颗芯片的理论性能，很难判断它能否形成持续利润。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "ASICs can optimize costs and energy efficiency by leveraging fixed models, fixed precision, and stable request patterns. Their economic viability depends on three conditions being met: the workload must be large enough so that long-term utilization can cover the costs associated with chip development and deployment; the software must be able to integrate the customer’s existing models, operators, and operational processes. For example, AWS combines the Trainium and Neuron software stacks with servers, networking, and cloud services under one product suite, while Google uses TPUs, interconnects, and Pathways to support large-scale inference. This shows that the competitive unit for specialized chips has expanded to include entire systems. It is difficult to determine whether a single chip can generate sustainable profits by merely comparing its theoretical performance."
+    },
+    "b45877376bee425885cb39d68b5a97675f4c3db941f2173ed151e574834d977b": {
+      "kind": "prose",
+      "source": "**HBM 与先进封装**",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "**HBM and Advanced Packaging**"
+    },
+    "92be5b4d0e2a6249331bc15f98ab4d58c46256b2d746dec820e3909d180395f1": {
+      "kind": "prose",
+      "source": "长上下文和并发请求会增加权重与 KV Cache 的内存占用，Decode 又需要持续搬运数据。HBM 的容量和带宽因此会影响加速器利用率。先进封装负责把计算芯片与多颗 HBM 组合起来，还要满足良率、功耗和客户认证要求。短期供给受限时，能稳定交付合格产品的供应商更容易获得溢价。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "Long contexts and concurrent requests increase the weight and memory usage of the KV Cache, while decoding requires continuous data transfer. As a result, the capacity and bandwidth of HBM affect the utilization rate of accelerators. Advanced packaging is responsible for combining computing chips with multiple HBM modules, while also meeting requirements regarding yield, power consumption, and customer certifications. When supply is limited in the short term, suppliers who can deliver qualified products consistently are more likely to receive premium prices."
+    },
+    "fda1975578bf06e0f5aa99643864a239d8ec913fc6e91e6dba4800beb13de250": {
+      "kind": "prose",
+      "source": "==blue|这类溢价有清楚的回落条件。新产能投放、良率改善、替代方案通过认证，或者客户开始分散采购，供给紧张带来的议价权就会减弱==（例如出现很多长鑫之类的企业）。截至 2026 年 9 月，台积电已经把全年资本开支指引上调至 600 亿至 640 亿美元，并把客户推动扩产列为主要原因。SK hynix 披露 HBM4 已在 2026 年第二季度开始量产出货，下半年继续提升产量，同时已与约十家核心客户签订长期协议。这些公司披露说明需求和扩产正在同时发生，还不足以证明当前溢价能够长期维持。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "==blue|Such premiums have clear conditions for a decline. With the introduction of new production capacity, improvements in yield, the approval of alternative solutions, or customers starting to source from multiple suppliers, the bargaining power resulting from supply constraints will weaken== (for example, with the emergence of many companies like GigaDevice). As of September 2026, TSMC has raised its full-year capital expenditure target to $60 billion to $64 billion, citing customer-driven capacity expansion as the main reason. SK hynix has announced that HBM4 production began in the second quarter of 2026, with further increases in output expected in the second half of the year, and it has already signed long-term agreements with around ten key customers. While these companies indicate that demand and capacity expansion are occurring simultaneously, this is not sufficient to prove that current premiums can be maintained in the long term."
+    },
+    "34c5484c776b478f8fddd8b281c7ae9692afe1249fcc6334c0ed0da96e8e7033": {
+      "kind": "prose",
+      "source": "**服务器、网络、电力与液冷**",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "**Servers, Networks, Power, and Liquid Cooling**"
+    },
+    "5c061561d6bec3318a7c7ae6f081bd9a0a7d2488e9bbd51aaaead9fca25e04ef": {
+      "kind": "prose",
+      "source": "GPU 和 HBM 只有装进服务器、接入低延迟网络并获得稳定电力以后，才能形成可部署算力。Google 为 Ironwood 提供最多 9,216 颗芯片的液冷配置，整套系统功耗接近 10 MW。这个产品口径不能代表所有集群，却能说明采购边界已经延伸到芯片之外。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "Only when GPUs and HBM are installed in servers, connected to low-latency networks, and supplied with stable power can they form deployable computing power. Google provides Ironwood with a liquid-cooling setup featuring up to 9,216 chips, and the entire system consumes nearly 10 MW of power. While this product specification does not represent all clusters, it shows that the scope of procurement has expanded beyond just chips."
+    },
+    "177a4a6d1c0fdf85e1c22049319d66731235ec60ffa8577d381d096d3e745059": {
+      "kind": "prose",
+      "source": "这些环节的利润通常来自电力接入、交付速度、系统集成和可靠性。它们也承担==blue|**更长的建设周期与更重的资本投入**==。机房建成以后，折旧、维护和电力合同仍会继续发生。收入可以随着建设订单快速增长，资本回报则取决于设备是否按期上架、利用率能否达到假设，以及合同能否覆盖资产回收周期。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "The profits from these aspects typically come from power access, delivery speed, system integration, and reliability. They also entail ==blue|**longer construction periods and higher capital investment**==. Even after the data center is built, depreciation, maintenance, and power contracts continue to exist. Revenue can grow rapidly with new construction orders, while capital returns depend on whether the equipment is deployed on schedule, whether the utilization rate meets expectations, and whether the contracts cover the asset recovery period."
+    },
+    "e8c7f5bb33a24f95c38653d08b563fd4d40d5ea183f6e2153079a62381c3bcc9": {
+      "kind": "prose",
+      "source": "**调度软件与云平台**",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "**Scheduling Software and Cloud Platforms**"
+    },
+    "e224b6e93089f02e9aafc30912f6ac317d17d5a8cd225e6926184a4f2ecc9527": {
+      "kind": "prose",
+      "source": "云厂商掌握客户入口、模型部署、任务路由和计费。调度软件可以提高批处理效率，复用缓存，减少空闲和失败重试，让同样的硬件完成更多任务。云平台还可以在 GPU 与自研 ASIC 之间分配工作负载，把硬件成本变化转成客户价格或平台毛利。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "Cloud providers control customer access points, model deployment, task routing, and billing. Scheduling software can improve batch processing efficiency, reuse caches, reduce idle time and failed retries, allowing the same hardware to handle more tasks. Cloud platforms can also distribute workloads between GPUs and custom ASICs, turning changes in hardware costs into customer prices or platform gross margins."
+    },
+    "21c3dffa064b12344098355f8b66b19cba3c841ce0b5be3d99425e971f2d41c3": {
+      "kind": "prose",
+      "source": "这部分利润依赖客户使用规模、软件兼容性和迁移成本，也会受到价格竞争与资本开支的制约。云厂商购买了更多设备，只有在任务收入和现金流跟上以后，系统优势才会转成可持续回报。",
+      "context": "一项 Agent 任务怎样传导到基础设施利润",
+      "translation": "This portion of the profit depends on the scale of customer usage, software compatibility, and migration costs; it is also influenced by price competition and capital expenditures. Only when task-related revenue and cash flow keep up can the advantages of the system be translated into sustainable returns, after cloud service providers have purchased more equipment."
+    },
+    "e84a0f875c0a086539d231f1aca4840a92086e90d8188e7ed15f46f373a0ed07": {
+      "kind": "prose",
+      "source": "## 融资让供给建设早于最终收入",
+      "context": "",
+      "translation": "## Financing allows supply construction to precede final revenue"
+    },
+    "8aa87231214e4130e6d014133c20d7b188688d0446c618890208be134e298b36": {
+      "kind": "prose",
+      "source": "AI 基础设施具有很长的采购和建设周期。云厂商根据客户需求规划算力，GPU 云服务商根据合同建设机房，服务器、内存和封装厂商再根据订单扩产。每个环节看到的都是相对靠前的采购信号，最终用户是否会持续付费，往往要等设备上架以后才能验证。",
+      "context": "融资让供给建设早于最终收入",
+      "translation": "AI infrastructure has a long procurement and construction cycle. Cloud providers plan computing power based on customer needs, GPU cloud service providers build data centers according to contracts, and server, memory, and packaging manufacturers expand production based on orders. At each stage, procurement decisions are made relatively early, but it is often only after the equipment is available that it can be determined whether end-users will continue to pay for it."
+    },
+    "d56ca2c76d31d1d3f09e00dd5751d0972b780607791159b77367a732486307bd": {
+      "kind": "prose",
+      "source": "台积电管理层在 2026 年第二季度业绩电话会上提到，客户各自给出的需求都可能是真实的，把所有需求相加以后仍然需要判断。公司还会检查数据中心的建设、地点和机架进度，避免芯片交付以后进入库存。这段表述说明，上游厂商已经意识到订单与最终部署之间存在距离。",
+      "context": "融资让供给建设早于最终收入",
+      "translation": "TSMC’s management mentioned during the earnings call for the second quarter of 2026 that the demands submitted by each customer may be legitimate, but it is still necessary to make a judgment after adding up all those demands. The company will also monitor the progress of data center construction, location selection, and rack setup to prevent chips from ending up in inventory after delivery. This statement indicates that upstream manufacturers are already aware of the gap between orders and actual deployment."
+    },
+    "810809865a78d05015bf4bcef99deb25ffc03e4024dd66ad1e89e2124675181f": {
+      "kind": "prose",
+      "source": "但同时，英伟达已经在和金融机构合作，通过包装芯片为一种金融资产去投资于小型初创企业，在自己扩大销量的同时，间接参与前沿科技投资，并建立深度绑定。这些初创公司根据协议以及需求，需要阶段性继续向英伟达购买芯片。又或者 Meta 成立空壳公司参与数据中心的建设，虽然账面上不影响母公司的业绩，但是这种金融包装行为随着后续的行业不稳定或其他层面的波动极有可能造成破坏性的影响。",
+      "context": "融资让供给建设早于最终收入",
+      "translation": "At the same time, NVIDIA is already working with financial institutions to package its chips as financial assets in order to invest in small startups. By doing so, it can expand its sales while indirectly participating in investments in cutting-edge technologies and establishing strong relationships with these companies. Under the terms of the agreements, these startups are required to continue purchasing chips from NVIDIA on a periodic basis. Alternatively, Meta sets up shell companies to engage in data center construction; although this does not affect the parent company’s financial results on paper, such financial structuring can have destructive consequences due to subsequent industry instability or other factors."
+    },
+    "e934ec150ddaf58193e3175fa8ed82aacc955f4606ff9f743fa98f37116355a1": {
+      "kind": "prose",
+      "source": "这两件事指向同一个机制。融资把决策时点往前挪，也把风险挪到了决策者之外。云厂商和 GPU 云服务商买入设备时，资产和折旧记在自己表内，债务与租赁承诺却是刚性的。设备上架以后，无论上面有没有任务在跑，折旧、电力和利息都在发生；它们能提前锁定的只有合同和预付款，能往后拖的只有终端愿不愿意持续付费。",
+      "context": "融资让供给建设早于最终收入",
+      "translation": "These two things point to the same mechanism. Financing shifts the decision-making point forward and also moves the risks away from the decision-makers. When cloud providers and GPU cloud service providers purchase equipment, the assets and depreciation are recorded in their own accounts, while the debts and leasing obligations remain fixed. Once the equipment is in use, depreciation, electricity costs, and interest continue to accrue, regardless of whether there are tasks running on it; the only things they can lock in ahead of time are contracts and upfront payments, while the only thing that can be postponed is whether the end-users are willing to keep paying."
+    },
+    "bc2d3b0cd25d14228d1cf631739e9f0d9764cb26c9a46a50e247658a307cf8d7": {
+      "kind": "prose",
+      "source": "采购订单又沿着同一条链逐层下发。云厂商按合同规划算力，GPU 云服务商按同一批合同建设机房，服务器、内存和封装厂商再根据这些订单扩产。每一层看到的都是上一层给出的确定信号，没有任何一层能看到所有层加总之后的真实使用量。合同把未来几年的调用预期提前折成今天的订单，这些订单叠加起来的总供给就可能超过当下的付费需求。每一层的判断单独看都成立，加总之后却可能超出真实使用量。",
+      "context": "融资让供给建设早于最终收入",
+      "translation": "Purchase orders are then issued layer by layer along the same chain. Cloud service providers allocate computing power according to the contracts, while GPU cloud service providers build data centers based on those same contracts. Server, memory, and packaging manufacturers then expand their production in response to these orders. Each level relies on the definite signals provided by the level above; no single level can see the total actual usage across all levels. Contracts convert the expected usage over the next few years into orders today, and the combined supply resulting from these orders may exceed the current payment requirements. Although each level’s decision is valid on its own, the sum of them may still exceed the actual usage."
+    },
+    "046a7ecdc1dca3ddedbe78d6038f1a7c27fd2c2fa1451ec09690ff06830b42de": {
+      "kind": "prose",
+      "source": "种种现象都没有证明泡沫已经发生，但是又无时无刻不揭示着目前的杠杆越加越大。它们说明长期合同和融资可以把未来收入提前转换成今天的服务器、GPU 和机房。只要有效任务持续增长，提前建设可以缩短交付时间，也能提高资产利用率。需求增速、续约率或利用率低于采购假设以后，租赁、折旧、电力和利息仍会继续发生。",
+      "context": "融资让供给建设早于最终收入",
+      "translation": "None of these phenomena prove that a bubble has formed, but they consistently indicate that the level of leverage is increasing. They show that long-term contracts and financing can convert future revenues into servers, GPUs, and data centers today. As legitimate workloads continue to grow, preemptive construction can shorten delivery times and improve asset utilization. Even if demand growth, renewal rates, or utilization fall short of the assumptions made during procurement, costs such as leasing, depreciation, electricity, and interest will still continue to arise."
+    },
+    "e4034104dc4b883b60f37350283d38f05d5e110c09d439fd22a158b8b85f2d40": {
+      "kind": "prose",
+      "source": "==blue|压力不会同时出现在所有指标上，也不会平均分布。即使模型调用总量仍在增长，只要供给增长得更快，最先承压的是价格类信号，包括 GPU 租赁价格、二手设备残值、服务器库存和部分内存价格。利用率和续约率属于经营结果，滞后一步；资产回报要等折旧和利息走完一个周期才显现。上游还可能在终端需求放缓以前继续收到订单，直到某个环节发现新增收入不足以覆盖资本成本，金融放大过程才会反向传导，造成牛鞭效应。==",
+      "context": "融资让供给建设早于最终收入",
+      "translation": "==blue|Pressure does not appear across all metrics at the same time, nor is it distributed evenly. Even as the total number of model invocations continues to rise, if supply grows faster, price-related indicators are the first to be affected, including GPU rental prices, residual values of used devices, server inventory, and certain memory prices. Utilization rates and renewal rates are outcomes of operational performance and lag behind; asset returns become apparent only after a full cycle of depreciation and interest has passed. Suppliers may continue to receive orders before demand at the end of the chain slows down, until a certain point where it becomes clear that new revenue is not sufficient to cover capital costs. Only then does the financial amplification effect work in reverse, causing a bullwhip effect.=="
+    },
+    "2e6405fb598b7de538980de48cfc5395ec2f18184b2c721200a9d8efdd3b13b1": {
+      "kind": "prose",
+      "source": "## 端侧是等待使用行为验证的第二条曲线",
+      "context": "",
+      "translation": "## The client side is the second curve where behavior verification is awaited"
+    },
+    "0af5af848775abb6db1d16dfb968fa3007f78b6b82527277408a8a79b6da8cf9": {
+      "kind": "prose",
+      "source": "汽车助手和家庭控制中枢需要快速响应，弱网时也要完成一部分操作。车内状态、家庭传感器和个人习惯还涉及隐私，本地处理可以减少部分数据上传。端侧适合承担唤醒、感知、简单决策和高频控制，复杂推理与长上下文仍可以交给云端。",
+      "context": "端侧是等待使用行为验证的第二条曲线",
+      "translation": "Car assistants and home control hubs need to respond quickly, and they must still be able to perform certain tasks even in low-network conditions. Information related to the status inside the vehicle, household sensors, and personal habits involves privacy issues, and local processing can reduce the amount of data that needs to be uploaded. The edge side is well-suited for tasks such as activation, sensing, simple decision-making, and frequent control, while complex reasoning and tasks that require extensive context can still be handled by the cloud."
+    },
+    "a26d6b171572dde4f7a4936d6431e321d5a960c31ef1deae0db3406c62349d70": {
+      "kind": "prose",
+      "source": "^[同时也更加适合未来的端侧智能助手的记忆、持续学习等功能]",
+      "context": "端侧是等待使用行为验证的第二条曲线",
+      "translation": "^[It is also more suitable for future capabilities such as memory and continuous learning in on-device intelligent assistants]"
+    },
+    "da4cc2826f8ce399a92bd7c322843705cfc1255f92f11275347bd50be58c6f2f": {
+      "kind": "prose",
+      "source": "本地运行消耗的是用户设备的电力，设备厂商仍要承担前置投入。更高规格的 SoC、内存和存储会增加 BOM，散热、模型适配、安全、OTA 更新和多年售后也需要工程资源。厂商只有在本地推理能够支持更高售价、减少云端调用支出、改善体验，或者满足隐私与离线要求时，才有理由长期承担这些成本。",
+      "context": "端侧是等待使用行为验证的第二条曲线",
+      "translation": "Local execution consumes power from the user’s device, and device manufacturers still have to bear the initial investment costs. Higher-specification SoCs, memory, and storage increase the BOM cost, while cooling, model adaptation, security, OTA updates, and long-term after-sales support also require engineering resources. Manufacturers will only have reason to bear these costs in the long term if local inference enables higher pricing, reduces cloud-based service expenses, improves the user experience, or meets privacy and offline requirements."
+    },
+    "1534dbdf17a9fecd8c7aa8e084bbe81bd1194d10826300426b82eee1e18f9251": {
+      "kind": "prose",
+      "source": "端侧芯片还要在有限功耗下处理模型更新。低比特计算、更高效的内存架构和端云调度可以缓解限制，能够部署不等于形成稳定需求。汽车和家庭设备的真实使用频率、本地运行占比、硬件增量成本和产品毛利，仍然是这条曲线最重要的验证指标。",
+      "context": "端侧是等待使用行为验证的第二条曲线",
+      "translation": "Edge-side chips also need to process model updates while maintaining low power consumption. Low-bit computing, more efficient memory architectures, and edge-cloud scheduling can help alleviate these constraints, but the ability to deploy such systems does not necessarily mean there will be a stable demand for them. The actual usage frequency of automotive and home devices, the proportion of operations performed locally, the additional hardware costs, and the gross profit of the products remain the most important indicators for validating this trend."
+    },
+    "dd4c345bc19dabc572c141e46657886ee74ee2ef75d0a001a2d212c14a49936f": {
+      "kind": "prose",
+      "source": "端侧一旦进入高频设备，需求会更分散，也更接近用户每天的真实行为。当前公开材料仍不足以证明这一阶段已经到来，所以我会把它保留为第二条曲线，不把产品演示提前写成大规模芯片订单。",
+      "context": "端侧是等待使用行为验证的第二条曲线",
+      "translation": "Once edge devices become high-frequency devices, the demands will be more diversified and closer to users’ actual daily behaviors. The available information to date is not sufficient to prove that this stage has been reached, so I will keep it as the second curve, without anticipating large-scale chip orders in the product demonstrations."
+    },
+    "784cdb5cfbdcf0f1fe6bec7b688f02ac95ff20365e70c24dd11708b47198c6e7": {
+      "kind": "prose",
+      "source": "## 未来持续观察的信号",
+      "context": "",
+      "translation": "## Signals for Ongoing Monitoring in the Future"
+    },
+    "0e7124e16c9d4b9be6e0b60f5622ee5ea12b8dfcdbaad5b4c001d98c8df693dc": {
+      "kind": "prose",
+      "source": "云端需求要看付费任务量、任务完成率和单位任务收入。有效 Token 可以帮助比较推理系统，但它要和延迟、质量、失败率一起看。云厂商的资本开支还要转化为 AI 云服务收入、现金流和更高的每兆瓦产出。",
+      "context": "未来持续观察的信号",
+      "translation": "For cloud demand, one needs to consider the volume of paid tasks, task completion rates, and revenue per task. Valid Tokens can assist in comparing reasoning systems, but they should be evaluated alongside latency, quality, and failure rates. Cloud service providers’ capital expenditures must also translate into revenue from AI cloud services, improved cash flow, and higher output per megawatt."
+    },
+    "2b8f6afb11631037b6c2919fa1a724dc0ddaccea589d663e985c1208378aee6d": {
+      "kind": "prose",
+      "source": "供应链要看 HBM 与标准 DRAM 的价格和库存是否分化，先进封装的交付周期是否缩短，GPU 租赁价格和二手残值是否开始下降。供给紧张带来的利润，只有在扩产以后仍能保持良率、认证优势和客户黏性，才更接近耐久优势。",
+      "context": "未来持续观察的信号",
+      "translation": "In terms of the supply chain, it is necessary to observe whether there is a divergence in prices and inventory levels between HBM and standard DRAM, whether the delivery times for advanced packaging are shortening, and whether GPU rental prices and second-hand residual values are starting to decline. The profits resulting from supply constraints can only be considered a sustainable advantage if good yield rates, certification advantages, and customer loyalty can be maintained even after capacity expansion."
+    },
+    "0796097f6765034df6514ea6e4ddf63065bbb89209515dfe6f5bd05f4f7d1e1d": {
+      "kind": "prose",
+      "source": "金融结构要看合同期限、债务期限和 GPU 经济寿命能否匹配。客户续约、机房上架进度和利用率，能够判断长期合同是在锁定真实需求，还是把未来需求提前计入了今天的投资。",
+      "context": "未来持续观察的信号",
+      "translation": "In terms of the financial structure, it is necessary to consider whether the contract duration, debt maturity period, and the economic lifespan of GPUs are compatible with each other. Customer renewals, the progress of deploying servers in data centers, and their utilization rates can help determine whether long-term contracts reflect actual demand or represent the anticipation of future demand being factored into today’s investments."
+    },
+    "014fb21cbd67ede6e9b412c095c5e3685e42ac37d5854e782363a53d0778ce02": {
+      "kind": "prose",
+      "source": "端侧要看助手的日均使用次数、本地完成比例和设备毛利。汽车与家庭设备开始承担高频任务以后，端侧芯片需求才会从配置竞争转成用户愿意持续使用的产品能力。",
+      "context": "未来持续观察的信号",
+      "translation": "On the device side, it is necessary to consider the average daily usage frequency of the assistant, the proportion of tasks completed locally, and the gross profit margin of the device. Only after cars and home devices start handling frequent tasks will the demand for device-side chips shift from a competition based on specifications to product capabilities that users are willing to use consistently."
+    },
+    "d249d9c77dec005513e9f7f52d3252fdd7c85ba0ce96bf3e7dfa1fbf5e44a7a5": {
+      "kind": "prose",
+      "source": "如果有效任务和收入能够跟上算力供给，GPU、ASIC、HBM、封装和数据中心仍有扩张空间。利润会更多留在能降低单位任务成本、掌握受限供给或控制客户与调度入口的环节。当租赁价格和残值这类领先信号持续走弱，利用率、续约和资产回报又持续低于采购假设时，即使 Agent 叙事仍然成立，这一轮基础设施投资也需要下调预期。",
+      "context": "未来持续观察的信号",
+      "translation": "If effective tasks and revenue can keep up with the supply of computing power, there is still room for growth in GPUs, ASICs, HBM, packaging, and data centers. Profits will remain with those who can reduce the cost per task, gain control over limited supplies, or manage customers and scheduling processes. When leading indicators such as rental prices and residual values continue to decline, and utilization rates, contract renewals, and asset returns remain below the assumptions made at the time of acquisition, even if the Agent narrative holds true, expectations for this round of infrastructure investment need to be lowered."
+    },
+    "0d4c48570bd9a7147c5bcb7b34f14d460d1108d2197c395ec0cf79f285028242": {
+      "kind": "prose",
+      "source": "## 关键来源",
+      "context": "",
+      "translation": "## Key Sources"
+    },
+    "d3d4e98ffe2393c06f77bb4e333481baec94b644ac37b566140a476d07afabc0": {
+      "kind": "prose",
+      "source": "- [NVIDIA 推理优化说明](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/)，Prefill、Decode、KV Cache 与内存带宽\n- [AWS Trainium 官方资料](https://aws.amazon.com/ai/machine-learning/trainium/)，芯片、Neuron 软件栈、服务器、网络与云服务的系统设计\n- [Google Ironwood 官方介绍](https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/ironwood-tpu-age-of-inference/)，大规模推理的计算、内存、互联和液冷配置\n- [台积电 2026 年第二季度业绩电话会](https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2026-07/547d1696765e05ce3adb81c108ce1c8c1682b80c/TSMC+2Q26+Transcript.pdf)，资本开支、扩产判断与终端部署核查\n- [SK hynix 2026 年第二季度业绩](https://news.skhynix.com/en/q2-2026-business-results)，HBM4 出货、长期协议与扩产计划",
+      "context": "关键来源",
+      "translation": "- [NVIDIA Inference Optimization Guide](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/), Prefill, Decode, KV Cache, and memory bandwidth\n- [AWS Trainium Official Documentation](https://aws.amazon.com/ai/machine-learning/trainium/), system design for chips, Neuron software stack, servers, networks, and cloud services\n- [Google Ironwood Official Introduction](https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/ironwood-tpu-age-of-inference/), computing, memory, interconnection, and liquid cooling configurations for large-scale inference\n- [TSMC’s Q2 2026 Earnings Call](https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2026-07/547d1696765e05ce3adb81c108ce1c8c1682b80c/TSMC+2Q26+Transcript.pdf), capital expenditure, expansion plans, and end-use deployment considerations\n- [SK hynix’s Q2 2026 Earnings Results](https://news.skhynix.com/en/q2-2026-business-results), HBM4 shipments, long-term agreements, and expansion plans"
+    }
+  }
 }
