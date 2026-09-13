@@ -32,7 +32,11 @@ Next.js 15 App Router、React 19、TypeScript(strict)、Tailwind 3、Vitest。
   frontmatter 里的 `permalink` 不参与路由。
 - `content/generated/translations/posts/*.json`：**翻译缓存，必须与源文件一起提交**。
   它是生成物，不要手改；缓存过期或 pipeline 版本不符时，目标语言的页面会直接抛错、
-  让 build 失败，而不会把文章从路由和列表里静默隐藏。
+  让 build 失败，而不会把文章从路由和列表里静默隐藏。缓存还会自我校验三件事：
+  格式版本（`TRANSLATION_CACHE_VERSION`，不认识的形状直接拒绝而不是硬读）、
+  生成身份（采样参数 + 本地模型 digest，任一改动都会让全篇自动重译，不靠人记得升版本）、
+  以及每条单元的译文是否真的出现在它发布到的字段里。脚本写入前跑同一套校验，
+  所以坏缓存写不进去。
 - `content/drafts/`：草稿区，不参与构建；写作与发布约定见 `content/drafts/README.md`。
 - `docs/insights-markup.md`：正文行内标记（`==red|文字==`、`^[批注]`）的唯一权威定义。
   渲染器、Notion 转换脚本、翻译校验三处都按它实现，改规则必须同步改三处。

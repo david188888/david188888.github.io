@@ -7,6 +7,16 @@
   "sourceLanguage": "zh",
   "targetLanguage": "en",
   "model": "hy-mt2-7b",
+  "generation": {
+    "parameters": {
+      "temperature": 0.7,
+      "top_p": 0.6,
+      "top_k": 20,
+      "repetition_penalty": 1.05,
+      "max_tokens": 4096
+    },
+    "modelDigest": "1c5ce930bf2e2655893f88e56f9d3bbcaf6edf87c3734ec7b0046edb7a554e0d"
+  },
   "mode": "hy-mt2",
   "title": "Computing Power for Reasoning in the Agent Era: Where Are GPU, HBM, and Compute Chips Heading?",
   "excerpt": "Agents are driving the competition in AI chips from individual chips to entire systems. This article breaks down the profit sources of cloud platforms, data centers, GPUs, HBM, and advanced packaging by examining a specific task, while also looking at how contracts and financing can accelerate development, with on-device AI serving as a second demand curve to be verified.",

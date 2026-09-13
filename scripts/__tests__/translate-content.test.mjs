@@ -12,9 +12,11 @@ import {
   extractBodyUnits,
   extractHtmlBlocks,
   extractTextNodes,
+  findModelDigest,
   hasInlineMarks,
   hasInlineStructure,
   listFenceMarkers,
+  ollamaTagsUrl,
   orderUnitsByPlan,
   parseFrontmatter,
   parseCliOptions,
@@ -40,6 +42,7 @@ import { createSourceHash as createRuntimeSourceHash } from "../../src/lib/conte
 import {
   createUnitKey,
   isTranslationCacheFresh,
+  TRANSLATION_CACHE_VERSION,
   TRANSLATION_PIPELINE_VERSION,
 } from "../../src/lib/content/translation-cache.mjs";
 import {
@@ -607,8 +610,33 @@ describe("body units for incremental reuse", () => {
   });
 });
 
+describe("model digest lookup", () => {
+  it("derives the Ollama tag endpoint from the chat base URL", () => {
+    expect(ollamaTagsUrl("http://localhost:11434/v1")).toBe("http://localhost:11434/api/tags");
+    expect(ollamaTagsUrl("http://localhost:11434/v1/")).toBe("http://localhost:11434/api/tags");
+    expect(ollamaTagsUrl("http://localhost:11434")).toBe("http://localhost:11434/api/tags");
+  });
+
+  it("finds a model by name with or without an explicit tag", () => {
+    const models = [
+      { name: "other:latest", digest: "zz" },
+      { name: "hy-mt2-7b:latest", digest: "1c5ce930" },
+    ];
+
+    expect(findModelDigest(models, "hy-mt2-7b")).toBe("1c5ce930");
+    expect(findModelDigest(models, "hy-mt2-7b:latest")).toBe("1c5ce930");
+  });
+
+  it("reports no digest rather than a wrong one", () => {
+    expect(findModelDigest([{ name: "other:latest", digest: "zz" }], "hy-mt2-7b")).toBeNull();
+    expect(findModelDigest([{ name: "hy-mt2-7b:latest" }], "hy-mt2-7b")).toBeNull();
+    expect(findModelDigest(undefined, "hy-mt2-7b")).toBeNull();
+  });
+});
+
 describe("translation cache contract", () => {
   const base = {
+    version: TRANSLATION_CACHE_VERSION,
     sourceHash: "abc",
     targetLanguage: "en",
     pipeline: TRANSLATION_PIPELINE_VERSION,

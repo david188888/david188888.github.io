@@ -4,7 +4,7 @@ import MarkdownIt from "markdown-it";
 import type { Locale } from "@/i18n/locales";
 import { defaultLocale } from "@/i18n/locales";
 import { createAnnotationIdFactory } from "./annotation-ids.mjs";
-import { createSourceHash, isTranslationCacheFresh } from "./cache";
+import { createSourceHash, findCacheInconsistencies, isTranslationCacheFresh } from "./cache";
 import { extractInlineMarks, restoreInlineMarks } from "./inline-marks.mjs";
 import { splitMarkdownSegments } from "./markdown-segments.mjs";
 import { detectSourceLanguage, getTargetLanguage } from "./language";
@@ -73,6 +73,7 @@ interface ParsedPost {
 }
 
 interface TranslationCache {
+  version?: number;
   sourceHash?: string;
   targetLanguage?: Locale;
   pipeline?: string;
@@ -164,6 +165,17 @@ export function getLocalizedPost(slug: string, locale: Locale = defaultLocale): 
       `${postPath}: missing or stale translation cache — the ${targetLanguage} page cannot be built. ` +
         `The cache goes stale when the source changes or the pipeline version changes. ` +
         `Run npm run translate:content and commit the cache together with the MDX.`
+    );
+  }
+
+  // Freshness says the cache belongs to this source; this says the cache agrees
+  // with itself. A body edited without its units (or the other way round) would
+  // otherwise be published as if nothing had happened.
+  const problems = findCacheInconsistencies(cache);
+  if (problems.length > 0) {
+    throw new Error(
+      `${postPath}: the ${targetLanguage} translation cache contradicts itself:\n  - ${problems.join("\n  - ")}\n` +
+        `Run npm run translate:content to rebuild it; do not edit the cache by hand.`
     );
   }
 

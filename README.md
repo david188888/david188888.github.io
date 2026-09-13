@@ -247,6 +247,29 @@ validator changes, and note that changing `HY_MT2_MODEL` also invalidates. The
 site checks the same pipeline version, so a prompt change fails the build until
 translation is re-run instead of silently republishing old output.
 
+Beyond the unit keys, a cache records what produced it:
+
+- `version` (`TRANSLATION_CACHE_VERSION`) — the shape of the document. A loader
+  that sees a version it does not know rejects the file instead of guessing at
+  it, so a breaking shape change is a loud "re-run the script", not a misread.
+- `generation.parameters` and `generation.modelDigest` — the sampling parameters
+  and the digest Ollama reports for the model. A model re-created from an edited
+  Modelfile, or replaced by a different GGUF, keeps its name and changes its
+  digest, so the name alone is not identity. The script compares this once per
+  post and retranslates the whole post when it moved. The site cannot see a
+  digest, which is why that comparison lives in the script.
+- `glossary` — the glossary identity, described below.
+
+Reading the digest is a metadata call to Ollama's `/api/tags`, so `--check`
+touches the local server but never runs inference. An endpoint that does not
+report digests degrades the identity with a warning instead of failing the run.
+
+A cache is also checked against itself: every unit's translation has to appear
+in the field that publishes it — `body` for prose, fenced blocks and diagram
+labels, the matching front-matter field for `title`, `excerpt` and `tags`. The
+script runs that check before writing and the site runs it before rendering,
+because a cache whose halves disagree has no way to say which half is right.
+
 ### Glossary
 
 `src/lib/content/translation-glossary.mjs` is the single source for proper nouns

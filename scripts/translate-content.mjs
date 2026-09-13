@@ -15,6 +15,9 @@ import {
 import {
   createSourceHash,
   createUnitKey,
+  findCacheInconsistencies,
+  generationRequiresRetranslation,
+  hasGeneration,
   isTranslationCacheFresh,
   TRANSLATION_CACHE_VERSION,
   TRANSLATION_PIPELINE_VERSION,
@@ -986,6 +989,17 @@ async function main() {
   const baseUrl = process.env.HY_MT2_BASE_URL || DEFAULT_BASE_URL;
   const model = process.env.HY_MT2_MODEL || DEFAULT_MODEL;
 
+  // Metadata read, never inference, so `--check` stays free of model calls. A
+  // server that does not report digests degrades the identity instead of
+  // failing the run: see `readModelDigest`.
+  const modelDigest = await readModelDigest(baseUrl, model);
+  if (modelDigest === null) {
+    console.warn(
+      `Could not read a model digest from ${ollamaTagsUrl(baseUrl)}; ` +
+        `this run cannot notice a re-created or swapped ${model}.`
+    );
+  }
+
   const allPaths = await listPostPaths();
   const sourcePaths = only
     ? allPaths.filter(
@@ -1009,7 +1023,7 @@ async function main() {
   for (const sourcePath of sourcePaths) {
     let outcome;
     try {
-      outcome = await translatePost({ sourcePath, baseUrl, model, force, dryRun, concurrency });
+      outcome = await translatePost({ sourcePath, baseUrl, model, modelDigest, force, dryRun, concurrency });
     } catch (error) {
       failures.push(`${sourcePath}: ${error.message}`);
       console.error(`Failed ${sourcePath}: ${error.message}`);
@@ -1041,7 +1055,7 @@ async function main() {
   }
 }
 
-async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concurrency }) {
+async function translatePost({ sourcePath, baseUrl, model, modelDigest, force, dryRun, concurrency }) {
   const source = await fs.readFile(sourcePath, "utf8");
   const parsed = parseFrontmatter(source);
   const title = normalizeString(parsed.frontmatter.title);
@@ -1064,9 +1078,39 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
       ? previousCache.units
       : {};
 
-  if (!force && !dryRun && isTranslationCacheFresh(previousCache, { sourceHash, targetLanguage, model })) {
+  // What produced this text besides the source and the prompts. Changing either
+  // input changes every unit at once, which is why it is compared here instead
+  // of being folded into 87 unit keys.
+  const generation = { parameters: GENERATION_PARAMETERS, modelDigest };
+  const generationMoved =
+    hasGeneration(previousCache) && generationRequiresRetranslation(previousCache.generation, generation);
+
+  if (generationMoved) {
+    console.warn(
+      `${sourcePath}: the model or the sampling parameters changed since this cache was written; ` +
+        `retranslating every unit.`
+    );
+  }
+
+  // The generation identity is part of what makes a cache self-describing, so a
+  // cache that never recorded one gets rewritten once — reusing every unit, not
+  // retranslating — rather than keeping a gap in what the file can prove about
+  // itself.
+  const generationRecorded = hasGeneration(previousCache);
+
+  if (
+    !force &&
+    !generationMoved &&
+    !dryRun &&
+    generationRecorded &&
+    isTranslationCacheFresh(previousCache, { sourceHash, targetLanguage, model })
+  ) {
     console.log(`Skipping ${sourcePath}: fresh translation cache exists.`);
     return { status: "fresh", reused: 0, translated: 0, pending: 0 };
+  }
+
+  if (!dryRun && previousCache && !generationRecorded && !generationMoved) {
+    console.log(`${sourcePath}: recording the model generation for this cache.`);
   }
 
   const request = { baseUrl, model, sourceLanguage, targetLanguage };
@@ -1081,7 +1125,7 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
     createUnitKey({ kind, source: unitSource, context, model, termsHash: createTermsHash(terms) });
 
   const cachedByKey = (key) => {
-    if (force) return null;
+    if (force || generationMoved) return null;
     const cached = previousUnits[key];
     return cached && typeof cached.translation === "string" && cached.translation.trim() !== ""
       ? cached.translation
@@ -1421,6 +1465,7 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
     sourceLanguage,
     targetLanguage,
     model,
+    generation,
     mode: "hy-mt2",
     title: translatedTitle,
     excerpt: translatedExcerpt,
@@ -1428,6 +1473,16 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
     body: finalBody,
     units: orderedUnits,
   };
+
+  // The cache is the one place where the published fields and the units they
+  // were assembled from sit side by side; if they disagree, no reader can tell
+  // which half is right.
+  const inconsistencies = findCacheInconsistencies(cache);
+  if (inconsistencies.length > 0) {
+    throw new Error(
+      `${sourcePath}: refusing to write a cache that contradicts itself:\n  - ${inconsistencies.join("\n  - ")}`
+    );
+  }
 
   await fs.mkdir(path.dirname(cachePath), { recursive: true });
   await fs.writeFile(cachePath, `${JSON.stringify(cache, null, 2)}\n`);
@@ -1555,6 +1610,70 @@ const REQUEST_BASE_RETRY_DELAY_MS = 2_000;
 // a whole post for one unlucky sample would be worse than re-asking. A prompt
 // that is systematically wrong still fails, after a bounded number of calls.
 const GLOSSARY_MAX_ATTEMPTS = 3;
+
+// How long to wait for the metadata read that identifies the local model.
+const MODEL_DIGEST_TIMEOUT_MS = 5_000;
+
+/**
+ * The Ollama tag list for a base URL, used only to read model digests.
+ *
+ * The chat endpoint is an OpenAI-compatible `${base}/v1`; Ollama's own metadata
+ * lives one level up. A base URL without a `/v1` suffix is used as it is.
+ */
+export function ollamaTagsUrl(baseUrl) {
+  const trimmed = String(baseUrl).replace(/\/+$/, "");
+  const root = trimmed.endsWith("/v1") ? trimmed.slice(0, -3) : trimmed;
+
+  return `${root}/api/tags`;
+}
+
+/**
+ * The digest of a model in an Ollama tag listing, or null when it is absent.
+ *
+ * Ollama identifies a model by name and digest. The name survives an
+ * `ollama create` from an edited Modelfile or a different GGUF while the digest
+ * does not, which is exactly the swap the cache has to notice. Names are matched
+ * with and without an explicit `:tag`, because a model created as `hy-mt2-7b`
+ * reports itself as `hy-mt2-7b:latest`.
+ */
+export function findModelDigest(models, model) {
+  if (!Array.isArray(models)) return null;
+
+  const wanted = String(model);
+
+  for (const entry of models) {
+    if (!entry || typeof entry !== "object") continue;
+
+    const names = [entry.name, entry.model].filter((name) => typeof name === "string");
+    if (!names.some((name) => name === wanted || name.split(":")[0] === wanted)) continue;
+
+    return typeof entry.digest === "string" && entry.digest !== "" ? entry.digest : null;
+  }
+
+  return null;
+}
+
+/**
+ * Reads the local model's digest, or null when the endpoint does not report one.
+ *
+ * Best effort on purpose. The chat endpoint is the only interface the pipeline
+ * truly needs, and a proxy that exposes `/v1` alone cannot answer `/api/tags`;
+ * an unreadable digest degrades the identity (a swapped model goes unnoticed
+ * until the parameters or the source change) but must never fail a run.
+ */
+async function readModelDigest(baseUrl, model) {
+  try {
+    const response = await fetch(ollamaTagsUrl(baseUrl), {
+      signal: AbortSignal.timeout(MODEL_DIGEST_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+
+    const payload = await response.json();
+    return findModelDigest(payload?.models, model);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Rejects a response the model cut short.
