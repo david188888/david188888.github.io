@@ -56,6 +56,9 @@ const RE_ORDERED = /^\s*\d+\.\s+(.*)$/;
 /** A line that opens a raw HTML block, excluding inline `<span>` annotations. */
 const RE_RAW_HTML_START = /^\s*<(?!\/?span\b)([a-zA-Z][a-zA-Z0-9-]*)/;
 
+/** A line that opens block-level markup: a tag or an HTML comment. */
+const RE_MARKUP_START = /^\s*(?:<!--|<(?!\/?span\b)[a-zA-Z][a-zA-Z0-9-]*)/;
+
 export class ConversionError extends Error {
   constructor(message) {
     super(message);
@@ -177,6 +180,19 @@ export function parseMetadataCallout(section) {
 /** True when the line opens a raw HTML block rather than an inline annotation. */
 function isRawHtmlBlockStart(line) {
   return RE_RAW_HTML_START.test(line);
+}
+
+/**
+ * True when a fenced body opens as block-level markup rather than sample code.
+ *
+ * Only the first non-empty line is inspected: a diagram written on the Notion
+ * side always starts with its outermost element (or a leading HTML comment), so
+ * this separates "the author embedded a figure" from "the author quoted some
+ * HTML", without having to parse the body.
+ */
+function looksLikeMarkup(lines) {
+  const first = lines.find((line) => line.trim() !== "");
+  return first !== undefined && RE_MARKUP_START.test(first);
 }
 
 /**
@@ -399,6 +415,7 @@ export function convertBodySection(section, options = {}) {
   const report = {
     blocks: 0,
     marks: 0,
+    htmlFencesUnwrapped: 0,
     notesPublished: [],
     notesSkipped: [],
     warnings: [],
@@ -518,10 +535,23 @@ export function convertBodySection(section, options = {}) {
       case "code": {
         const rawLanguage = block.lines[0].replace(/^\s*```/, "");
         const language = normaliseFenceLanguage(rawLanguage);
+        const fencedBody = block.lines.slice(1, -1);
+
+        // A ```html fence whose body is markup is author-written block HTML,
+        // not sample code. The renderer never promotes fenced content to live
+        // HTML (`src/lib/content/markdown-segments.mjs`), so keeping the fence
+        // publishes the diagram as escaped source text. Drop the fence and emit
+        // the markup as a block-level HTML chunk instead.
+        if (language === "html" && looksLikeMarkup(fencedBody)) {
+          chunks.push(fencedBody.map((line) => stripDiscussionSpans(line).text).join("\n"));
+          report.htmlFencesUnwrapped += 1;
+          break;
+        }
+
         if (language !== rawLanguage.trim()) {
           localWarn(`代码块语言已规范为 "${language}"（原为 "${rawLanguage.trim()}"）。`);
         }
-        chunks.push(["```" + language, ...block.lines.slice(1, -1), "```"].join("\n"));
+        chunks.push(["```" + language, ...fencedBody, "```"].join("\n"));
         break;
       }
 
@@ -686,6 +716,11 @@ function formatReport(result) {
   const out = [""];
   out.push(`目标源文件：${result.sourcePath}`);
   out.push(`转换块数：${report.blocks} ｜ 彩色下划线：${report.marks} 处`);
+  if (report.htmlFencesUnwrapped > 0) {
+    out.push(
+      `已拆掉 html 代码块的围栏：${report.htmlFencesUnwrapped} 处（围栏内的 HTML 会作为块级 HTML 渲染）`
+    );
+  }
   out.push(`已发布页边注：${report.notesPublished.length} 条`);
   for (const note of report.notesPublished) out.push(`  ✓ ${note}`);
 

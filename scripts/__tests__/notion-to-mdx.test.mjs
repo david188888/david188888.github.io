@@ -317,6 +317,59 @@ describe("conversion output shape", () => {
   });
 });
 
+describe("html fences", () => {
+  const markup = '```html\n<figure class="demo">\n  <svg viewBox="0 0 10 10"><text>Flow</text></svg>\n</figure>\n```';
+
+  it("unwraps a ```html fence whose body is markup", () => {
+    const { chunks, report } = convertBodySection(`${markup}\n后文`);
+
+    expect(chunks[0]).toBe(
+      '<figure class="demo">\n  <svg viewBox="0 0 10 10"><text>Flow</text></svg>\n</figure>'
+    );
+    expect(chunks[0]).not.toContain("```");
+    expect(chunks[1]).toBe("后文");
+    expect(report.htmlFencesUnwrapped).toBe(1);
+  });
+
+  it("unwrapped markup renders as live HTML instead of escaped source text", () => {
+    const { chunks } = convertBodySection(markup);
+    const html = renderMarkdownToHtml(chunks.join("\n\n"));
+
+    expect(html).toContain('<svg viewBox="0 0 10 10">');
+    expect(html).not.toContain("<pre><code>");
+    expect(html).not.toContain("&lt;figure");
+  });
+
+  it("keeps a fenced diagram as escaped code when the fence is not html", () => {
+    const { chunks, report } = convertBodySection(markup.replace("```html", "```markdown"));
+    const html = renderMarkdownToHtml(chunks.join("\n\n"));
+
+    expect(chunks[0]).toContain("```markdown");
+    expect(report.htmlFencesUnwrapped).toBe(0);
+    expect(html).toContain("<pre><code>");
+  });
+
+  it("keeps a ```html fence whose body is prose rather than markup", () => {
+    const { chunks, report } = convertBodySection("```html\n把 <b> 写在同一行\n```");
+
+    expect(chunks[0]).toBe("```html\n把 <b> 写在同一行\n```");
+    expect(report.htmlFencesUnwrapped).toBe(0);
+  });
+
+  it("keeps fences in other languages verbatim", () => {
+    const { chunks, report } = convertBodySection("```js\nconst a = 1;\n```");
+
+    expect(chunks[0]).toBe("```js\nconst a = 1;\n```");
+    expect(report.htmlFencesUnwrapped).toBe(0);
+  });
+
+  it("does not count fences that were never present", () => {
+    const { report } = convertNotionFetch(FETCH);
+
+    expect(report.htmlFencesUnwrapped).toBe(0);
+  });
+});
+
 describe("renderer compatibility", () => {
   it("renders the converted body, note and marks included", () => {
     const html = renderMarkdownToHtml(convertNotionFetch(FETCH).body);
