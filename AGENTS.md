@@ -31,15 +31,24 @@ Next.js 15 App Router、React 19、TypeScript(strict)、Tailwind 3、Vitest。
 - `content/posts/*.mdx`：已发布文章，唯一被站点读取的内容目录；**文件名即 URL**，
   frontmatter 里的 `permalink` 不参与路由。
 - `content/generated/translations/posts/*.json`：**翻译缓存，必须与源文件一起提交**。
-  它是生成物，不要手改；缓存过期或 pipeline 版本不符时站点会让 build 直接失败。
+  它是生成物，不要手改；缓存过期或 pipeline 版本不符时，目标语言的页面会直接抛错、
+  让 build 失败，而不会把文章从路由和列表里静默隐藏。
 - `content/drafts/`：草稿区，不参与构建；写作与发布约定见 `content/drafts/README.md`。
 - `docs/insights-markup.md`：正文行内标记（`==red|文字==`、`^[批注]`）的唯一权威定义。
   渲染器、Notion 转换脚本、翻译校验三处都按它实现，改规则必须同步改三处。
 - `scripts/translate-content.mjs`：增量翻译管线；缓存契约在
   `src/lib/content/translation-cache.mjs`（脚本与站点共用）。改 prompt、切分或校验后
   必须升 `TRANSLATION_PIPELINE_VERSION`，否则旧缓存会被当成新鲜译文继续发布。
+- `src/lib/content/translation-glossary.mjs`：术语表，专有名词与统一译法的唯一来源。
+  它同样由脚本与站点共用：内容哈希以 `glossary` 写进每条翻译缓存并参与新鲜度判定，
+  所以**改术语表不需要手动升版本**，但必须重跑 `translate:content`（站点会先报
+  build 失败）。只有「该单元源文里命中」的术语会注入 prompt 与缓存键，改一条术语
+  只重译受影响的单元。术语命中译文违规时管线会先重采样若干次，仍不过才中止。
 - `scripts/notion-to-mdx.mjs`：Notion → MDX 的确定性转换；完整同步流程见 README
-  的 “Syncing An Existing Post From Notion”。
+  的 “Syncing An Existing Post From Notion”。正文里的图表以**无围栏的块级 HTML** 落进
+  MDX：```` ```html ```` 围栏内的标记语言会被转换脚本自动拆掉围栏，因为
+  `src/lib/content/markdown-segments.mjs` 规定围栏块永远不会被提升为实时 HTML，
+  留着围栏等于把图表当源码文本发到页面上。
 - `.agents/skills/`：随仓库发布的 skill（DSH 只扫这里）。`.claude/` 不被 git 跟踪，
   其中的 skill 只是本机 Claude Code 副本。
 - `src/config/profile.ts`：首页、CV、论文等双语资料的唯一来源。

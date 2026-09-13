@@ -75,6 +75,7 @@ interface TranslationCache {
   sourceHash?: string;
   targetLanguage?: Locale;
   pipeline?: string;
+  glossary?: string;
   title?: string;
   excerpt?: string;
   tags?: string[];
@@ -84,10 +85,14 @@ interface TranslationCache {
 
 export function getPostSlugs(): string[] {
   if (!existsSync(POSTS_DIR)) return [];
+  // Every published `.mdx` is returned, including one whose translation cache is
+  // stale. Filtering here used to drop such a post from the routes and listings
+  // while the build stayed green, so the article silently 404'd. A stale cache
+  // is now surfaced by `getLocalizedPost` below, which fails the build with an
+  // actionable message instead.
   return readdirSync(POSTS_DIR)
     .filter((name) => name.endsWith(".mdx"))
     .map((name) => basename(name, ".mdx"))
-    .filter((slug) => hasFreshTranslationCache(slug))
     .sort();
 }
 
@@ -154,7 +159,11 @@ export function getLocalizedPost(slug: string, locale: Locale = defaultLocale): 
 
   const cache = readTranslationCache(slug);
   if (!isFreshCache(cache, sourceHash, targetLanguage)) {
-    throw new Error(`${postPath}: missing or stale translation cache. Run npm run translate:content.`);
+    throw new Error(
+      `${postPath}: missing or stale translation cache — the ${targetLanguage} page cannot be built. ` +
+        `The cache goes stale when the source changes or the pipeline version changes. ` +
+        `Run npm run translate:content and commit the cache together with the MDX.`
+    );
   }
 
   return createPost({
@@ -166,20 +175,6 @@ export function getLocalizedPost(slug: string, locale: Locale = defaultLocale): 
     tags: arrayValue(cache.tags),
     body: stringValue(cache.body),
   });
-}
-
-function hasFreshTranslationCache(slug: string): boolean {
-  const postPath = join(POSTS_DIR, `${slug}.mdx`);
-  if (!existsSync(postPath)) return false;
-
-  const source = readFileSync(postPath, "utf8");
-  const sourceHash = createSourceHash(source);
-  const { frontmatter, body } = parseFrontmatter(source);
-  const sourceLanguage = getSourceLanguage(frontmatter, body);
-  if (!sourceLanguage) return false;
-
-  const cache = readTranslationCache(slug);
-  return isFreshCache(cache, sourceHash, getTargetLanguage(sourceLanguage));
 }
 
 function parseFrontmatter(source: string): ParsedPost {

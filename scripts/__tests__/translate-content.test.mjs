@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyTextTranslations,
   assembleBody,
+  assertResponseComplete,
   buildHtmlTextPrompt,
   buildTagsPrompt,
   buildTitlePrompt,
@@ -41,8 +42,36 @@ import {
   isTranslationCacheFresh,
   TRANSLATION_PIPELINE_VERSION,
 } from "../../src/lib/content/translation-cache.mjs";
+import {
+  buildTerminologyBlock,
+  createGlossaryHash,
+  createTermsHash,
+  selectGlossaryTerms,
+  validateGlossaryTerms,
+  TRANSLATION_GLOSSARY,
+  TRANSLATION_GLOSSARY_VERSION,
+} from "../../src/lib/content/translation-glossary.mjs";
 import { renderMarkdownToHtml } from "../../src/lib/content/posts.ts";
 import { splitMarkdownSegments } from "../../src/lib/content/markdown-segments.mjs";
+
+describe("assertResponseComplete", () => {
+  const payload = (finishReason) => ({ choices: [{ finish_reason: finishReason, message: { content: "text" } }] });
+
+  it("rejects a response the model cut short", () => {
+    expect(() => assertResponseComplete(payload("length"), "body unit 3/12")).toThrow(
+      /hit the token limit for body unit 3\/12 \(finish_reason: "length"\)/
+    );
+  });
+
+  it("accepts a response that stopped on its own", () => {
+    expect(() => assertResponseComplete(payload("stop"), "body unit 1/12")).not.toThrow();
+  });
+
+  it("accepts a payload that omits finish_reason", () => {
+    expect(() => assertResponseComplete({ choices: [{ message: { content: "text" } }] }, "label")).not.toThrow();
+    expect(() => assertResponseComplete(undefined, "label")).not.toThrow();
+  });
+});
 
 describe("translate-content helpers", () => {
   it("parses frontmatter and body", () => {
@@ -315,6 +344,151 @@ describe("Hy-MT2 prompt builders", () => {
   });
 });
 
+describe("translation glossary", () => {
+  it("selects only the terms a unit's own text contains", () => {
+    const both = selectGlossaryTerms("端侧芯片要等待长鑫之类的企业", "zh");
+    expect(both.map((term) => term.source).sort()).toEqual(["端侧", "长鑫"].sort());
+    expect(both.map((term) => term.target).sort()).toEqual(["CXMT", "on-device"].sort());
+
+    const one = selectGlossaryTerms("端侧构成第二条需求曲线", "zh");
+    expect(one).toHaveLength(1);
+    expect(one[0]).toMatchObject({ source: "端侧", target: "on-device", enforce: true });
+
+    expect(selectGlossaryTerms("普通段落，没有任何术语。", "zh")).toEqual([]);
+  });
+
+  it("resolves the longest alias inside one entry", () => {
+    expect(selectGlossaryTerms("长鑫存储宣布扩产", "zh")[0].source).toBe("长鑫存储");
+  });
+
+  it("reads the table in the source direction", () => {
+    const terms = selectGlossaryTerms("many companies like CXMT", "en");
+
+    expect(terms).toHaveLength(1);
+    expect(terms[0]).toMatchObject({ source: "CXMT", target: "长鑫存储", enforce: false });
+  });
+
+  it("keeps aliases unambiguous across entries", () => {
+    for (const side of ["zh", "en"]) {
+      const opposite = side === "zh" ? "en" : "zh";
+      const keys = TRANSLATION_GLOSSARY.flatMap((entry) => entry[side].map((key) => ({ key, entry })));
+
+      for (const outer of keys) {
+        for (const inner of keys) {
+          if (outer.entry === inner.entry || outer.key === inner.key) continue;
+          if (!outer.key.includes(inner.key)) continue;
+
+          // A narrower phrase may sit on top of a broader term only when its
+          // target builds on the broader target. Otherwise one passage matches
+          // two entries with unrelated instructions and the model has to guess.
+          expect(
+            outer.entry[opposite][0].includes(inner.entry[opposite][0]),
+            `${outer.key} (${outer.entry[opposite][0]}) overlaps ${inner.key} (${inner.entry[opposite][0]})`
+          ).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("hashes the table by content and not by layout", () => {
+    const a = [{ zh: ["甲"], en: ["A"] }];
+
+    expect(createGlossaryHash(a)).toBe(createGlossaryHash([{ zh: ["甲"], en: ["A"] }]));
+    expect(createGlossaryHash(a)).not.toBe(createGlossaryHash([{ zh: ["甲"], en: ["B"] }]));
+    expect(createGlossaryHash(a)).toMatch(/^[0-9a-f]{64}$/);
+    expect(TRANSLATION_GLOSSARY_VERSION).toBe(createGlossaryHash(TRANSLATION_GLOSSARY).slice(0, 8));
+  });
+
+  it("hashes selected terms, including their rules", () => {
+    const base = [{ source: "长鑫", target: "CXMT", enforce: true, forbid: ["GigaDevice"] }];
+
+    expect(createTermsHash([])).toBe("");
+    expect(createTermsHash(base)).toBe(createTermsHash([...base]));
+    expect(createTermsHash(base)).not.toBe(createTermsHash([{ ...base[0], target: "ChangXin" }]));
+    expect(createTermsHash(base)).not.toBe(createTermsHash([{ ...base[0], forbid: [] }]));
+  });
+
+  it("writes the terminology block in the official wording", () => {
+    const terms = selectGlossaryTerms("端侧", "zh");
+
+    expect(buildTerminologyBlock(terms, "zh")).toBe("参考下面的翻译：\n`端侧` 翻译成 `on-device`");
+    expect(buildTerminologyBlock(terms, "en")).toBe(
+      "Reference the following translations:\n`端侧` translates to `on-device`"
+    );
+    expect(buildTerminologyBlock([], "zh")).toBe("");
+  });
+
+  it("selects the phrase entry alongside the term it builds on", () => {
+    const terms = selectGlossaryTerms("中间展示端侧设备形成的第二条需求曲线。", "zh");
+
+    expect(terms.map((term) => term.source)).toEqual(["端侧设备", "端侧"]);
+    expect(terms.map((term) => term.target)).toEqual(["on-device hardware", "on-device"]);
+  });
+
+  it("rejects a published translation of 长鑫 as another company", () => {
+    const terms = selectGlossaryTerms("（例如出现很多长鑫之类的企业）", "zh");
+
+    expect(() =>
+      validateGlossaryTerms({
+        translation: "(for example, with the emergence of many companies like GigaDevice)",
+        terms,
+        label: "body unit 21/48",
+      })
+    ).toThrow(/body unit 21\/48未通过术语检查.*GigaDevice/);
+
+    expect(() =>
+      validateGlossaryTerms({ translation: "companies like CXMT", terms, label: "body unit 21/48" })
+    ).not.toThrow();
+  });
+
+  it("requires the canonical spelling when an entry enforces one", () => {
+    const terms = selectGlossaryTerms("端侧是第二条曲线", "zh");
+
+    expect(() => validateGlossaryTerms({ translation: "The edge side is the second curve.", terms })).toThrow(
+      /on-device/
+    );
+    expect(() => validateGlossaryTerms({ translation: "The client side is the second curve.", terms })).toThrow(
+      /on-device/
+    );
+    expect(() => validateGlossaryTerms({ translation: "On-device is the second curve.", terms })).not.toThrow();
+    expect(() => validateGlossaryTerms({ translation: "on device computing", terms })).not.toThrow();
+  });
+
+  it("does not fire on text without glossary terms", () => {
+    expect(() => validateGlossaryTerms({ translation: "cutting-edge technologies", terms: [] })).not.toThrow();
+  });
+
+  it("prefixes the glossary block without touching the clause chain", () => {
+    const source = "承担**更长的建设周期**的投入，例如出现很多长鑫之类的企业。";
+    const terms = selectGlossaryTerms(source, "zh");
+    const prompt = buildTranslatePrompt({
+      sourceText: source,
+      sourceLanguage: "zh",
+      targetLanguage: "en",
+      preserveStructure: true,
+      terms,
+    });
+
+    expect(prompt.startsWith("参考下面的翻译：\n`长鑫` 翻译成 `CXMT`\n将以下文本翻译为 `英语`")).toBe(true);
+
+    const clause = prompt.slice(prompt.indexOf("，并且"), prompt.indexOf("：\n\n"));
+    expect(clause).not.toMatch(/[*=^`]/);
+  });
+
+  it("leaves a prompt with no matching terms byte-for-byte unchanged", () => {
+    const plain = { sourceText: "普通正文。", sourceLanguage: "zh", targetLanguage: "en" };
+
+    expect(buildTranslatePrompt({ ...plain, terms: [] })).toBe(buildTranslatePrompt(plain));
+    expect(buildTranslatePrompt(plain).startsWith("将以下文本翻译为")).toBe(true);
+  });
+
+  it("carries a version that a prompt-shape change has to bump", () => {
+    // Guards against editing the prompts without deciding what happens to the
+    // caches written by the previous shape.
+    expect(TRANSLATION_PIPELINE_VERSION).toBe("hy-mt2-v3");
+  });
+});
+
 describe("body units for incremental reuse", () => {
   it("reassembles a body byte-for-byte from its units", () => {
     const body = [
@@ -382,7 +556,7 @@ describe("body units for incremental reuse", () => {
     const before = extractBodyUnits("第一段。\n\n第二段。\n\n第三段。\n\n第四段。").units;
     const after = extractBodyUnits("第一段。\n\n第二段改长了，加了一句话。\n\n第三段。\n\n第四段。").units;
     const identity = (unit) =>
-      createUnitKey({ kind: unit.kind, source: unit.source, context: unit.context, model: "m" });
+      createUnitKey({ kind: unit.kind, source: unit.source, context: unit.context, model: "m", termsHash: "" });
 
     const beforeKeys = new Set(before.filter((unit) => unit.kind !== "verbatim").map(identity));
     const untouched = after.filter((unit) => unit.source === "第三段。" || unit.source === "第四段。");
@@ -438,6 +612,7 @@ describe("translation cache contract", () => {
     sourceHash: "abc",
     targetLanguage: "en",
     pipeline: TRANSLATION_PIPELINE_VERSION,
+    glossary: TRANSLATION_GLOSSARY_VERSION,
     model: "hy-mt2-7b",
     body: "text",
   };
@@ -472,8 +647,18 @@ describe("translation cache contract", () => {
     expect(isTranslationCacheFresh(null, { sourceHash: "abc", targetLanguage: "en" })).toBe(false);
   });
 
-  it("moves a unit key when the model, the context, or the pipeline changes", () => {
-    const unit = { kind: "prose", source: "正文", context: "小节", model: "hy-mt2-7b" };
+  it("rejects a cache written under a different glossary", () => {
+    expect(
+      isTranslationCacheFresh({ ...base, glossary: "00000000" }, { sourceHash: "abc", targetLanguage: "en" })
+    ).toBe(false);
+
+    // A cache written before the glossary existed has no field at all.
+    const { glossary: _dropped, ...preGlossary } = base;
+    expect(isTranslationCacheFresh(preGlossary, { sourceHash: "abc", targetLanguage: "en" })).toBe(false);
+  });
+
+  it("moves a unit key when the model, the context, the terms or the pipeline changes", () => {
+    const unit = { kind: "prose", source: "正文", context: "小节", model: "hy-mt2-7b", termsHash: "" };
     const key = createUnitKey(unit);
 
     expect(createUnitKey({ ...unit })).toBe(key);
@@ -481,6 +666,13 @@ describe("translation cache contract", () => {
     expect(createUnitKey({ ...unit, context: "别的小节" })).not.toBe(key);
     expect(createUnitKey({ ...unit, source: "别的正文" })).not.toBe(key);
     expect(createUnitKey({ ...unit, pipelineVersion: "old" })).not.toBe(key);
+    expect(createUnitKey({ ...unit, termsHash: "a1b2c3d4" })).not.toBe(key);
+  });
+
+  it("refuses to build a unit key without a terms hash", () => {
+    // A caller that forgets termsHash would key its units differently from one
+    // that passes it, and the mismatch would never surface.
+    expect(() => createUnitKey({ kind: "prose", source: "正文" })).toThrow(/termsHash/);
   });
 });
 

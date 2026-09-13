@@ -22,6 +22,7 @@
  */
 
 import { createHash } from "node:crypto";
+import { TRANSLATION_GLOSSARY_VERSION } from "./translation-glossary.mjs";
 
 /**
  * Cache format version. Bumped when the shape of the cache JSON changes.
@@ -36,9 +37,10 @@ export const TRANSLATION_CACHE_VERSION = 2;
  *
  * It participates in the whole-post freshness check AND in every unit key, so a
  * bump forces a clean retranslation instead of silently reusing output produced
- * by an older pipeline.
+ * by an older pipeline. Glossary edits do not need a manual bump: the glossary
+ * has its own version, derived from its contents.
  */
-export const TRANSLATION_PIPELINE_VERSION = "hy-mt2-v2";
+export const TRANSLATION_PIPELINE_VERSION = "hy-mt2-v3";
 
 /**
  * SHA-256 of a raw source document.
@@ -58,11 +60,15 @@ export function createSourceHash(source) {
  * Content address for one translation unit.
  *
  * Every input that can change the produced text is folded into the key: the
- * pipeline version, the model, the unit kind, the section context, and the
- * source text itself. Two units with the same key are interchangeable, so the
- * cached translation can be reused wherever the key reappears.
+ * pipeline version, the model, the unit kind, the section context, the source
+ * text, and the hash of the glossary terms injected into that unit's prompt.
+ * Two units with the same key are interchangeable, so the cached translation
+ * can be reused wherever the key reappears.
  *
- * @param {{ kind: string, source: string, context?: string, model?: string, pipelineVersion?: string }} unit
+ * `termsHash` has no default on purpose: a caller that forgets it would key its
+ * units differently from one that passes it, and the mismatch would be silent.
+ *
+ * @param {{ kind: string, source: string, context?: string, model?: string, termsHash: string, pipelineVersion?: string }} unit
  * @returns {string}
  */
 export function createUnitKey({
@@ -70,11 +76,18 @@ export function createUnitKey({
   source,
   context = "",
   model,
+  termsHash,
   pipelineVersion = TRANSLATION_PIPELINE_VERSION,
 }) {
+  if (typeof termsHash !== "string") {
+    throw new TypeError(
+      "createUnitKey requires termsHash (the hash of the glossary terms for this unit; pass an empty string when none matched)."
+    );
+  }
+
   const hash = createHash("sha256");
 
-  for (const part of [pipelineVersion, model ?? "", kind, context, source]) {
+  for (const part of [pipelineVersion, model ?? "", kind, context, source, termsHash]) {
     hash.update(String(part));
     hash.update("\n");
   }
@@ -89,13 +102,24 @@ export function createUnitKey({
  * produced a cache, while the translation script passes it so switching models
  * re-runs the post.
  *
+ * `glossaryVersion` defaults to the current glossary, so the site rejects a
+ * cache written before a glossary edit without having to be told — that is what
+ * keeps an edited glossary from silently republishing translations produced
+ * under the old one.
+ *
  * @param {unknown} cache
- * @param {{ sourceHash: string, targetLanguage: string, model?: string, pipelineVersion?: string }} expected
+ * @param {{ sourceHash: string, targetLanguage: string, model?: string, pipelineVersion?: string, glossaryVersion?: string }} expected
  * @returns {boolean}
  */
 export function isTranslationCacheFresh(
   cache,
-  { sourceHash, targetLanguage, model, pipelineVersion = TRANSLATION_PIPELINE_VERSION }
+  {
+    sourceHash,
+    targetLanguage,
+    model,
+    pipelineVersion = TRANSLATION_PIPELINE_VERSION,
+    glossaryVersion = TRANSLATION_GLOSSARY_VERSION,
+  }
 ) {
   if (!cache || typeof cache !== "object") {
     return false;
@@ -107,6 +131,7 @@ export function isTranslationCacheFresh(
   if (document.targetLanguage !== targetLanguage) return false;
   if (typeof document.body !== "string" || document.body.length === 0) return false;
   if (document.pipeline !== pipelineVersion) return false;
+  if (document.glossary !== glossaryVersion) return false;
   if (model !== undefined && document.model !== model) return false;
 
   return true;

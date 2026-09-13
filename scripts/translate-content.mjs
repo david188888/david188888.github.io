@@ -6,6 +6,13 @@ import { fileURLToPath } from "node:url";
 
 import { splitMarkdownSegments } from "../src/lib/content/markdown-segments.mjs";
 import {
+  buildTerminologyBlock,
+  createTermsHash,
+  selectGlossaryTerms,
+  validateGlossaryTerms,
+  TRANSLATION_GLOSSARY_VERSION,
+} from "../src/lib/content/translation-glossary.mjs";
+import {
   createSourceHash,
   createUnitKey,
   isTranslationCacheFresh,
@@ -451,10 +458,27 @@ const CONTEXT_CLAUSE_EN =
   'This passage belongs to the section "{context}". That heading is context only: do not translate, rewrite, or output it.';
 
 /**
+ * Prepends the glossary block to a prompt.
+ *
+ * The block is its own paragraph ahead of the instruction, which is where the
+ * official terminology template puts it. It is deliberately not merged into the
+ * `，并且…` clause chain: that clause is asserted to quote no example syntax,
+ * while the terminology template quotes the terms by design. A prompt with no
+ * matching terms comes back byte-for-byte unchanged.
+ */
+function withTerminology(prompt, terms, sourceLanguage) {
+  const block = buildTerminologyBlock(terms, sourceLanguage);
+  if (!block) return prompt;
+
+  return `${block}${sourceLanguage === "zh" ? "\n" : "\n\n"}${prompt}`;
+}
+
+/**
  * Basic-mode Hy-MT2 prompt. `preserveMarks` appends the blog-specific
  * annotation clause, `preserveStructure` the inline-formatting clause, and
  * `context` the enclosing section path. Each is attached only where it applies,
- * so a plain paragraph is not handed examples it might echo.
+ * so a plain paragraph is not handed examples it might echo. `terms` are the
+ * glossary entries this unit's own text matched, if any.
  */
 export function buildTranslatePrompt({
   sourceText,
@@ -463,6 +487,7 @@ export function buildTranslatePrompt({
   preserveMarks = false,
   preserveStructure = false,
   context = "",
+  terms = [],
 }) {
   const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
   const clausesZh = [
@@ -482,11 +507,19 @@ export function buildTranslatePrompt({
 
   if (sourceLanguage === "zh") {
     const extra = clausesZh ? `，并且${clausesZh}` : "";
-    return `将以下文本翻译为 \`${target}\`，注意**只需要输出翻译后的结果，不要额外解释**${extra}：\n\n${sourceText}`;
+    return withTerminology(
+      `将以下文本翻译为 \`${target}\`，注意**只需要输出翻译后的结果，不要额外解释**${extra}：\n\n${sourceText}`,
+      terms,
+      sourceLanguage
+    );
   }
 
   const extra = clausesEn ? ` ${clausesEn}` : "";
-  return `Translate the following text into \`${target}\`. Note that you should **only output the translated result without any additional explanation**.${extra}\n\n${sourceText}`;
+  return withTerminology(
+    `Translate the following text into \`${target}\`. Note that you should **only output the translated result without any additional explanation**.${extra}\n\n${sourceText}`,
+    terms,
+    sourceLanguage
+  );
 }
 
 const TITLE_STYLE = {
@@ -499,15 +532,23 @@ const TITLE_STYLE = {
  * translates headlines literally (`推理算力` -> "Reasoning computing power"),
  * while naming a style recovers the headline register the site had before.
  */
-export function buildTitlePrompt({ sourceText, sourceLanguage, targetLanguage }) {
+export function buildTitlePrompt({ sourceText, sourceLanguage, targetLanguage, terms = [] }) {
   const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
   const style = TITLE_STYLE[sourceLanguage];
 
   if (sourceLanguage === "zh") {
-    return `请将以下文本翻译为 \`${target}\`。\n注意翻译的风格要严格符合【**\`${style}\`**】\n\n${sourceText}`;
+    return withTerminology(
+      `请将以下文本翻译为 \`${target}\`。\n注意翻译的风格要严格符合【**\`${style}\`**】\n\n${sourceText}`,
+      terms,
+      sourceLanguage
+    );
   }
 
-  return `Please translate the following text into \`${target}\`. Note that the translation style must strictly conform to [**\`${style}\`**]:\n\n${sourceText}`;
+  return withTerminology(
+    `Please translate the following text into \`${target}\`. Note that the translation style must strictly conform to [**\`${style}\`**]:\n\n${sourceText}`,
+    terms,
+    sourceLanguage
+  );
 }
 
 /**
@@ -515,52 +556,68 @@ export function buildTitlePrompt({ sourceText, sourceLanguage, targetLanguage })
  * separator so one call translates all of them and the result can be split
  * back deterministically.
  */
-export function buildTagsPrompt({ tags, sourceLanguage, targetLanguage }) {
+export function buildTagsPrompt({ tags, sourceLanguage, targetLanguage, terms = [] }) {
   const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
   const joined = tags.join(" @@ ");
 
   if (sourceLanguage === "zh") {
-    return `请将以下文本准确翻译为 \`${target}\`。你必须在译文中**保留等量的分隔符 \` @@ \`，绝对不可遗漏、转义或翻译该符号，并注意分隔符的位置**：\n\n${joined}`;
+    return withTerminology(
+      `请将以下文本准确翻译为 \`${target}\`。你必须在译文中**保留等量的分隔符 \` @@ \`，绝对不可遗漏、转义或翻译该符号，并注意分隔符的位置**：\n\n${joined}`,
+      terms,
+      sourceLanguage
+    );
   }
 
-  return `Please accurately translate the following text into \`${target}\`. You must **retain the exact same number of \` @@ \` delimiters in the translation. Strictly do not omit, escape, or translate these symbols, and pay close attention to their placement**:\n\n${joined}`;
+  return withTerminology(
+    `Please accurately translate the following text into \`${target}\`. You must **retain the exact same number of \` @@ \` delimiters in the translation. Strictly do not omit, escape, or translate these symbols, and pay close attention to their placement**:\n\n${joined}`,
+    terms,
+    sourceLanguage
+  );
 }
 
 /**
  * Structured-data mode prompt for the visible text nodes of embedded HTML
  * blocks: the model translates JSON values only and must keep keys untouched.
  */
-export function buildHtmlTextPrompt({ htmlText, sourceLanguage, targetLanguage }) {
+export function buildHtmlTextPrompt({ htmlText, sourceLanguage, targetLanguage, terms = [] }) {
   const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
   const data = JSON.stringify(htmlText, null, 2);
 
   if (sourceLanguage === "zh") {
-    return [
-      `*# 任务目标*`,
-      `将下方文本中的 JSON 格式数据翻译为 \`${target}\`。`,
-      ``,
-      `*# 严格约束*`,
-      `1. **结构锁定**：绝对保持原有的 JSON 数据结构、缩进和层级完全不变。`,
-      `2. **选择性翻译**：仅翻译面向用户展示的可见文本内容。`,
-      `3. **禁止修改**：**严禁**翻译或更改任何键名 (Key)。`,
-      ``,
-      `*# 数据输入*`,
-      data,
-    ].join("\n");
+    return withTerminology(
+      [
+        `*# 任务目标*`,
+        `将下方文本中的 JSON 格式数据翻译为 \`${target}\`。`,
+        ``,
+        `*# 严格约束*`,
+        `1. **结构锁定**：绝对保持原有的 JSON 数据结构、缩进和层级完全不变。`,
+        `2. **选择性翻译**：仅翻译面向用户展示的可见文本内容。`,
+        `3. **禁止修改**：**严禁**翻译或更改任何键名 (Key)。`,
+        ``,
+        `*# 数据输入*`,
+        data,
+      ].join("\n"),
+      terms,
+      sourceLanguage
+    );
   }
 
-  return [
-    `*### Task*`,
-    `Translate the user-facing text within the following JSON data into \`${target}\`.`,
-    ``,
-    `*### Strict Rules*`,
-    `1. **Structure Preservation:** You MUST preserve the original JSON data structure, nesting, hierarchy, and indentation exactly as they are.`,
-    `2. **Selective Translation:** Translate ONLY the visible, user-facing text content/values.`,
-    `3. **Strict Non-Translation:** NEVER translate or alter any keys.`,
-    ``,
-    `*### Source Data*`,
-    data,
-  ].join("\n");
+  return withTerminology(
+    [
+      `*### Task*`,
+      `Translate the user-facing text within the following JSON data into \`${target}\`.`,
+      ``,
+      `*### Strict Rules*`,
+      `1. **Structure Preservation:** You MUST preserve the original JSON data structure, nesting, hierarchy, and indentation exactly as they are.`,
+      `2. **Selective Translation:** Translate ONLY the visible, user-facing text content/values.`,
+      `3. **Strict Non-Translation:** NEVER translate or alter any keys.`,
+      ``,
+      `*### Source Data*`,
+      data,
+    ].join("\n"),
+    terms,
+    sourceLanguage
+  );
 }
 
 /**
@@ -569,21 +626,25 @@ export function buildHtmlTextPrompt({ htmlText, sourceLanguage, targetLanguage }
  * rules: translate what a reader must read, keep code, identifiers, operators
  * and layout byte-identical.
  */
-export function buildFencedPrompt({ sourceText, sourceLanguage, targetLanguage }) {
+export function buildFencedPrompt({ sourceText, sourceLanguage, targetLanguage, terms = [] }) {
   const target = LANGUAGE_NAMES[targetLanguage][sourceLanguage];
 
   if (sourceLanguage === "zh") {
-    return (
+    return withTerminology(
       `将以下文本翻译为 \`${target}\`，注意**只需要输出翻译后的结果，不要额外解释**。` +
-      `这段内容位于 Markdown 代码块内：只翻译面向读者的自然语言和中文注释；` +
-      `代码、公式符号（如 = ÷ × 等）、标识符、变量名、数字、缩进与换行必须原样保留。\n\n${sourceText}`
+        `这段内容位于 Markdown 代码块内：只翻译面向读者的自然语言和中文注释；` +
+        `代码、公式符号（如 = ÷ × 等）、标识符、变量名、数字、缩进与换行必须原样保留。\n\n${sourceText}`,
+      terms,
+      sourceLanguage
     );
   }
 
-  return (
+  return withTerminology(
     `Translate the following text into \`${target}\`. Note that you should **only output the translated result without any additional explanation**. ` +
-    `This content sits inside a Markdown code block: translate only reader-facing natural language and comments; ` +
-    `keep code, formula symbols (such as = ÷ ×), identifiers, variable names, numbers, indentation and line breaks exactly as they are.\n\n${sourceText}`
+      `This content sits inside a Markdown code block: translate only reader-facing natural language and comments; ` +
+      `keep code, formula symbols (such as = ÷ ×), identifiers, variable names, numbers, indentation and line breaks exactly as they are.\n\n${sourceText}`,
+    terms,
+    sourceLanguage
   );
 }
 
@@ -1011,8 +1072,13 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
   const request = { baseUrl, model, sourceLanguage, targetLanguage };
   const nextUnits = {};
 
-  const keyOf = (kind, unitSource, context = "") =>
-    createUnitKey({ kind, source: unitSource, context, model });
+  // Only the terms a unit's own text contains are injected: handing the model
+  // the whole table makes it invent words. The selection feeds the unit's cache
+  // key, so it must not depend on which units share a batch.
+  const termsOf = (unitSource) => selectGlossaryTerms(unitSource, sourceLanguage);
+
+  const keyOf = (kind, unitSource, context = "", terms = termsOf(unitSource)) =>
+    createUnitKey({ kind, source: unitSource, context, model, termsHash: createTermsHash(terms) });
 
   const cachedByKey = (key) => {
     if (force) return null;
@@ -1023,6 +1089,15 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
   };
 
   const commit = (unit, translation) => {
+    // Reused translations are validated too. The cache otherwise freezes a
+    // one-off mistake: a unit's key only moves when its source or its terms
+    // change, so a wrong translation of unchanged text would never be revisited.
+    validateGlossaryTerms({
+      translation,
+      terms: unit.terms ?? [],
+      label: unit.label ?? unit.kind,
+    });
+
     nextUnits[unit.key] = {
       kind: unit.kind,
       source: unit.source,
@@ -1031,28 +1106,60 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
     };
   };
 
+  /**
+   * Translates one unit, re-sampling when the glossary check rejects a sample.
+   *
+   * A rejection is a meaning-level problem, not a transport one, so it is not
+   * retried inside `translateField`; it is retried here, where the unit and its
+   * terms are known. The last error is re-thrown so a systematically wrong
+   * prompt still stops the run instead of publishing a compromise.
+   */
+  const translateWithGlossaryRetry = async (unit) => {
+    let lastError;
+
+    for (let attempt = 1; attempt <= GLOSSARY_MAX_ATTEMPTS; attempt += 1) {
+      const translation = await translateField(request, unit.prompt, unit.label);
+
+      try {
+        validateGlossaryTerms({ translation, terms: unit.terms ?? [], label: unit.label });
+        return translation;
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          `  ! ${unit.label}: ${error.message} Retrying (${attempt}/${GLOSSARY_MAX_ATTEMPTS}).`
+        );
+      }
+    }
+
+    throw lastError;
+  };
+
   // ---- plan every unit ----------------------------------------------------
   const { body: placeholderBody, blocks } = extractHtmlBlocks(body);
   const bodyPlan = extractBodyUnits(placeholderBody);
   const htmlNodes = planHtmlTextUnits(blocks);
 
+  const titleTerms = termsOf(title);
   const headerUnits = [
     {
-      key: keyOf("title", title),
+      key: keyOf("title", title, "", titleTerms),
       kind: "title",
       source: title,
       context: "",
+      terms: titleTerms,
       label: "title",
-      prompt: buildTitlePrompt({ sourceText: title, sourceLanguage, targetLanguage }),
+      prompt: buildTitlePrompt({ sourceText: title, sourceLanguage, targetLanguage, terms: titleTerms }),
     },
   ];
 
   if (excerpt) {
+    const excerptTerms = termsOf(excerpt);
     headerUnits.push({
-      key: keyOf("excerpt", excerpt),
+      key: keyOf("excerpt", excerpt, "", excerptTerms),
       kind: "excerpt",
       source: excerpt,
       context: "",
+      terms: excerptTerms,
       label: "excerpt",
       prompt: buildTranslatePrompt({
         sourceText: excerpt,
@@ -1060,27 +1167,44 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
         targetLanguage,
         preserveMarks: hasInlineMarks(excerpt),
         preserveStructure: hasInlineStructure(excerpt),
+        terms: excerptTerms,
       }),
     });
   }
 
   const tagsSource = tags.join(" @@ ");
   if (tags.length > 0) {
+    const tagsTerms = termsOf(tagsSource);
     headerUnits.push({
-      key: keyOf("tags", tagsSource),
+      key: keyOf("tags", tagsSource, "", tagsTerms),
       kind: "tags",
       source: tagsSource,
       context: "",
+      terms: tagsTerms,
       label: "tags",
-      prompt: buildTagsPrompt({ tags, sourceLanguage, targetLanguage }),
+      prompt: buildTagsPrompt({ tags, sourceLanguage, targetLanguage, terms: tagsTerms }),
     });
   }
 
+  // Diagram labels travel as one JSON batch, so two different term sets apply
+  // and they are deliberately not the same one:
+  //
+  //   - `promptTerms` is selected from the whole diagram. The batch prompt and
+  //     the cache key must depend only on the document, never on which labels
+  //     happened to be pending, or a shrinking batch would change the prompt
+  //     while leaving every key alone.
+  //   - `terms` is selected from that label's own source, because that is what
+  //     its translation has to honour. Enforcing the whole-diagram set on every
+  //     label would demand `on-device` in labels that never mention 端侧.
+  const diagramTerms = termsOf(htmlNodes.map((node) => node.source).join("\n"));
+
   const htmlUnits = htmlNodes.map((node) => ({
-    key: keyOf("htmltext", node.source),
+    key: keyOf("htmltext", node.source, "", diagramTerms),
     kind: "htmltext",
     source: node.source,
     context: "",
+    promptTerms: diagramTerms,
+    terms: termsOf(node.source),
     slot: node.slot,
   }));
 
@@ -1088,16 +1212,19 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
     .map((unit, index) => {
       if (unit.kind === "verbatim") return null;
 
+      const terms = termsOf(unit.source);
+
       return {
         index,
-        key: keyOf(unit.kind, unit.source, unit.context),
+        key: keyOf(unit.kind, unit.source, unit.context, terms),
         kind: unit.kind,
         source: unit.source,
         context: unit.context,
+        terms,
         label: `body unit ${index + 1}/${bodyPlan.units.length}`,
         prompt:
           unit.kind === "fenced"
-            ? buildFencedPrompt({ sourceText: unit.source, sourceLanguage, targetLanguage })
+            ? buildFencedPrompt({ sourceText: unit.source, sourceLanguage, targetLanguage, terms })
             : buildTranslatePrompt({
                 sourceText: unit.source,
                 sourceLanguage,
@@ -1109,6 +1236,7 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
                 preserveMarks: hasInlineMarks(unit.source),
                 preserveStructure: hasInlineStructure(unit.source),
                 context: unit.context,
+                terms,
               }),
       };
     })
@@ -1168,7 +1296,7 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
   // Header fields are cheap to check and expensive to get wrong: a bad title
   // must fail in seconds, not after the whole body has been retranslated.
   await mapWithConcurrency(pendingHeader, concurrency, async (unit) => {
-    commit(unit, await translateField(request, unit.prompt, unit.label));
+    commit(unit, await translateWithGlossaryRetry(unit));
     noteCall(unit.label, unit.source.length);
   });
 
@@ -1210,20 +1338,40 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
         missPayload[unit.slot] = unit.source;
       }
 
-      const rawHtmlText = await translateField(
-        request,
-        buildHtmlTextPrompt({ htmlText: missPayload, sourceLanguage, targetLanguage }),
-        "htmlText"
-      );
-      const parsedHtmlText = parseJsonObject(rawHtmlText);
-      if (!parsedHtmlText) {
-        throw new Error("Hy-MT2 returned non-JSON htmlText. Diagnostics saved for inspection.");
-      }
-      validateHtmlText(parsedHtmlText, missPayload, targetLanguage);
+      const htmlPrompt = buildHtmlTextPrompt({
+        htmlText: missPayload,
+        sourceLanguage,
+        targetLanguage,
+        terms: diagramTerms,
+      });
 
-      for (const unit of pendingHtml.values()) {
-        commit(unit, decodeHtmlEntities(String(parsedHtmlText[unit.slot]).trim()));
+      // The whole batch is re-sampled when the glossary check rejects any of its
+      // labels, because the labels share one call. A failed attempt may have
+      // written some units into `nextUnits`; that is harmless, since a final
+      // failure throws before the cache is written.
+      let htmlError;
+      for (let attempt = 1; attempt <= GLOSSARY_MAX_ATTEMPTS; attempt += 1) {
+        const rawHtmlText = await translateField(request, htmlPrompt, "htmlText");
+        const parsedHtmlText = parseJsonObject(rawHtmlText);
+        if (!parsedHtmlText) {
+          throw new Error("Hy-MT2 returned non-JSON htmlText. Diagnostics saved for inspection.");
+        }
+        validateHtmlText(parsedHtmlText, missPayload, targetLanguage);
+
+        try {
+          for (const unit of pendingHtml.values()) {
+            commit(unit, decodeHtmlEntities(String(parsedHtmlText[unit.slot]).trim()));
+          }
+          htmlError = null;
+          break;
+        } catch (error) {
+          htmlError = error;
+          console.warn(`  ! htmlText: ${error.message} Retrying (${attempt}/${GLOSSARY_MAX_ATTEMPTS}).`);
+        }
       }
+
+      if (htmlError) throw htmlError;
+
       noteCall(`diagram (${pendingHtml.size} labels)`, Object.values(missPayload).join("").length);
     }
 
@@ -1235,7 +1383,7 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
 
   // ---- body ---------------------------------------------------------------
   await mapWithConcurrency([...pendingBody.values()], concurrency, async (unit) => {
-    commit(unit, await translateField(request, unit.prompt, unit.label));
+    commit(unit, await translateWithGlossaryRetry(unit));
     noteCall(unit.label, unit.source.length);
   });
 
@@ -1267,6 +1415,7 @@ async function translatePost({ sourcePath, baseUrl, model, force, dryRun, concur
   const cache = {
     version: TRANSLATION_CACHE_VERSION,
     pipeline: TRANSLATION_PIPELINE_VERSION,
+    glossary: TRANSLATION_GLOSSARY_VERSION,
     sourcePath,
     sourceHash,
     sourceLanguage,
@@ -1400,6 +1549,33 @@ async function readTranslationCache(cachePath) {
 const REQUEST_MAX_ATTEMPTS = 3;
 const REQUEST_BASE_RETRY_DELAY_MS = 2_000;
 
+// How many samples a unit may take before a glossary rejection ends the run.
+// The glossary check is the only one that judges meaning, and a local 7B model
+// occasionally drops a required term on an otherwise fine translation; aborting
+// a whole post for one unlucky sample would be worse than re-asking. A prompt
+// that is systematically wrong still fails, after a bounded number of calls.
+const GLOSSARY_MAX_ATTEMPTS = 3;
+
+/**
+ * Rejects a response the model cut short.
+ *
+ * A response stopped by the token budget is not a translation: the model breaks
+ * off mid-sentence and every structural validator still passes, because nothing
+ * about the text is malformed — the truncated unit would then be cached and
+ * published. `finish_reason` is the only signal that says so, so it is checked
+ * before the text reaches the validators.
+ */
+export function assertResponseComplete(payload, label) {
+  const finishReason = payload?.choices?.[0]?.finish_reason;
+
+  if (finishReason === "length") {
+    throw new Error(
+      `Hy-MT2 hit the token limit for ${label} (finish_reason: "length") and the text was cut short. ` +
+        `Raise num_predict in scripts/translation/Modelfile or shorten the unit; nothing was written to the cache.`
+    );
+  }
+}
+
 /**
  * One field/chunk translation against the local (or any OpenAI-compatible)
  * Hy-MT2 server. Unlike the old chat-model pipeline there is no JSON envelope:
@@ -1459,6 +1635,13 @@ export async function translateField({ baseUrl, model, sourceLanguage, targetLan
   if (typeof content !== "string" || content.trim() === "") {
     await writeInvalidResponse(rawResponse);
     throw new Error(`Hy-MT2 returned an empty translation for ${label}. Diagnostics saved to ${DIAGNOSTICS_PATH}.`);
+  }
+
+  try {
+    assertResponseComplete(payload, label);
+  } catch (error) {
+    await writeInvalidResponse(rawResponse);
+    throw new Error(`${error.message} Diagnostics saved to ${DIAGNOSTICS_PATH}.`);
   }
 
   return content.trim();

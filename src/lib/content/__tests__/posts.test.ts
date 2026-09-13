@@ -1,6 +1,8 @@
+import { existsSync, readdirSync } from "node:fs";
+import { basename } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { LocalizedPost } from "../posts";
-import { renderMarkdownToHtml, selectPublishedPosts } from "../posts";
+import { getPostSlugs, renderMarkdownToHtml, selectPublishedPosts } from "../posts";
 
 function post(slug: string, date?: string): LocalizedPost {
   return {
@@ -238,6 +240,22 @@ describe("renderMarkdownToHtml margin notes", () => {
 
   it("fails on a malformed mark inside a note", () => {
     expect(() => renderMarkdownToHtml("正文。\n\n^[带 ==未闭合的批注]")).toThrow(/没有闭合/);
+  });
+});
+
+describe("getPostSlugs", () => {
+  it("returns every published post, including one whose translation cache is stale", () => {
+    // Filtering by cache freshness here used to remove the slug from the routes
+    // and listings while the build stayed green, so the article silently 404'd.
+    // A stale cache must fail the build in `getLocalizedPost` instead.
+    const onDisk = existsSync("content/posts")
+      ? readdirSync("content/posts")
+          .filter((name) => name.endsWith(".mdx"))
+          .map((name) => basename(name, ".mdx"))
+          .sort()
+      : [];
+
+    expect(getPostSlugs()).toEqual(onDisk);
   });
 });
 

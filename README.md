@@ -139,6 +139,11 @@ threads become `^[text]` margin notes; the full syntax is specified in
 `docs/insights-markup.md`, and `content/drafts/README.md` covers drafting and
 publishing a brand-new post.
 
+A ```` ```html ```` fence whose body is markup is written back as bare block HTML
+and the report lists how many fences were unwrapped. The renderer never promotes
+fenced content to live HTML, so a figure left inside a fence publishes as escaped
+source text instead of a diagram.
+
 ### Embedding HTML Visualizations (Diagrams, Flowcharts)
 
 The body renderer supports author-authored block-level HTML inside the
@@ -175,7 +180,9 @@ During translation the script replaces each embedded block with a
 into the original markup, so diagrams never get mangled by the model. A
 ```` ```html ```` fence that wraps such a block gets the same treatment: the
 fence markers are re-attached from the source and only the text nodes are
-translated. Character references are decoded before the model sees them and
+translated. The Notion sync writes such a fence back as the bare block HTML shown
+above, because the renderer deliberately never promotes fenced content to live
+HTML — a figure left inside a fence publishes as escaped source text. Character references are decoded before the model sees them and
 re-escaped exactly once afterwards, so a label written `R&amp;D` stays `R&amp;D`
 instead of publishing the visible `R&amp;amp;D`. The content of `<style>` and
 `<script>` elements inside a diagram is never treated as prose and never
@@ -229,16 +236,37 @@ byte-identical while both are present.
 Editing a small part of a post no longer retranslates the whole article. Every
 translation unit — a heading, a paragraph, a diagram label, the title, the tags —
 is cached under a content address (`sha256(pipeline version + model + kind +
-section context + source text)`), so an unchanged unit is reused even after it
-moves to a different position in the document. Only the units whose text actually
-changed are sent to the model, which turns a one-sentence Notion edit into a
-handful of calls instead of a full article pass.
+section context + source text + glossary terms)`), so an unchanged unit is reused
+even after it moves to a different position in the document. Only the units whose
+text actually changed are sent to the model, which turns a one-sentence Notion
+edit into a handful of calls instead of a full article pass.
 
 Two deliberate invalidations: bump `TRANSLATION_PIPELINE_VERSION` in
 `src/lib/content/translation-cache.mjs` whenever a prompt, the segmentation or a
 validator changes, and note that changing `HY_MT2_MODEL` also invalidates. The
 site checks the same pipeline version, so a prompt change fails the build until
 translation is re-run instead of silently republishing old output.
+
+### Glossary
+
+`src/lib/content/translation-glossary.mjs` is the single source for proper nouns
+and for terms that must read the same way everywhere. Hy-MT2 has no offline
+glossary feature, so each matching term is injected into the prompt through the
+official terminology template — and only the terms that unit's own text contains,
+because handing the model the whole table makes it invent words.
+
+The glossary carries its own identity. Its content hash is written to every cache
+file as `glossary` and participates in the freshness check, so **editing a term
+invalidates the affected caches without a manual version bump**; the affected
+units are then the only ones retranslated. `enforce` requires a canonical
+spelling to appear, `forbid` records a wrong rendering as a regression (it is how
+`长鑫` stops being published as `GigaDevice`). A unit whose translation breaks a
+rule is re-sampled a few times before the run gives up, because a local 7B model
+drops a term occasionally.
+
+```bash
+npm run translate:content -- --check   # shows the affected unit count after a glossary edit
+```
 
 ```bash
 npm run translate:content                    # translate everything that changed

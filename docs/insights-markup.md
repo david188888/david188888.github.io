@@ -140,6 +140,7 @@ Markdown 行内解析由 markdown-it 完成，所以 `**` 与 `==` 可以互相�
 | `scripts/notion-to-mdx.mjs` | Notion 增强 Markdown → MDX 的确定性转换 |
 | `scripts/translate-content.mjs` | 分段增量翻译 + 行内标记、围栏、乱码与 HTML 图表文本保全校验 |
 | `src/lib/content/translation-cache.mjs` | 翻译缓存契约：pipeline 版本、单元内容寻址键、新鲜度判定（脚本与站点共用） |
+| `src/lib/content/translation-glossary.mjs` | 术语表与术语合规校验（脚本与站点共用，内容哈希参与缓存新鲜度） |
 | `src/components/insights/AnnotationControls.tsx` | 页面上的隐藏/恢复与本地标注 |
 | `src/lib/annotations/` | 标注状态与引文锚定的纯逻辑 |
 

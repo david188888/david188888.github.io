@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createSourceHash,
   isTranslationCacheFresh,
+  TRANSLATION_GLOSSARY_VERSION,
   TRANSLATION_PIPELINE_VERSION,
 } from "../cache";
 
@@ -10,6 +11,7 @@ const freshCache = {
   sourceHash: "abc",
   targetLanguage: "zh",
   pipeline: TRANSLATION_PIPELINE_VERSION,
+  glossary: TRANSLATION_GLOSSARY_VERSION,
   body: "你好",
 };
 
@@ -39,6 +41,23 @@ describe("translation cache", () => {
   it("ignores a cache with no body", () => {
     expect(
       isTranslationCacheFresh({ ...freshCache, body: "" }, { sourceHash: "abc", targetLanguage: "zh" })
+    ).toBe(false);
+  });
+
+  it("treats a cache written under a different glossary as stale", () => {
+    // Editing the glossary has to invalidate caches produced under the old one,
+    // otherwise the site keeps publishing the previous wording.
+    expect(
+      isTranslationCacheFresh(
+        { ...freshCache, glossary: "00000000" },
+        { sourceHash: "abc", targetLanguage: "zh" }
+      )
+    ).toBe(false);
+    expect(
+      isTranslationCacheFresh(
+        { ...freshCache, glossary: undefined },
+        { sourceHash: "abc", targetLanguage: "zh" }
+      )
     ).toBe(false);
   });
 });
