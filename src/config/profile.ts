@@ -156,7 +156,7 @@ export const publicationRecords: readonly PublicationRecord[] = [
     authorship: { en: "First author", zh: "第一作者" },
     title: {
       en: "Multi-segment Multitask Fusion Network for Marketing Audio Classification",
-      zh: "面向营销音频分类的多片段多任务融合网络",
+      zh: "MSMT-FN：面向营销音频分类的多片段多任务融合网络",
     },
     description: {
       en: "Proposed MSMT-FN for marketing-call attitude classification, achieving stronger results than prior baselines.",

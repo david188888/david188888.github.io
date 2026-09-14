@@ -295,7 +295,7 @@ const selectorFixtures = {
         id: "msmt-fn",
         venue: "ADMA 2025 · 海报",
         authorship: "第一作者",
-        title: "面向营销音频分类的多片段多任务融合网络",
+        title: "MSMT-FN：面向营销音频分类的多片段多任务融合网络",
         description: "提出 MSMT-FN 用于营销通话态度分类，相比既有基线取得更优结果。",
         paperUrl: "https://arxiv.org/abs/2511.11006",
       },
@@ -330,7 +330,7 @@ const selectorFixtures = {
       },
       {
         id: "msmt-fn",
-        title: "面向营销音频分类的多片段多任务融合网络",
+        title: "MSMT-FN：面向营销音频分类的多片段多任务融合网络",
         permalink: "https://arxiv.org/abs/2511.11006",
         venue: "ADMA 2025 · 海报",
         date: "2025-01-01",
@@ -371,7 +371,7 @@ const selectorFixtures = {
       },
       {
         id: "msmt-fn",
-        title: "面向营销音频分类的多片段多任务融合网络",
+        title: "MSMT-FN：面向营销音频分类的多片段多任务融合网络",
         permalink: "https://arxiv.org/abs/2511.11006",
         venue: "ADMA 2025 · 海报",
         date: "2025-01-01",
