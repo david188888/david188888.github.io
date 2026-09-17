@@ -83,9 +83,10 @@ npm run build
 The site supports static English and Chinese routes for pages, navigation, and
 blog content:
 
-- `/` and `/en/` for English
-- `/zh/` for Chinese
-- `/stats/` and `/zh/stats/` for the private statistics page
+- `/` for Chinese by default; `/zh/` remains available
+- `/en/` for English
+- Unprefixed subpages use Chinese; English subpages use the `/en/` prefix
+- `/stats/` and `/zh/stats/` for the Chinese private statistics page; `/en/stats/` for English
 
 Short UI copy lives in `src/i18n/messages.ts`. Locale-specific page data lives
 alongside the components or in `src/config/`.

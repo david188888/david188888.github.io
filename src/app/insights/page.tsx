@@ -1,8 +1,9 @@
+import { defaultLocale } from "@/i18n/locales";
 import type { Metadata } from "next";
 import { InsightsPageView } from "@/components/pages/InsightsPageView";
 import { getMessages } from "@/i18n/messages";
 
-const { insights } = getMessages("en").pages;
+const { insights } = getMessages(defaultLocale).pages;
 
 export const metadata: Metadata = {
   title: insights.metadataTitle,
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function InsightsPage() {
-  return <InsightsPageView locale="en" />;
+  return <InsightsPageView locale={defaultLocale} />;
 }

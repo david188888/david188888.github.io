@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
+import { defaultLocale } from "@/i18n/locales";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 
 const documentLanguageScript = `(function () {
   var locale = window.location.pathname.split("/")[1];
-  document.documentElement.lang = locale === "zh" ? "zh" : "en";
+  document.documentElement.lang = locale === "en" ? "en" : "${defaultLocale}";
 })();`;
 
 export default function RootLayout({
@@ -25,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={defaultLocale} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: documentLanguageScript }} />
       </head>

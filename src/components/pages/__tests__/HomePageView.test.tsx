@@ -34,8 +34,17 @@ vi.mock("@/components/home/HomeSectionRail", () => ({
 }));
 
 import { HomePageView } from "../HomePageView";
+import HomePage from "@/app/page";
 
 describe("HomePageView", () => {
+  it("renders the unprefixed homepage in Chinese", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toBe(renderToStaticMarkup(<HomePageView locale="zh" />));
+    educationRecords.forEach((record) => expect(html).toContain(record.institution.zh));
+    expect(html).not.toContain("South China Normal University");
+  });
+
   it("renders the approved identity-first section order without obsolete campaign copy", () => {
     const html = renderToStaticMarkup(<HomePageView locale="en" />);
     const ids = ["profile", "education", "research", "experience", "insights"];

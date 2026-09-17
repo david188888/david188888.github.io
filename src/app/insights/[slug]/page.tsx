@@ -1,3 +1,4 @@
+import { defaultLocale } from "@/i18n/locales";
 import { notFound } from "next/navigation";
 import { InsightArticlePageView } from "@/components/pages/InsightArticlePageView";
 import { getLocalizedPost, getPostSlugs } from "@/lib/content/posts";
@@ -18,8 +19,8 @@ export default async function InsightArticlePage({
   const { slug } = await params;
 
   try {
-    const post = getLocalizedPost(slug, "en");
-    return <InsightArticlePageView locale="en" post={post} />;
+    const post = getLocalizedPost(slug, defaultLocale);
+    return <InsightArticlePageView locale={defaultLocale} post={post} />;
   } catch {
     notFound();
   }

@@ -1,5 +1,6 @@
+import { defaultLocale } from "@/i18n/locales";
 import { TeachingPageView } from "@/components/pages/SubpageViews";
 
 export default function TeachingPage() {
-  return <TeachingPageView locale="en" />;
+  return <TeachingPageView locale={defaultLocale} />;
 }

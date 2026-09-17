@@ -1,3 +1,4 @@
+import { defaultLocale } from "@/i18n/locales";
 import { SubpageShell } from "@/components/pages/SubpageViews";
 
 export default function SubpageLayout({
@@ -5,5 +6,5 @@ export default function SubpageLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <SubpageShell locale="en">{children}</SubpageShell>;
+  return <SubpageShell locale={defaultLocale}>{children}</SubpageShell>;
 }

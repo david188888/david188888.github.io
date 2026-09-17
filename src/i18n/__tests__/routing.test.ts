@@ -8,9 +8,10 @@ import {
 
 describe("locale routing", () => {
   it("detects locale-prefixed paths", () => {
+    expect(getLocaleFromPathname("/")).toBe("zh");
     expect(getLocaleFromPathname("/en/insights/")).toBe("en");
     expect(getLocaleFromPathname("/zh/cv/")).toBe("zh");
-    expect(getLocaleFromPathname("/insights/")).toBe("en");
+    expect(getLocaleFromPathname("/insights/")).toBe("zh");
   });
 
   it("strips locale prefixes while preserving trailing slashes", () => {
@@ -20,14 +21,16 @@ describe("locale routing", () => {
   });
 
   it("adds locale prefixes for non-default locale", () => {
-    expect(addLocalePrefix("/", "zh")).toBe("/zh/");
-    expect(addLocalePrefix("/insights/", "zh")).toBe("/zh/insights/");
-    expect(addLocalePrefix("/insights/", "en")).toBe("/insights/");
+    expect(addLocalePrefix("/", "zh")).toBe("/");
+    expect(addLocalePrefix("/insights/", "zh")).toBe("/insights/");
+    expect(addLocalePrefix("/insights/", "en")).toBe("/en/insights/");
   });
 
   it("switches between locale-prefixed paths", () => {
-    expect(switchLocalePathname("/en/insights/", "zh")).toBe("/zh/insights/");
-    expect(switchLocalePathname("/zh/insights/post-a/", "en")).toBe("/insights/post-a/");
-    expect(switchLocalePathname("/", "zh")).toBe("/zh/");
+    expect(switchLocalePathname("/en/insights/", "zh")).toBe("/insights/");
+    expect(switchLocalePathname("/zh/insights/post-a/", "en")).toBe("/en/insights/post-a/");
+    expect(switchLocalePathname("/", "en")).toBe("/en/");
+    expect(switchLocalePathname("/en/", "zh")).toBe("/");
+    expect(switchLocalePathname("/", "zh")).toBe("/");
   });
 });
