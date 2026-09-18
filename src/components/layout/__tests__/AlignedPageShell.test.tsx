@@ -17,7 +17,7 @@ describe("AlignedPageShell", () => {
   it("leaves no stray whitespace when no modifier is given", () => {
     const html = renderToStaticMarkup(<AlignedPageShell sections={[]} />);
 
-    expect(html).toContain('class="home-motion-shell aligned-page-shell min-h-screen');
+    expect(html).toContain('class="home-motion-shell aligned-page-shell"');
     expect(html).not.toMatch(/class="[^"]*\s"/);
   });
 });

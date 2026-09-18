@@ -43,6 +43,5 @@ describe("aligned page CSS contracts", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*767px\)/);
     expect(css).toMatch(/\.aligned-section-row\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
     expect(css).toMatch(/\.aligned-quick-nav\s*\{[\s\S]*?display:\s*flex/);
-    expect(css).toMatch(/\.home-nav-mobile-language\s*\{[\s\S]*?display:\s*block/);
   });
 });

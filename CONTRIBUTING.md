@@ -9,8 +9,9 @@ and preserve the static GitHub Pages export.
 2. Run the site with `npm run dev`.
 3. Run `npm run test:run` and `npm run build` before opening a pull request.
 
-Profile content belongs in `src/config/profile.ts`. Blog source belongs in
-`content/posts/`, with reviewed translation caches committed under
+Profile content belongs in `src/config/profile.ts`, and the homepage projects
+section in `src/config/projects.ts`. Blog source belongs in `content/posts/`,
+with reviewed translation caches committed under
 `content/generated/translations/posts/`. See `README.md` for the authoring
 workflow.
 

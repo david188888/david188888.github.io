@@ -60,7 +60,19 @@ Next.js 15 App Router、React 19、TypeScript(strict)、Tailwind 3、Vitest。
   留着围栏等于把图表当源码文本发到页面上。
 - `.agents/skills/`：随仓库发布的 skill（DSH 只扫这里）。`.claude/` 不被 git 跟踪，
   其中的 skill 只是本机 Claude Code 副本。
-- `src/config/profile.ts`：首页、CV、论文等双语资料的唯一来源。
+- `src/config/profile.ts`：教育、实习、论文等双语资料的唯一来源；首页「项目与开源」
+  栏目和 `/projects/tradingagents/` 的数据在 `src/config/projects.ts`。
+- `src/components/home/editorial.css`：首页、洞察页、项目页共用的编辑版样式。规则**必须**
+  写在 `.ed-root` 下保持隔离；它是无层级（unlayered）样式，因此能盖过 `globals.css` 里
+  `@layer components` 的旧配色——洞察页就是靠这一点在不改 globals.css 的前提下换掉配色的。
+  改洞察页配色优先加在这里，不要回头去改 globals.css 里的硬编码色值。
+- **编辑版页面自带显示模式，不要并回全站主题**：首页、洞察页、项目页由
+  `src/components/home/editorialTheme.ts` 在首绘前把 `data-ed-theme` 写到 `<html>`，
+  取值来自 localStorage 的 `editorial-theme`（默认跟随系统）。这与 `src/app/layout.tsx`
+  中 next-themes 写下的全站 `data-theme` 是两套：全站默认深色且其他页面读 `--global-*`
+  调色板，合并两者会连带翻转 CV、publications 等页面。
+- `docs/insights-markup.md` 的高亮颜色与 Notion 调色板一一对应，所以 `mk-*` 系列
+  **只能调饱和度，不能改色相**——作者在 Notion 选蓝色，页面上就必须是蓝色系。
 
 ## 提交前
 

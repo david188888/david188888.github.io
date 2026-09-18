@@ -6,13 +6,14 @@ import { localeLabels, locales, type Locale } from "@/i18n/locales";
 import { getLocaleFromPathname, switchLocalePathname } from "@/i18n/routing";
 
 interface LanguageSwitcherProps {
-  variant?: "home" | "masthead";
+  /** `editorial` matches the homepage/Insights masthead; the default suits the subpage masthead. */
+  variant?: "masthead" | "editorial";
 }
 
 export function LanguageSwitcher({ variant = "masthead" }: LanguageSwitcherProps) {
   const pathname = usePathname() ?? "/";
   const currentLocale = getLocaleFromPathname(pathname);
-  const isHome = variant === "home";
+  const isEditorial = variant === "editorial";
 
   function handleSelect(locale: Locale) {
     try {
@@ -24,11 +25,7 @@ export function LanguageSwitcher({ variant = "masthead" }: LanguageSwitcherProps
 
   return (
     <div
-      className={
-        isHome
-          ? "flex items-center gap-1 border-l border-[rgba(166,182,206,0.18)] pl-2"
-          : "flex items-center gap-1"
-      }
+      className={isEditorial ? "masthead-lang" : "flex items-center gap-1"}
       aria-label="Language selector"
     >
       {locales.map((locale) => {
@@ -40,12 +37,8 @@ export function LanguageSwitcher({ variant = "masthead" }: LanguageSwitcherProps
             onClick={() => handleSelect(locale)}
             aria-current={isActive ? "page" : undefined}
             className={
-              isHome
-                ? `rounded px-1.5 py-1 text-[0.72rem] font-semibold no-underline transition-colors ${
-                    isActive
-                      ? "text-[#eef3fc]"
-                      : "text-[rgba(202,212,228,0.68)] hover:text-[#eef3fc]"
-                  }`
+              isEditorial
+                ? undefined
                 : `rounded px-1.5 py-0.5 text-xs no-underline transition-colors ${
                     isActive
                       ? "font-bold text-[var(--global-masthead-link-color)]"

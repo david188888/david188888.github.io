@@ -27,13 +27,26 @@ const selectorFixtures = {
         title: "South China Normal University",
         meta: "B.Eng. in Software Engineering",
         description: "Overall GPA: 4.06.",
+        courses: [
+          "Python Data Analysis and Applications",
+          "Software Process and Management",
+          "Probability Theory and Mathematical Statistics",
+          "Data Structures and Algorithms",
+        ],
       },
       {
         id: "cuhksz-msc-data-science",
-        time: "Matriculation: Sep 2026",
+        time: "September 2026 — June 2028",
         title: "The Chinese University of Hong Kong, Shenzhen",
         meta: "Master of Science in Data Science",
-        description: "Enrollment scheduled for September 2026.",
+        description: null,
+        courses: [
+          "Optimization",
+          "Machine Learning",
+          "Data Mining",
+          "Market Microstructure and Algorithmic Trading",
+          "Blockchain",
+        ],
       },
     ],
     getCvEducation: [
@@ -45,7 +58,7 @@ const selectorFixtures = {
       {
         id: "cuhksz-msc-data-science",
         school: "The Chinese University of Hong Kong, Shenzhen",
-        detail: "M.Sc. in Data Science · Matriculation: Sep 2026",
+        detail: "M.Sc. in Data Science · September 2026 — June 2028",
       },
     ],
     getIncomingEducation: {
@@ -213,13 +226,26 @@ const selectorFixtures = {
         title: "华南师范大学",
         meta: "软件工程工学学士",
         description: "综合 GPA：4.06。",
+        courses: [
+          "Python 数据分析与应用",
+          "软件过程与管理",
+          "概率论与数理统计",
+          "数据结构与算法",
+        ],
       },
       {
         id: "cuhksz-msc-data-science",
-        time: "预计 2026 年 9 月入学",
+        time: "2026 年 9 月 — 2028 年 6 月",
         title: "香港中文大学（深圳）",
         meta: "数据科学理学硕士",
-        description: "预计于 2026 年 9 月开始硕士阶段学习。",
+        description: null,
+        courses: [
+          "最优化",
+          "机器学习",
+          "数据挖掘",
+          "市场微观结构与算法交易",
+          "区块链",
+        ],
       },
     ],
     getCvEducation: [
@@ -231,7 +257,7 @@ const selectorFixtures = {
       {
         id: "cuhksz-msc-data-science",
         school: "香港中文大学（深圳）",
-        detail: "数据科学理学硕士 · 预计 2026 年 9 月入学",
+        detail: "数据科学理学硕士 · 2026 年 9 月 — 2028 年 6 月",
       },
     ],
     getIncomingEducation: {
@@ -426,7 +452,9 @@ describe("profile content", () => {
       expect(record.period[locale]).toBeTruthy();
       expect(record.institution[locale]).toBeTruthy();
       expect(record.degree[locale]).toBeTruthy();
-      expect(record.description[locale]).toBeTruthy();
+      if (record.description) expect(record.description[locale]).toBeTruthy();
+      expect(record.courses.length).toBeGreaterThan(0);
+      record.courses.forEach((course) => expect(course[locale]).toBeTruthy());
     }
     for (const record of internshipRecords) {
       expect(record.period[locale]).toBeTruthy();
@@ -451,7 +479,9 @@ describe("profile content", () => {
 
   it("keeps the homepage master's degree expanded while the English CV stays compact", () => {
     expect(getHomeEducation("en")[1].meta).toBe("Master of Science in Data Science");
-    expect(getCvEducation("en")[1].detail).toBe("M.Sc. in Data Science · Matriculation: Sep 2026");
+    expect(getCvEducation("en")[1].detail).toBe(
+      "M.Sc. in Data Science · September 2026 — June 2028"
+    );
   });
 
   it("throws when no incoming summary is configured", () => {

@@ -1,5 +1,7 @@
-import { PointerGlow } from "@/components/home/PointerGlow";
-import { HomeNav } from "@/components/navigation/HomeNav";
+import "@/components/home/editorial.css";
+import { EditorialMasthead } from "@/components/home/EditorialMasthead";
+import { editorialThemeScript } from "@/components/home/editorialTheme";
+import { authorConfig } from "@/config/author";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { AlignedSections, type AlignedPageSection } from "./AlignedSections";
 
@@ -10,17 +12,23 @@ interface AlignedPageShellProps {
   className?: string;
 }
 
+const footerNote: Record<Locale, string> = {
+  en: "Research and personal notes · © 2026",
+  zh: "研究与个人笔记 · © 2026",
+};
+
 export function AlignedPageShell({
   locale = defaultLocale,
   sections,
   className,
 }: AlignedPageShellProps) {
   return (
-    <>
-      <HomeNav locale={locale} />
-      <PointerGlow>
+    <div className="ed-root">
+      <script dangerouslySetInnerHTML={{ __html: editorialThemeScript }} />
+      <div className="ed-site">
+        <EditorialMasthead locale={locale} variant="page" />
         <main
-          className={`home-motion-shell aligned-page-shell min-h-screen bg-[#050608] text-[#e8edf7] ${
+          className={`home-motion-shell aligned-page-shell ${
             className ?? ""
           }`.trim()}
           data-locale={locale}
@@ -29,8 +37,14 @@ export function AlignedPageShell({
             <AlignedSections sections={sections} />
           </div>
         </main>
-      </PointerGlow>
-    </>
+        <footer className="foot">
+          <div>
+            <strong>{authorConfig.name}</strong>
+          </div>
+          <p className="foot-note">{footerNote[locale]}</p>
+        </footer>
+      </div>
+    </div>
   );
 }
 

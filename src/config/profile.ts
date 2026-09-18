@@ -9,7 +9,10 @@ export interface EducationRecord {
   period: LocalizedText;
   institution: LocalizedText;
   degree: LocalizedText;
-  description: LocalizedText;
+  /** 首页上紧随学位的一行说明；没有可展示的说明时省略。 */
+  description?: LocalizedText;
+  /** 主修课程，用于说明修过什么、具备哪些方向的能力。 */
+  courses: readonly LocalizedText[];
   cvSupplement?: LocalizedText;
   cvDegree?: LocalizedText;
   incomingSummary?: { label: LocalizedText; value: LocalizedText };
@@ -48,21 +51,30 @@ export const educationRecords: readonly EducationRecord[] = [
     institution: { en: "South China Normal University", zh: "华南师范大学" },
     degree: { en: "B.Eng. in Software Engineering", zh: "软件工程工学学士" },
     description: { en: "Overall GPA: 4.06.", zh: "综合 GPA：4.06。" },
+    courses: [
+      { en: "Python Data Analysis and Applications", zh: "Python 数据分析与应用" },
+      { en: "Software Process and Management", zh: "软件过程与管理" },
+      { en: "Probability Theory and Mathematical Statistics", zh: "概率论与数理统计" },
+      { en: "Data Structures and Algorithms", zh: "数据结构与算法" },
+    ],
     cvSupplement: { en: "GPA: 4.06", zh: "GPA：4.06" },
   },
   {
     id: "cuhksz-msc-data-science",
-    period: { en: "Matriculation: Sep 2026", zh: "预计 2026 年 9 月入学" },
+    period: { en: "September 2026 — June 2028", zh: "2026 年 9 月 — 2028 年 6 月" },
     institution: {
       en: "The Chinese University of Hong Kong, Shenzhen",
       zh: "香港中文大学（深圳）",
     },
     degree: { en: "Master of Science in Data Science", zh: "数据科学理学硕士" },
     cvDegree: { en: "M.Sc. in Data Science", zh: "数据科学理学硕士" },
-    description: {
-      en: "Enrollment scheduled for September 2026.",
-      zh: "预计于 2026 年 9 月开始硕士阶段学习。",
-    },
+    courses: [
+      { en: "Optimization", zh: "最优化" },
+      { en: "Machine Learning", zh: "机器学习" },
+      { en: "Data Mining", zh: "数据挖掘" },
+      { en: "Market Microstructure and Algorithmic Trading", zh: "市场微观结构与算法交易" },
+      { en: "Blockchain", zh: "区块链" },
+    ],
     incomingSummary: {
       label: { en: "Incoming 2026", zh: "2026 年入学" },
       value: {
@@ -183,7 +195,8 @@ export function getHomeEducation(locale: Locale) {
     time: localized(record.period, locale),
     title: localized(record.institution, locale),
     meta: localized(record.degree, locale),
-    description: localized(record.description, locale),
+    description: record.description ? localized(record.description, locale) : null,
+    courses: record.courses.map((course) => localized(course, locale)),
   }));
 }
 

@@ -23,6 +23,8 @@ TypeScript, and Tailwind CSS.
 - `src/app/page.tsx` - main homepage
 - `src/app/(subpages)/` - secondary pages such as CV and publications
 - `src/app/insights/` - default-locale Insights index and article routes
+- `src/app/projects/` - project write-ups; `/projects/tradingagents/` is linked
+  from the homepage and shares its editorial design
 - `src/app/[locale]/` - static English and Chinese route variants
 - `src/components/` - shared React components
 - `src/i18n/` - locale routing helpers and bilingual UI messages
@@ -54,9 +56,9 @@ npm run build
 
 ## Common Content Updates
 
-Profile content is centralized in `src/config/profile.ts`. Keep the English and
-Chinese values in the same record so the homepage, CV, and publications pages
-stay synchronized.
+Profile content is centralized in `src/config/profile.ts`, and the projects
+section in `src/config/projects.ts`. Keep the English and Chinese values in the
+same record so the homepage, CV, and publications pages stay synchronized.
 
 ### Update Education Or Internship Dates
 
@@ -77,6 +79,36 @@ After changing profile content, run:
 npm run test:run
 npm run build
 ```
+
+### Update The Projects And Open-Source Section
+
+The homepage's 项目与开源 section and the `/projects/tradingagents/` page read
+from `src/config/projects.ts`: `tradingAgentsProject` holds the repository links
+and the screenshot path, `openSourceProjects` the upstream pull requests, and
+`competitionRecords` the competition awards. Degree coursework lives with its
+degree instead, as `courses` in `src/config/profile.ts`.
+
+## Homepage And Editorial Pages
+
+The homepage, the Insights index and article pages, and
+`/projects/tradingagents/` share one editorial design system: the styles in
+`src/components/home/editorial.css` plus a masthead that carries the language and
+display-mode controls. The two content grids inside the shell (the aligned
+section rail on Insights pages, the chapter layout on the homepage) keep their
+own markup; only the palette, type and chrome are shared.
+
+Those pages resolve their own display mode. The inline script in
+`src/components/home/editorialTheme.ts` sets `data-ed-theme` on `<html>` from the
+`editorial-theme` localStorage entry, falling back to the system setting, before
+first paint. That is deliberately separate from the site-wide `data-theme` that
+`next-themes` writes in `src/app/layout.tsx`: the site default is dark and the
+other pages read the `--global-*` palette, so reusing the site theme would flip
+CV, publications and the rest along with it.
+
+Every selector in `editorial.css` is scoped under `.ed-root`, and the file is
+imported by the components that need it. It is unlayered, so it overrides the
+`@layer components` rules in `src/app/globals.css`; that is how the Insights
+pages were retinted without editing `globals.css`.
 
 ## Bilingual Site
 

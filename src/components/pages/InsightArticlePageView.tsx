@@ -56,7 +56,7 @@ export function buildInsightArticleSections(
               },
             }}
           />
-          <article className="aligned-article-prose prose prose-invert max-w-none prose-headings:font-serif prose-a:text-[#c8d8f2]">
+          <article className="aligned-article-prose prose max-w-none prose-headings:font-serif">
             <h2 className="sr-only">{insights.readingLabel}</h2>
             <InsightBody body={post.body} />
           </article>
