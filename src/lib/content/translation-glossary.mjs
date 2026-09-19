@@ -75,6 +75,63 @@ export const TRANSLATION_GLOSSARY = [
     // mistake; the model produced it from the bare term in the SVG description.
     forbid: { en: ["on-device device", "on-device devices"] },
   },
+  // 港中深 is CUHK-Shenzhen. Left alone, the model read it as three separate
+  // institutions ("Hong Kong University of Science and Technology, Chinese
+  // University of Hong Kong, and Shenzhen University") — a factual error about a
+  // named research partner, not a wording preference.
+  {
+    zh: ["港中深"],
+    en: ["CUHK-Shenzhen"],
+    enforce: "en",
+  },
+  {
+    zh: ["港中深武的教授语音团队"],
+    en: ["Professor Wu's speech team at CUHK-Shenzhen"],
+  },
+  // The speech-safety article is about AI safety (the safety / fairness /
+  // privacy triad), not security. The model mixed "safety" and "security"
+  // inside one piece, including in the title.
+  {
+    zh: ["语音安全"],
+    en: ["speech safety"],
+    enforce: "en",
+  },
+  {
+    zh: ["语音安全训练", "安全训练"],
+    en: ["speech safety training"],
+    enforce: "en",
+  },
+  {
+    zh: ["安全缺口"],
+    en: ["safety gap"],
+    enforce: "en",
+  },
+  {
+    zh: ["安全和隐私"],
+    en: ["safety and privacy"],
+  },
+  {
+    zh: ["安全要求"],
+    en: ["safety requirements"],
+    enforce: "en",
+  },
+  {
+    zh: ["安全工具"],
+    en: ["safety tools"],
+    enforce: "en",
+  },
+  {
+    zh: ["安全、公平与普通对话质量"],
+    en: ["safety, fairness, and the quality of ordinary conversations"],
+  },
+  {
+    zh: ["安全、隐私和公平"],
+    en: ["safety, privacy, and fairness"],
+  },
+  {
+    zh: ["语音大模型"],
+    en: ["large speech model"],
+  },
 ];
 
 /** Escapes a literal for use inside a RegExp. */
