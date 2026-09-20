@@ -2,6 +2,11 @@ import type { Locale } from "@/i18n/locales";
 
 type LocalizedText = Record<Locale, string>;
 
+export interface CourseRecord {
+  name: LocalizedText;
+  score?: number;
+}
+
 export type PublicationCategory = "conferences" | "manuscripts" | "books";
 
 export interface EducationRecord {
@@ -12,7 +17,7 @@ export interface EducationRecord {
   /** 首页上紧随学位的一行说明；没有可展示的说明时省略。 */
   description?: LocalizedText;
   /** 主修课程，用于说明修过什么、具备哪些方向的能力。 */
-  courses: readonly LocalizedText[];
+  courses: readonly CourseRecord[];
   cvSupplement?: LocalizedText;
   cvDegree?: LocalizedText;
   incomingSummary?: { label: LocalizedText; value: LocalizedText };
@@ -52,10 +57,10 @@ export const educationRecords: readonly EducationRecord[] = [
     degree: { en: "B.Eng. in Software Engineering", zh: "软件工程工学学士（双学位）" },
     description: { en: "Overall GPA: 4.06.", zh: "综合 GPA：4.06" },
     courses: [
-      { en: "Python Data Analysis and Applications", zh: "Python程序设计基础（99分）" },
-      { en: "Software Process and Management", zh: "软件过程与管理（95分）" },
-      { en: "Probability Theory and Mathematical Statistics", zh: "自然语言处理（99分）" },
-      { en: "Data Structures and Algorithms", zh: "数据挖掘与可视化（99分）" },
+      { name: { en: "Python Data Analysis and Applications", zh: "Python程序设计基础" }, score: 99 },
+      { name: { en: "Software Process and Management", zh: "软件过程与管理" }, score: 95 },
+      { name: { en: "Probability Theory and Mathematical Statistics", zh: "自然语言处理" }, score: 99 },
+      { name: { en: "Data Structures and Algorithms", zh: "数据挖掘与可视化" }, score: 99 },
     ],
     cvSupplement: { en: "GPA: 4.06", zh: "GPA：4.06" },
   },
@@ -69,11 +74,11 @@ export const educationRecords: readonly EducationRecord[] = [
     degree: { en: "Master of Science in Data Science", zh: "数据科学理学硕士" },
     cvDegree: { en: "M.Sc. in Data Science", zh: "数据科学理学硕士" },
     courses: [
-      { en: "Optimization", zh: "最优化" },
-      { en: "Machine Learning", zh: "机器学习" },
-      { en: "Data Mining", zh: "数据挖掘" },
-      { en: "Market Microstructure and Algorithmic Trading", zh: "市场微观结构与算法交易" },
-      { en: "Blockchain", zh: "区块链" },
+      { name: { en: "Optimization", zh: "最优化" } },
+      { name: { en: "Machine Learning", zh: "机器学习" } },
+      { name: { en: "Data Mining", zh: "数据挖掘" } },
+      { name: { en: "Market Microstructure and Algorithmic Trading", zh: "市场微观结构与算法交易" } },
+      { name: { en: "Blockchain", zh: "区块链" } },
     ],
     incomingSummary: {
       label: { en: "Incoming 2026", zh: "2026 年入学" },
@@ -196,7 +201,10 @@ export function getHomeEducation(locale: Locale) {
     title: localized(record.institution, locale),
     meta: localized(record.degree, locale),
     description: record.description ? localized(record.description, locale) : null,
-    courses: record.courses.map((course) => localized(course, locale)),
+    courses: record.courses.map((course) => ({
+      name: localized(course.name, locale),
+      score: course.score,
+    })),
   }));
 }
 

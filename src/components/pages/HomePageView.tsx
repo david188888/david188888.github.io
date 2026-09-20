@@ -228,7 +228,14 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                   <p className="courses-label">{copy.coursesLabel}</p>
                   <ul className="education-courses">
                     {item.courses.map((course) => (
-                      <li key={course}>{course}</li>
+                      <li key={course.name}>
+                        <span>{course.name}</span>
+                        {course.score !== undefined ? (
+                          <span className="course-score" aria-label={`${course.score} points`}>
+                            {course.score}
+                          </span>
+                        ) : null}
+                      </li>
                     ))}
                   </ul>
                 </article>

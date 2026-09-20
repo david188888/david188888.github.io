@@ -28,10 +28,10 @@ const selectorFixtures = {
         meta: "B.Eng. in Software Engineering",
         description: "Overall GPA: 4.06.",
         courses: [
-          "Python Data Analysis and Applications",
-          "Software Process and Management",
-          "Probability Theory and Mathematical Statistics",
-          "Data Structures and Algorithms",
+          { name: "Python Data Analysis and Applications", score: 99 },
+          { name: "Software Process and Management", score: 95 },
+          { name: "Probability Theory and Mathematical Statistics", score: 99 },
+          { name: "Data Structures and Algorithms", score: 99 },
         ],
       },
       {
@@ -41,11 +41,11 @@ const selectorFixtures = {
         meta: "Master of Science in Data Science",
         description: null,
         courses: [
-          "Optimization",
-          "Machine Learning",
-          "Data Mining",
-          "Market Microstructure and Algorithmic Trading",
-          "Blockchain",
+          { name: "Optimization" },
+          { name: "Machine Learning" },
+          { name: "Data Mining" },
+          { name: "Market Microstructure and Algorithmic Trading" },
+          { name: "Blockchain" },
         ],
       },
     ],
@@ -227,10 +227,10 @@ const selectorFixtures = {
         meta: "软件工程工学学士（双学位）",
         description: "综合 GPA：4.06",
         courses: [
-          "Python程序设计基础（99分）",
-          "软件过程与管理（95分）",
-          "自然语言处理（99分）",
-          "数据挖掘与可视化（99分）",
+          { name: "Python程序设计基础", score: 99 },
+          { name: "软件过程与管理", score: 95 },
+          { name: "自然语言处理", score: 99 },
+          { name: "数据挖掘与可视化", score: 99 },
         ],
       },
       {
@@ -240,11 +240,11 @@ const selectorFixtures = {
         meta: "数据科学理学硕士",
         description: null,
         courses: [
-          "最优化",
-          "机器学习",
-          "数据挖掘",
-          "市场微观结构与算法交易",
-          "区块链",
+          { name: "最优化" },
+          { name: "机器学习" },
+          { name: "数据挖掘" },
+          { name: "市场微观结构与算法交易" },
+          { name: "区块链" },
         ],
       },
     ],
@@ -454,7 +454,7 @@ describe("profile content", () => {
       expect(record.degree[locale]).toBeTruthy();
       if (record.description) expect(record.description[locale]).toBeTruthy();
       expect(record.courses.length).toBeGreaterThan(0);
-      record.courses.forEach((course) => expect(course[locale]).toBeTruthy());
+      record.courses.forEach((course) => expect(course.name[locale]).toBeTruthy());
     }
     for (const record of internshipRecords) {
       expect(record.period[locale]).toBeTruthy();

@@ -114,6 +114,14 @@ describe("HomePageView", () => {
     });
     publicationRecords.forEach((record) => expect(html).toContain(escapeHtml(record.title[locale])));
   });
+
+  it("renders course scores as separate accessible badges", () => {
+    const html = renderToStaticMarkup(<HomePageView locale="zh" />);
+
+    expect(html).toContain('<span>Python程序设计基础</span>');
+    expect(html).toContain('<span class="course-score" aria-label="99 points">99</span>');
+    expect(html).not.toContain("Python程序设计基础（99分）");
+  });
 });
 
 describe("TradingAgentsPageView", () => {
