@@ -50,7 +50,6 @@ const homeCopy = {
     projectDetail: "Project details →",
     upstreamLabel: "Upstream project ↗",
     openSourceKicker: "Open-source contribution",
-    mergedLabel: "Merged",
     competitionsKicker: "Competitions & Modeling",
     competitionsTitle: "Mathematical modeling",
     repositoryLabel: "View repository ↗",
@@ -73,7 +72,7 @@ const homeCopy = {
     coursesLabel: "主修课程",
     experienceTitle: "实习经历",
     experienceDescription: "将语音研究转化为生产系统与低时延应用。",
-    researchTitle: "主要研究",
+    researchTitle: "论文研究",
     researchDescription: "围绕语音语言模型安全、隐私与语音对话智能的研究。",
     paperLabel: "阅读论文 ↗",
     projectsTitle: "项目与开源",
@@ -83,12 +82,11 @@ const homeCopy = {
     projectDetail: "项目详情 →",
     upstreamLabel: "上游项目 ↗",
     openSourceKicker: "开源贡献",
-    mergedLabel: "已合并",
     competitionsKicker: "竞赛与建模",
     competitionsTitle: "数学建模实践",
     repositoryLabel: "查看参赛仓库 ↗",
     closingTitle: "保持联系。",
-    closingNote: "HongYu Liu · 研究与个人笔记",
+    closingNote: "刘泓宇 · 研究与个人笔记",
     footerNote: "研究与个人笔记 · © 2026",
   },
 } satisfies Record<Locale, Record<string, string | { cv: string; github: string; email: string }>>;
@@ -352,7 +350,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                           #{contribution.id.split("-").at(-1)} ↗
                         </a>
                         <span>{contribution.summary}</span>
-                        {contribution.merged ? <span className="merged">{copy.mergedLabel}</span> : null}
                       </li>
                     ))}
                   </ul>
@@ -397,9 +394,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
           </section>
         </main>
         <footer className="foot">
-          <div>
-            <strong>{authorConfig.name}</strong>
-          </div>
           <p className="foot-note">{copy.footerNote}</p>
         </footer>
       </div>

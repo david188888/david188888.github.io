@@ -49,13 +49,13 @@ export const educationRecords: readonly EducationRecord[] = [
     id: "scnu-beng",
     period: { en: "Bachelor's Degree", zh: "本科" },
     institution: { en: "South China Normal University", zh: "华南师范大学" },
-    degree: { en: "B.Eng. in Software Engineering", zh: "软件工程工学学士" },
-    description: { en: "Overall GPA: 4.06.", zh: "综合 GPA：4.06。" },
+    degree: { en: "B.Eng. in Software Engineering", zh: "软件工程工学学士（双学位）" },
+    description: { en: "Overall GPA: 4.06.", zh: "综合 GPA：4.06" },
     courses: [
-      { en: "Python Data Analysis and Applications", zh: "Python 数据分析与应用" },
-      { en: "Software Process and Management", zh: "软件过程与管理" },
-      { en: "Probability Theory and Mathematical Statistics", zh: "概率论与数理统计" },
-      { en: "Data Structures and Algorithms", zh: "数据结构与算法" },
+      { en: "Python Data Analysis and Applications", zh: "Python程序设计基础（99分）" },
+      { en: "Software Process and Management", zh: "软件过程与管理（95分）" },
+      { en: "Probability Theory and Mathematical Statistics", zh: "自然语言处理（99分）" },
+      { en: "Data Structures and Algorithms", zh: "数据挖掘与可视化（99分）" },
     ],
     cvSupplement: { en: "GPA: 4.06", zh: "GPA：4.06" },
   },
@@ -89,7 +89,7 @@ export const internshipRecords: readonly InternshipRecord[] = [
   {
     id: "insta360-speech-algorithm",
     period: { en: "Feb 2026 - Jun 2026", zh: "2026 年 2 月 - 2026 年 6 月" },
-    company: { en: "Insta360", zh: "Insta360" },
+    company: { en: "Insta360", zh: "影石Insta360" },
     role: { en: "Speech Algorithm Intern", zh: "语音算法实习生" },
     location: { en: "Shenzhen, China", zh: "中国深圳" },
     description: {
@@ -100,7 +100,7 @@ export const internshipRecords: readonly InternshipRecord[] = [
   {
     id: "amphion-r-and-d",
     period: { en: "Jun 2025 - Sep 2025", zh: "2025 年 6 月 - 2025 年 9 月" },
-    company: { en: "Amphion Technology", zh: "Amphion Technology" },
+    company: { en: "Amphion Technology", zh: "安菲翁科技有限公司" },
     role: { en: "R&D Intern", zh: "研发实习生" },
     location: { en: "Shenzhen, China", zh: "中国深圳" },
     description: {

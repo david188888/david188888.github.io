@@ -72,7 +72,7 @@ describe("HomePageView", () => {
         expect(html).toContain(contribution.pullRequestUrl);
       });
     });
-    expect(html.match(/已合并/g)).toHaveLength(2);
+    expect(html).not.toContain("已合并");
     competitionRecords.forEach((record) => expect(html).toContain(record.award.zh));
   });
 

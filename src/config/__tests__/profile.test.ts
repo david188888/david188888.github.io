@@ -224,13 +224,13 @@ const selectorFixtures = {
         id: "scnu-beng",
         time: "本科",
         title: "华南师范大学",
-        meta: "软件工程工学学士",
-        description: "综合 GPA：4.06。",
+        meta: "软件工程工学学士（双学位）",
+        description: "综合 GPA：4.06",
         courses: [
-          "Python 数据分析与应用",
-          "软件过程与管理",
-          "概率论与数理统计",
-          "数据结构与算法",
+          "Python程序设计基础（99分）",
+          "软件过程与管理（95分）",
+          "自然语言处理（99分）",
+          "数据挖掘与可视化（99分）",
         ],
       },
       {
@@ -252,7 +252,7 @@ const selectorFixtures = {
       {
         id: "scnu-beng",
         school: "华南师范大学",
-        detail: "软件工程工学学士 · GPA：4.06",
+        detail: "软件工程工学学士（双学位） · GPA：4.06",
       },
       {
         id: "cuhksz-msc-data-science",
@@ -268,14 +268,14 @@ const selectorFixtures = {
       {
         id: "insta360-speech-algorithm",
         time: "2026 年 2 月 - 2026 年 6 月",
-        title: "Insta360 · 语音算法实习生",
+        title: "影石Insta360 · 语音算法实习生",
         meta: "中国深圳",
         description: "参与生产级语音算法开发，并针对语音应用优化低时延模型推理能力。",
       },
       {
         id: "amphion-r-and-d",
         time: "2025 年 6 月 - 2025 年 9 月",
-        title: "Amphion Technology · 研发实习生",
+        title: "安菲翁科技有限公司 · 研发实习生",
         meta: "中国深圳",
         description: "为语音克隆应用开发核心算法，并支持视频翻译场景中的后端模型集成。",
       },
@@ -283,12 +283,12 @@ const selectorFixtures = {
     getCvInternships: [
       {
         id: "insta360-speech-algorithm",
-        role: "Insta360 · 语音算法实习生",
+        role: "影石Insta360 · 语音算法实习生",
         detail: "中国深圳 · 2026 年 2 月 - 2026 年 6 月",
       },
       {
         id: "amphion-r-and-d",
-        role: "Amphion Technology · 研发实习生",
+        role: "安菲翁科技有限公司 · 研发实习生",
         detail: "中国深圳 · 2025 年 6 月 - 2025 年 9 月",
       },
     ],
