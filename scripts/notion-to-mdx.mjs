@@ -126,13 +126,40 @@ export function parseDiscussions(fetchText) {
 
 /* ────────────────────────────── section slicing ─────────────────────────── */
 
-/** Returns the text after the `# 正文` heading. */
+/** Returns the text between `# 正文` and the next top-level heading. */
 export function extractBodySection(content) {
   const lines = content.split(/\r?\n/);
   const start = lines.findIndex((line) => line.trim() === BODY_HEADING);
 
   if (start === -1) {
     throw new ConversionError(`Notion 页面里找不到 "${BODY_HEADING}" 标题，无法确定正文范围。`);
+  }
+
+  let fence;
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const trimmed = lines[index].trimStart();
+    if (fence) {
+      const closingFence = trimmed.match(/^([`~]{3,})\s*$/)?.[1];
+      if (
+        closingFence &&
+        closingFence[0] === fence.character &&
+        closingFence.length >= fence.length &&
+        [...closingFence].every((character) => character === fence.character)
+      ) {
+        fence = undefined;
+      }
+      continue;
+    }
+
+    const openingFence = trimmed.match(/^(`{3,}|~{3,})/)?.[1];
+    if (openingFence) {
+      fence = { character: openingFence[0], length: openingFence.length };
+      continue;
+    }
+
+    if (/^#\s+/.test(lines[index])) {
+      return lines.slice(start + 1, index).join("\n");
+    }
   }
 
   return lines.slice(start + 1).join("\n");
@@ -287,7 +314,10 @@ export function splitBlocks(section) {
       continue;
     }
 
-    blocks.push({ type: "paragraph", lines: [line] });
+    // A child paragraph in Notion enhanced Markdown is tab-indented. Outside
+    // structural blocks (callout/table/code/HTML), it is still prose; retaining
+    // that tab would turn it into an unintended Markdown code block.
+    blocks.push({ type: "paragraph", lines: [line.replace(/^\t+/, "")] });
     index += 1;
   }
 
@@ -344,6 +374,14 @@ export function convertInlineAnnotations(text, warn = () => {}) {
   result = result
     .replace(/<mention-[a-z-]+\b[^>]*>([\s\S]*?)<\/mention-[a-z-]+>/g, "$1")
     .replace(/<mention-[a-z-]+\b[^>]*\/>/g, "");
+
+  // Notion can split one continuous underline/colour run into adjacent spans.
+  // Merge identical runs so the site's delimiter-based mark syntax stays valid.
+  let previous;
+  do {
+    previous = result;
+    result = result.replace(/==([a-z]+)\|([\s\S]*?)====\1\|/g, "==$1|$2");
+  } while (result !== previous);
 
   if (/<span\b/.test(result)) {
     const leftovers = [...result.matchAll(/<span\b[^>]*>/g)].map((m) => m[0]);

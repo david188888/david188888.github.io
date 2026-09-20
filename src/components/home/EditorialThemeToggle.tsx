@@ -9,39 +9,31 @@ import {
 } from "./editorialTheme";
 
 const options: readonly { preference: EditorialThemePreference; label: Record<Locale, string> }[] = [
-  { preference: "system", label: { en: "System", zh: "跟随系统" } },
   { preference: "light", label: { en: "Light", zh: "浅色" } },
   { preference: "dark", label: { en: "Dark", zh: "深色" } },
 ];
 
-function resolve(preference: EditorialThemePreference) {
-  if (preference === "system") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-  return preference;
-}
-
 function apply(preference: EditorialThemePreference) {
-  document.documentElement.setAttribute("data-ed-theme", resolve(preference));
+  document.documentElement.setAttribute("data-ed-theme", preference);
 }
 
 export function EditorialThemeToggle({ locale }: { locale: Locale }) {
-  const [preference, setPreference] = useState<EditorialThemePreference>("system");
+  const [preference, setPreference] = useState<EditorialThemePreference>("light");
 
   useEffect(() => {
-    let stored = "system";
     try {
-      stored = window.localStorage.getItem(EDITORIAL_THEME_KEY) ?? "system";
+      const stored = window.localStorage.getItem(EDITORIAL_THEME_KEY) ?? "light";
+      if (isEditorialThemePreference(stored)) setPreference(stored);
     } catch {
-      // Storage unavailable: the pre-paint script already used the system setting.
+      // Storage unavailable: the pre-paint script already selected light.
     }
-    if (isEditorialThemePreference(stored)) setPreference(stored);
   }, []);
 
   function choose(next: EditorialThemePreference) {
     setPreference(next);
     apply(next);
     try {
+      // A legacy "system" value is replaced the next time the visitor chooses a mode.
       window.localStorage.setItem(EDITORIAL_THEME_KEY, next);
     } catch {
       // The preference still applies for this page view.

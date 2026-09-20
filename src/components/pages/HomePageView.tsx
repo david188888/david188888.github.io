@@ -1,6 +1,7 @@
 import Link from "next/link";
 import "@/components/home/editorial.css";
 import { EditorialMasthead } from "@/components/home/EditorialMasthead";
+import { LatestInsightCarousel } from "@/components/home/LatestInsightCarousel";
 import { editorialThemeScript } from "@/components/home/editorialTheme";
 import { authorConfig } from "@/config/author";
 import { getInsightContent } from "@/config/insights";
@@ -107,16 +108,6 @@ const sharedCopy = {
   },
 } as const;
 
-/**
- * Splits a headline at its first colon so the second half can carry the accent
- * colour, mirroring the approved layout. Titles without a colon stay unaccented.
- */
-function splitFeatureTitle(title: string): [string, string | null] {
-  const match = title.match(/^([^：:]{1,40}[：:])([\s\S]+)$/);
-  if (!match) return [title, null];
-  return [match[1], match[2].trim()];
-}
-
 const MAX_PULL_QUOTE_LENGTH = 160;
 
 /**
@@ -157,13 +148,19 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
   const openSource = getOpenSourceProjects(locale);
   const competitions = getCompetitionRecords(locale);
   const { featuredInsight } = getInsightContent(locale);
-  const latestPost = getPublishedPosts(locale)[0];
+  const latestPosts = getPublishedPosts(locale).slice(0, 5);
+  const latestCards = latestPosts.map((post) => ({
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    date: post.date,
+    tags: post.tags,
+    href: localizedHref(`/insights/${post.slug}/`, locale),
+    pullQuote: extractPullQuote(post.body),
+  }));
   const insightsHref = localizedHref("/insights/", locale);
   const [nameFirst, ...nameRest] = authorConfig.name.split(" ");
   const nameLast = nameRest.join(" ");
-  const postHref = latestPost ? localizedHref(`/insights/${latestPost.slug}/`, locale) : null;
-  const pullQuote = latestPost ? extractPullQuote(latestPost.body) : null;
-  const [titleHead, titleSubject] = latestPost ? splitFeatureTitle(latestPost.title) : ["", null];
 
   return (
     <div className="ed-root">
@@ -192,51 +189,29 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
               <p className="profile-foot">{copy.profileFoot}</p>
             </section>
 
-            <article className="feature" aria-labelledby="feature-title">
-              {latestPost && postHref ? (
-                <>
-                  <div className="feature-meta">
-                    <strong>{copy.featureLabel}</strong>
-                    {latestPost.date ? (
-                      <time dateTime={latestPost.date}>
-                        {latestPost.date.replaceAll("-", ".")}
-                      </time>
-                    ) : null}
-                  </div>
-                  <h2 id="feature-title">
-                    <span>{titleHead}</span>
-                    {titleSubject ? <span className="subject">{titleSubject}</span> : null}
-                  </h2>
-                  <p className="excerpt">{latestPost.excerpt}</p>
-                  {pullQuote ? (
-                    <blockquote className="quotation">
-                      <p>{pullQuote}</p>
-                      <cite>{locale === "zh" ? "摘自本文" : "From this article"}</cite>
-                    </blockquote>
-                  ) : null}
-                  <Link className="read" href={postHref}>
-                    <span>
-                      {copy.readArticle} &nbsp; / &nbsp; {latestPost.tags.join(" · ")}
-                    </span>
-                    <span aria-hidden="true">↗</span>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <div className="feature-meta">
-                    <strong>{copy.featureLabel}</strong>
-                  </div>
-                  <h2 id="feature-title">
-                    <span>{featuredInsight.title}</span>
-                  </h2>
-                  <p className="excerpt">{featuredInsight.description}</p>
-                  <Link className="read" href={insightsHref}>
-                    <span>{copy.fallbackCta}</span>
-                    <span aria-hidden="true">↗</span>
-                  </Link>
-                </>
-              )}
-            </article>
+            {latestCards.length > 0 ? (
+              <LatestInsightCarousel
+                locale={locale}
+                cards={latestCards}
+                featureLabel={copy.featureLabel}
+                readArticleLabel={copy.readArticle}
+                pullQuoteLabel={locale === "zh" ? "摘自本文" : "From this article"}
+              />
+            ) : (
+              <article className="feature" aria-labelledby="feature-title">
+                <div className="feature-meta">
+                  <strong>{copy.featureLabel}</strong>
+                </div>
+                <h2 id="feature-title">
+                  <span>{featuredInsight.title}</span>
+                </h2>
+                <p className="excerpt">{featuredInsight.description}</p>
+                <Link className="read" href={insightsHref}>
+                  <span>{copy.fallbackCta}</span>
+                  <span aria-hidden="true">↗</span>
+                </Link>
+              </article>
+            )}
           </div>
 
           <section id="education" className="chapter" aria-labelledby="education-title">

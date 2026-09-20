@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync("src/app/globals.css", "utf8");
+const editorialCss = readFileSync("src/components/home/editorial.css", "utf8");
 
 describe("aligned page CSS contracts", () => {
   it("defines the shared grid, sticky rail, and active marker", () => {
@@ -43,5 +44,14 @@ describe("aligned page CSS contracts", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*767px\)/);
     expect(css).toMatch(/\.aligned-section-row\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
     expect(css).toMatch(/\.aligned-quick-nav\s*\{[\s\S]*?display:\s*flex/);
+  });
+
+  it("restores a scoped editorial rhythm without changing the annotation grid", () => {
+    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose\s*\{[\s\S]*?font-size:\s*17px[\s\S]*?line-height:\s*1\.85/);
+    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose \.insight-body > p[\s\S]*?margin-top:\s*1\.25em/);
+    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose \.insight-body > h2[\s\S]*?margin-top:\s*2\.8em/);
+    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose code::before[\s\S]*?content:\s*none/);
+    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose code::after[\s\S]*?content:\s*none/);
+    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose \.insight-body > \.note-pair > p/);
   });
 });

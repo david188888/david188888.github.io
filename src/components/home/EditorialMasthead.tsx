@@ -38,23 +38,24 @@ export function EditorialMasthead({ locale = defaultLocale, variant = "home" }: 
       <Link className="wordmark" href={localizedHref("/", locale)}>
         HongYu Liu<span>.</span>
       </Link>
-      <div className="masthead-end">
-        {variant === "project" ? (
-          <nav className="masthead-nav" aria-label={navLabel}>
-            <Link href={localizedHref("/#projects", locale)}>
-              {locale === "zh" ? "← 返回项目与开源" : "← Back to projects"}
-            </Link>
-          </nav>
-        ) : (
-          <nav className="masthead-nav" aria-label={navLabel}>
-            {sectionLinks.map((item) => (
-              <a key={item.id} href={sectionHref(item.href, variant, locale)}>
-                {item.label[locale]}
-              </a>
-            ))}
-          </nav>
-        )}
+      {variant === "project" ? (
+        <nav className="masthead-nav" aria-label={navLabel}>
+          <Link href={localizedHref("/#projects", locale)}>
+            {locale === "zh" ? "← 返回项目与开源" : "← Back to projects"}
+          </Link>
+        </nav>
+      ) : (
+        <nav className="masthead-nav" aria-label={navLabel}>
+          {sectionLinks.map((item) => (
+            <a key={item.id} href={sectionHref(item.href, variant, locale)}>
+              {item.label[locale]}
+            </a>
+          ))}
+        </nav>
+      )}
+      <div className="masthead-tools">
         <LanguageSwitcher variant="editorial" />
+        <span className="masthead-divider" aria-hidden="true" />
         <EditorialThemeToggle locale={locale} />
       </div>
     </header>

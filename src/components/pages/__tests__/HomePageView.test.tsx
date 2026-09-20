@@ -7,6 +7,7 @@ import {
   publicationRecords,
 } from "@/config/profile";
 import { competitionRecords, openSourceProjects } from "@/config/projects";
+import { getPublishedPosts } from "@/lib/content/posts";
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -79,6 +80,28 @@ describe("HomePageView", () => {
     const html = renderToStaticMarkup(<HomePageView locale="en" />);
 
     expect(html).not.toContain("future-post");
+  });
+
+  it("represents the newest published insights in an accessible localized carousel", () => {
+    const posts = getPublishedPosts("en").slice(0, 5);
+    const html = renderToStaticMarkup(<HomePageView locale="en" />);
+
+    expect(html).toContain('aria-roledescription="carousel"');
+    expect(html).toContain("Previous article");
+    expect(html).toContain("Next article");
+    expect(html).toContain("Pause automatic rotation");
+    expect(html).toContain(`${posts.length} ${posts.length === 1 ? "article" : "articles"}`);
+
+    const postLinks = posts.map((post) => `/en/insights/${post.slug}/`);
+    expect((html.match(/class="latest-insight-slide"/g) ?? [])).toHaveLength(posts.length);
+    postLinks.forEach((href, index) => {
+      expect(html).toContain(`href="${href}"`);
+      if (index > 0) expect(html.indexOf(postLinks[index - 1])).toBeLessThan(html.indexOf(href));
+    });
+    expect(html).toContain(`href="${postLinks[0]}" class="read" tabindex="0"`);
+    postLinks.slice(1).forEach((href) => {
+      expect(html).toContain(`href="${href}" class="read" tabindex="-1"`);
+    });
   });
 
   it.each(["en", "zh"] as const)("renders every configured profile record for %s", (locale) => {

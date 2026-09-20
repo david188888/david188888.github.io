@@ -1,0 +1,222 @@
+---
+title: "AI 时代，企业组织方式正在如何改变"
+date: "2026-09-19"
+language: zh
+excerpt: "AI 时代的组织转型，不只是给员工配一个 Agent，而是重写任务交接、权限治理、上下文管理和结果验收的基础设施。本文从 Grok Bot、Claude Tag 与豆包工作伙伴出发，讨论企业协作层的产品形态、商业价值与风险边界。"
+tags:
+  - AI
+  - Agents
+  - Organization
+---
+
+## 交接正在换一种方式发生
+
+我在之前实习的过程中，实际体验到开发流程中的交互方式的转变。现在的需求由产品那边提出来，交付给开发端的是一份结构化Agent生成的相关文件，包含目标、范围、约束、要交付的产物和验收标准。随即开发人员接到以后 使用 Coding Agent 逐一实现包括第一手的验证和测试。PR提交上去的时候，审核代码的也已经是 Agent按照相关skills进行review了。还有其他部门的各种自动化任务：例如运维的一部分日常动作挂在协作机器人的定时任务上，出异常就自动去私聊对应的人；又或者测试团队的自动化测试pipeline。
+
+现在仍然离不开人的工作，我在实习中遇到两类。第一类是跨角色对齐。产品、开发和测试要先由人确认目标、责任与验收边界，再把已经对齐的结果交给各自的 Agent 去规划和执行。这里受限于责任归属、权限和模型可靠性。当前更稳妥的协作方式，是人先把分歧和责任说清，再让 Agent 接住后续交付。
+
+第二类是接近 RSI的概念，也就是递归自我改进的模型训练流程。从数据准备、训练、评估，到根据结果调整数据和参数，Agent 还不能稳定地完成全流程循环。训练和强化学习一旦跑偏，成本会迅速累积，所以中间的关键判断目前仍要人盯着。
+
+这些细节单独看都不新鲜，coding agent 能写代码这件事已经讲了两三年。比较值得关注的是交互过程的中间那一层。以前一个需求要走完，产品把话讲给开发，开发把东西交给测试，测试把结论回给产品，每次交接都要人重新说一遍上下文，说岔了还要来回掰扯。==blue|现在我认为应该的转变是这些交接被一份份结构化文件接住，通过管理合适高效的上下文context 以及交互协议去提升效率。==
+
+## 四个月内，三家公司给出相似答案
+
+2026 年 6 月到 9 月，Anthropic、xAI 和飞书先后发布 Claude Tag、Grok Bot 和豆包工作伙伴。三个产品入口不同，方向却很接近。Agent 开始离开单独的聊天框，进入员工长期使用的频道、文件和工作系统。任务可以在人员下线后继续，管理员也能限制 Agent 可以读取的资料和执行的操作。
+
+这一变化到现在才有条件落地，主要靠两件事。一方面是目前的模型已经能持续处理更长的任务，另一方面是协作平台也开放了足够多的接口。对于飞书CLI，Agent 可调用的接口从 247 个增至 767 个，调用成功率从 78% 提升到 95%。这说明 Agent 已经能直接读写更多办公系统。
+
+权限和审计也开始进入产品。管理员可以给 Agent 单独配置权限，要求高风险动作经过审批，并查看它调用过哪些工具。企业因此敢把 Agent 放进真实流程。三款产品目前仍处在早期阶段，它们能证明产品方向正在收敛，尚不足以证明大多数公司已经完成组织改造。
+
+## 三个入口，指向同一种组织变化
+
+Grok Bot、Claude Tag 和豆包工作伙伴分别从个人、团队和组织关系切入。Agent 先接住一个人的执行工作，再进入共享频道，最后沿着岗位和部门权限参与流程。公司内部的任务因此开始在不同员工和部门的 Agent 之间交接。
+
+1. **Grok Bot 先扩展个人能力**
+
+一名员工可以在云端运行多只 Bot，让它们分别查资料、分析和整理结果。Bot 在员工离线后仍能继续工作。它证明了一个人可以带着一组常驻执行者工作，不同员工的 Bot 如何稳定交接任务，目前仍缺少公开证据。
+
+同一账户下的 Bot 共用文件和登录状态，能做的事情也不会超过这个员工原有的权限。
+
+1. **Claude Tag 把 Agent 放进共享频道**
+
+团队成员可以在同一个 Slack 讨论串里派任务、补材料和查看进度。不同部门因此可以配置职责不同的 Agent，再用标准交接单传递任务。同时claude tag可以在群里自主决定什么时候插话或者回答。
+
+管理员可以给 Claude 单独开机器账号，规定它能使用哪些工具和资料，并保留调用记录。频道成员能够调用 Agent 已有的权限，成员范围和 Agent 权限必须保持一致。
+
+1. **豆包工作伙伴沿用企业现有的组织关系**
+
+它可以像同事一样进入群聊，读取飞书里的文档、会议和审批，并按照当前员工的权限取资料。同时也可以像Claude tag一样在群里回答问题、执行任务。不同的是飞书积攒的护城河，大量的OKR，飞书日程、飞书会议等非常适合这种协作方式，供智能体作为上下文。
+
+==blue|三条路径的差别落在上下文和权限归谁==。个人 Agent 了解一个人的工作，频道 Agent 共享团队状态，组织 Agent 沿用岗位和部门关系。把它们连起来，还需要统一的交接格式、明确的权限和可以检查的验收证据。
+
+## 先被自动化的是交接、执行和验证
+
+一个任务在部门之间流转，要先把需求交给下一方，随后完成执行，最后判断结果能否使用。执行最早是交给 Agent，因为输入和产物相对明确。交接需要把口头要求整理成下一方能直接使用的内容，验证还要预先写清标准，并要求执行方提供证据。因此我认为例如json等格式的文件是最合适的。
+
+Agent 可以接住交接，前提是目标被写成一份标准交接单，也可以叫任务契约。产品 Agent 收到“降低验证码步骤流失率”后，交给开发 Agent 的内容可以压成下面几项。
+
+```text
+任务 #4821
+目标  注册完成率提高 5%
+范围  修改验证码交互，不改风控逻辑
+权限  允许修改 frontend/signup
+执行  Dev Agent
+验收  错误提示、重发、重试和埋点符合要求
+验证  QA Agent
+```
+
+开发 Agent 完成后，返回代码链接、测试结果和风险说明。QA Agent 再按同一份标准检查。目标发生冲突、权限超出边界或结果可能造成高风险影响时，人再介入。任务契约把反复解释上下文的过程变成可以直接读取的交接，也把验收从口头判断变成可以核对的证据。
+
+<figure class="supply-chain-diagram">
+  <div class="supply-chain-diagram-scroll">
+    <svg
+      aria-labelledby="agent-org-topology-title agent-org-topology-description"
+      class="supply-chain-diagram-svg"
+      role="img"
+      viewBox="0 0 1120 620"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title id="agent-org-topology-title">人加 Agent 的组织形态</title>
+      <desc id="agent-org-topology-description">
+        业务目标与共享工作区位于上层，中间是产品、工程、商务三个角色各自的 Agent，它们接入同一个 Agent 网络，下层由 QA、SRE 与 Data Agent 承担验证、运行和数据职责。
+      </desc>
+      <defs>
+        <marker id="topo-arrow" markerHeight="8" markerWidth="8" orient="auto-start-reverse" refX="8" refY="4" viewBox="0 0 8 8">
+          <path class="supply-chain-arrow" d="M 0 0 L 8 4 L 0 8 z" />
+        </marker>
+      </defs>
+
+      <text class="supply-chain-heading" x="60" y="50">人还在上层，交接在 Agent 之间</text>
+      <text class="supply-chain-subheading" x="60" y="78">业务目标由人定义，中间的传递交给 Agent 网络</text>
+
+      <g class="supply-chain-node supply-chain-node-demand">
+        <rect height="64" rx="14" width="320" x="400" y="100" />
+        <text x="560" y="128">业务目标</text>
+        <text class="supply-chain-node-small" x="560" y="152">由人定义，可以度量</text>
+      </g>
+      <path class="supply-chain-flow" d="M 560 164 V 184" marker-end="url(#topo-arrow)" />
+
+      <g class="supply-chain-node">
+        <rect height="64" rx="14" width="460" x="330" y="184" />
+        <text x="560" y="212">共享工作区</text>
+        <text class="supply-chain-node-small" x="560" y="236">目标、决策、任务、状态、权限</text>
+      </g>
+      <path class="supply-chain-flow" d="M 560 248 V 268" marker-end="url(#topo-arrow)" />
+
+      <g class="supply-chain-node">
+        <rect height="84" rx="14" width="300" x="60" y="268" />
+        <text x="210" y="300">产品负责人</text>
+        <text class="supply-chain-node-small" x="210" y="326">Product Agent</text>
+      </g>
+      <g class="supply-chain-node">
+        <rect height="84" rx="14" width="300" x="410" y="268" />
+        <text x="560" y="300">工程师</text>
+        <text class="supply-chain-node-small" x="560" y="326">Dev Agent</text>
+      </g>
+      <g class="supply-chain-node">
+        <rect height="84" rx="14" width="300" x="760" y="268" />
+        <text x="910" y="300">商务负责人</text>
+        <text class="supply-chain-node-small" x="910" y="326">GTM Agent</text>
+      </g>
+
+      <path class="supply-chain-flow" d="M 210 352 V 372" marker-end="url(#topo-arrow)" />
+      <path class="supply-chain-flow" d="M 560 352 V 372" marker-end="url(#topo-arrow)" />
+      <path class="supply-chain-flow" d="M 910 352 V 372" marker-end="url(#topo-arrow)" />
+
+      <g class="supply-chain-node supply-chain-node-bottleneck">
+        <rect height="76" rx="14" width="1000" x="60" y="372" />
+        <text x="560" y="404">Agent 网络</text>
+        <text class="supply-chain-node-small" x="560" y="430">任务委派、上下文同步、冲突处理、结果验证</text>
+      </g>
+
+      <path class="supply-chain-flow" d="M 210 448 V 468" marker-end="url(#topo-arrow)" />
+      <path class="supply-chain-flow" d="M 560 448 V 468" marker-end="url(#topo-arrow)" />
+      <path class="supply-chain-flow" d="M 910 448 V 468" marker-end="url(#topo-arrow)" />
+
+      <g class="supply-chain-node">
+        <rect height="84" rx="14" width="300" x="60" y="468" />
+        <text x="210" y="500">QA Agent</text>
+        <text class="supply-chain-node-small" x="210" y="526">按契约验证</text>
+      </g>
+      <g class="supply-chain-node">
+        <rect height="84" rx="14" width="300" x="410" y="468" />
+        <text x="560" y="500">SRE Agent</text>
+        <text class="supply-chain-node-small" x="560" y="526">运行与故障处理</text>
+      </g>
+      <g class="supply-chain-node">
+        <rect height="84" rx="14" width="300" x="760" y="468" />
+        <text x="910" y="500">Data Agent</text>
+        <text class="supply-chain-node-small" x="910" y="526">数据与指标</text>
+      </g>
+
+      <text class="supply-chain-subheading" x="60" y="592">人负责定义目标和边界，Agent 根据任务契约完成交接、执行与验收。</text>
+    </svg>
+  </div>
+  <figcaption>
+    工作单位从人变成人加 Agent 以后，组织形态变成两层。上层是人定义的目标与共享工作区，下层是各角色的 Agent 接入同一个网络，由验证、运行和数据 Agent 承接横跨职能的部分
+  </figcaption>
+</figure>
+
+## 公司内部协作还缺四道约束
+
+单点任务目前已经能交给 Agent，但是部门之间长期协作仍要补齐四道约束。
+
+1. **权限和责任要跟着任务走。** Agent 要知道自己可以读什么、能改什么，谁批准高风险动作，出错以后由谁负责。写邮件草稿可以放开，付款和生产环境变更仍要人确认。
+1. ==blue|**上下文只保留当前有效的信息。** 协调 Agent 只需要目标、当前状态和已经确认的决定。部门内部的过程细节留在原处，交付时再附上产物、证据和风险。旧决定还要标明负责人和有效期，否则三个月前的结论会继续影响今天的任务。==
+1. **失败必须能够停止和恢复。** 两个 Agent 可能反复触发彼此，也可能给出冲突结论或写错系统。每个任务都需要唯一编号、最大执行次数、超时、回滚和人工升级机制。
+1. **经验要经过复核才能变成新规则。** 还是得有人工review的参与的环节，对于agent迭代的记忆文件或者流程规则文件需要经过人工review。人确认以后，这条经验才能进入组织记忆，作为参考和引用。
+
+这四道约束决定部门 Agent 能否长期工作。模型能力继续提高以后，权限、上下文和失败处理仍然需要公司自己定义。
+
+## 企业会为可靠的交接付费
+
+模型和工具调用仍会产生收入，企业新增预算更可能流向能够接管一次完整交接的产品。业务部门关心交付周期和人力，IT 或数字化部门负责接入现有系统，安全与法务决定数据和权限边界能否通过。企业最终购买的是少返工、少等待、少出错的内部流程。
+
+资金可能在三类供应商之间分配。
+
+1. **办公套件占据入口。** 员工关系、日常讨论、文档和审批已经在飞书、Slack 或 Office 里。套件把 Agent 放进现有席位，部署和采购都更直接。
+1. **模型厂商承接高价值任务的推理收入。** 复杂任务仍依赖强模型，调用越多，模型厂商收入越高。模型切换成本正在下降，组织关系和工作记录通常掌握在套件一侧。
+1. **独立治理层的价值主要出现在跨系统场景。** 单一办公套件通常能够管理自己内部的用户权限、数据访问和 Agent 行为，因此如果企业的大部分工作都发生在同一生态内，额外采购一层治理产品的必要性并不高。
+
+但现实中的大型企业往往同时使用聊天、代码、项目管理、CRM、数据库和云服务，不同部门还可能使用不同模型和 Agent。此时，单一套件很难管理多系统多生态的agent调配。独立治理层并不替 Agent 决定业务上应该读取什么或执行什么，而是在 Agent 跨越不同系统时统一约束身份、权限、数据范围和高风险操作，并记录完整的调用与审计链路。尤其在金融、医疗和政企等对数据边界和责任追溯要求更高的行业，这类能力更容易形成独立需求。==blue|独立厂商能否获得预算，最终取决于它是否能让跨系统 Agent 在保持安全和可审计的前提下减少接入成本、人工审批和错误写入，从而真正降低一条自动化流程的运行成本。==
+
+**隐私保护**是企业采用这套系统的前提。系统应先按员工权限筛选资料，只把当前任务需要的片段发给云端模型，并对敏感字段加密或脱敏。企业还要知道数据在哪里处理、保存多久，以及谁读过或修改过它。
+
+==blue|而在采用系统后优势和护城河的建立就来自于能不能更好的**管理Context**==。持续更新的组织上下文、权限关系、任务证据和评估反馈这些都可以作为持续迭代的context，而无论上游的接入模型是哪个亦或者后续的不同类型的任务，管理好context才能让agent在更符合企业要求的环境下持续工作并且不偏移，因此也更容易进入企业的长期预算。
+
+企业可以按一次成功交接来算账。
+
+```text
+每次成功交接的净价值
+= 节省的人力 + 缩短周期的价值 + 避免的错误损失
+- 模型与工具调用 - 集成运维 - 人工复核 - 预期错误损失
+```
+
+供应商获得席位收入或用量收入，还要承担推理、检索、存储、连接器、支持和异常处理成本。人工复核如果长期不能从全量降到抽检，客户价值和供应商利润都会受压。错误写入率、正式采购转化和跨部门流程能够连续运行多久，比融资额和发布会上的产品名单更能说明这门生意是否成立。
+
+## 风险边界与组织信号
+
+最要紧的风险是错误被真的执行出去。一个只会说错的助手，损失止于一句错话。一个有登录凭据、能写系统的 Agent 说错话，会变成一封发错的邮件、一次错的采购、一次生产环境的变更。所以这三款产品都把高风险动作拦在人这里。Grok Bot 对 shell 和浏览器操作要求逐项批准，Claude Tag 用窄范围的机器身份控制权限半径，飞书用工作流和敏感数据管控把节点固化下来。
+
+同样还有提示词攻击问题，提示注入是结构性的。攻击者可以把指令藏进网页、邮件、issue、PDF 或者插件返回的数据里，让 Agent 把它当成任务。还有三个次一级的缺口。过期记忆会让 Agent 拿着三个月前的结论继续推理。自动化任务还可能自己转圈循环。比如销售 Agent 更新客户状态，触发运营 Agent 发消息；这条消息又被销售 Agent 当成新事件处理，两个 Agent 就会反复唤醒彼此，持续消耗 token，严重时还会重复改数据或发送消息。目前三家公开材料都没有把这些保护措施讲清楚。异构模型治理在豆包这里尤其突出，它允许企业接入自己的模型厂商账户，数据政策要按合同一家一家看，不能只看飞书那一层。
+
+数据驻留和合规也要单独处理。Grok Bot 的云电脑目前在美国，企业需要确认数据存放地点、跨境传输和供应商合同。中国企业如果把 Agent 生成的内容对外发布，还要按照《人工智能生成合成内容标识办法》履行标识义务。
+
+组织变化最终会落在正式制度里。企业是否开始调整岗位职责和审批方式，并把 Agent 的权限、交付与验收写进流程，比发布会上的功能数量更值得观察。
+
+## 两个视角
+
+==blue|对个人来说，之后的职责和责任会从执行往定义和验证挪。接下来更重要的考核是能不能判断什么算做好了或者什么值得做。还有重要的是个人在行业领域的垂直经验的积累，只有个人在行业有足够多的沉淀，才会积累出出对于该行业的taste以及一些关键决策的判断力==。
+
+==blue|对公司来说，顺序和准确比速度重要我认为。先做权限和上下文治理，再把 Agent 铺开，把组织记忆当基础设施建，而不是当提示词写。授权按影响可逆性分层，读和总结可以放开，对外发消息、下单、改生产环境要留在人这里。验收指标也不要选聊天 benchmark，值得测的是长任务完成率、需要人介入的次数、错误的对外写入率、工具调用的重试率和平均每个成功任务的成本。==
+
+## 关键来源
+
+- [Introducing Grok Bot](https://x.ai/news/introducing-grok-bot)，持久云电脑、多 Bot 协作、routine 与事件触发
+- [Grok Bot Security](https://cursor.com/docs/grok-bot/security) 与 [Security FAQ](https://cursor.com/docs/grok-bot/security-faq)，隔离单位、身份模型、Auto Review、网络策略、模型路由与数据驻留
+- [Introducing Claude Tag](https://www.anthropic.com/news/introducing-claude-tag)，multiplayer、Opus 4.8、记忆与异步任务
+- [What is Claude Tag](https://support.claude.com/en/articles/15594475-what-is-claude-tag)，频道权限、Agent Identity、计费与审计
+- [豆包工作伙伴模型管理](https://aily.feishu.cn/hc/1u7kleqg/897wr1b8)、[知识检索范围](https://aily.feishu.cn/hc/1u7kleqg/2csyds1b)、[安全合规解决方案](https://aily.feishu.cn/hc/1u7kleqg/taaiminh)，多模型接入、按用户鉴权的检索与企业数据管控
+- [飞书 8.0 与豆包工作伙伴发布报道](https://tech.ifeng.com/c/8wRMH4mNFWS)，CLI 接口数量、调用成功率与权限对齐口径
+- [AWS 生成式 AI 安全参考架构](https://docs.aws.amazon.com/pdfs/prescriptive-guidance/latest/security-reference-architecture-generative-ai/security-reference-architecture-generative-ai.pdf)，权限感知检索、输入输出脱敏、数据留存与网络隔离
+- [《人工智能生成合成内容标识办法》](https://www.gov.cn/zhengce/zhengceku/202503/content_7014286.htm)，对外发布生成合成内容时的显式与隐式标识要求

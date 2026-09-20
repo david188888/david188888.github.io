@@ -93,6 +93,30 @@ describe("fetch payload parsing", () => {
     expect(section).not.toContain("写作规范");
   });
 
+  it("stops at the next top-level heading but keeps nested article headings", () => {
+    const section = extractBodySection(
+      "# 正文\n文章开头\n## 保留的二级标题\n### 保留的三级标题\n# 调研结果（可供阅读）\n内部附件\n# 思路整理\n内部笔记"
+    );
+
+    expect(section).toContain("文章开头");
+    expect(section).toContain("## 保留的二级标题");
+    expect(section).toContain("### 保留的三级标题");
+    expect(section).not.toContain("# 调研结果（可供阅读）");
+    expect(section).not.toContain("内部附件");
+    expect(section).not.toContain("# 思路整理");
+  });
+
+  it("does not stop at a heading example inside a fenced code block", () => {
+    const section = extractBodySection(
+      "# 正文\n````markdown\n```text\n# 示例标题\n```\n````\n代码块后的正文\n# 调研结果（可供阅读）\n内部附件"
+    );
+
+    expect(section).toContain("# 示例标题");
+    expect(section).toContain("代码块后的正文");
+    expect(section).not.toContain("# 调研结果（可供阅读）");
+    expect(section).not.toContain("内部附件");
+  });
+
   it("fails loudly when 正文 is missing", () => {
     expect(() => extractBodySection("<content># 思路整理\n一些内容</content>")).toThrow(
       /找不到 "# 正文"/
@@ -177,6 +201,12 @@ describe("inline annotation mapping", () => {
     expect(convertInlineAnnotations('<mention-page url="https://x">某页面</mention-page>')).toBe("某页面");
     expect(convertInlineAnnotations('<mention-date start="2026-01-01"/>')).toBe("");
   });
+
+  it("merges adjacent annotations with the same mapped colour", () => {
+    expect(
+      convertInlineAnnotations('<span underline="true">前半</span><span underline="true">**后半**</span>')
+    ).toBe("==blue|前半**后半**==");
+  });
 });
 
 describe("block splitting", () => {
@@ -191,6 +221,19 @@ describe("block splitting", () => {
 
     expect(blocks[0]).toMatchObject({ type: "ul", items: ["一", "二"] });
     expect(blocks[1]).toMatchObject({ type: "paragraph" });
+  });
+
+  it("keeps a tab-indented paragraph after an ordered list as normal prose", () => {
+    const { chunks } = convertBodySection(
+      "1. 第三项\n\t这是第三项后的续段，必须保留为普通段落。\n下一段"
+    );
+
+    expect(chunks).toEqual([
+      "1. 第三项",
+      "这是第三项后的续段，必须保留为普通段落。",
+      "下一段",
+    ]);
+    expect(chunks[1]).not.toMatch(/^\t/);
   });
 
   it("keeps a code fence as a single block", () => {
@@ -293,6 +336,13 @@ describe("conversion output shape", () => {
     expect(result.body).toContain("==red|**红字加粗**==");
     expect(result.body).toContain("==blue|下划线==");
     expect(result.body).toContain("==yellow|底色高亮==");
+  });
+
+  it("consumes the sync-metadata callout instead of publishing its internal fields", () => {
+    const { mdx } = convertNotionFetch(FETCH);
+
+    expect(mdx).not.toMatch(/同步元数据|源文件：|发布标题：|日期：|标签：|摘要：/);
+    expect(mdx).toContain("第一段正文");
   });
 
   it("produces frontmatter with title, date, language, excerpt and tags", () => {
