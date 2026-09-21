@@ -1177,7 +1177,8 @@ async function translatePost({ sourcePath, baseUrl, model, modelDigest, force, d
   };
 
   /**
-   * Translates one unit, re-sampling when the glossary check rejects a sample.
+   * Translates one unit, re-sampling when the glossary or the output-hygiene
+   * check rejects a sample.
    *
    * A rejection is a meaning-level problem, not a transport one, so it is not
    * retried inside `translateField`; it is retried here, where the unit and its
@@ -1192,6 +1193,15 @@ async function translatePost({ sourcePath, baseUrl, model, modelDigest, force, d
 
       try {
         validateGlossaryTerms({ translation, terms: unit.terms ?? [], label: unit.label });
+        // A unit that leaks CJK punctuation into English would be rejected by the
+        // whole-body gate after every other unit has been paid for; re-sample it
+        // here instead, while the run can still afford to.
+        validateTextHygiene({
+          text: translation,
+          sourceText: unit.source,
+          targetLanguage,
+          label: unit.label,
+        });
         return translation;
       } catch (error) {
         lastError = error;
@@ -1789,7 +1799,8 @@ export async function translateField({ baseUrl, model, sourceLanguage, targetLan
     throw new Error(`${error.message} Diagnostics saved to ${DIAGNOSTICS_PATH}.`);
   }
 
-  return content.trim();
+  const translated = targetLanguage === "en" ? normalizeEnglishPunctuation(content) : content;
+  return translated.trim();
 }
 
 export function validateHtmlText(htmlText, expected, targetLanguage) {
@@ -2009,6 +2020,51 @@ const MOJIBAKE_PATTERN =
   /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u2028\u2029\u2060\uFEFF\uFFFD]/;
 const HTML_ENTITY_PATTERN = /&(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);/g;
 const CJK_SENTENCE_PUNCTUATION_PATTERN = /[。，；！？、]/g;
+
+const FENCED_BLOCK_PATTERN = /^[ \t]*[`~]{3,}[^\n]*\n[\s\S]*?^[ \t]*[`~]{3,}[ \t]*$/gm;
+
+// Full-width first when a non-space follows (the ASCII form then needs its
+// space), then the bare form for line ends and closing positions.
+const EN_PUNCTUATION_MAP = [
+  [/，(?=\S)/g, ", "],
+  [/，/g, ","],
+  [/。(?=\S)/g, ". "],
+  [/。/g, "."],
+  [/、(?=\S)/g, ", "],
+  [/、/g, ","],
+  [/；(?=\S)/g, "; "],
+  [/；/g, ";"],
+  [/！(?=\S)/g, "! "],
+  [/！/g, "!"],
+  [/？(?=\S)/g, "? "],
+  [/？/g, "?"],
+];
+
+function mapEnglishPunctuation(segment) {
+  let out = segment;
+  for (const [pattern, replacement] of EN_PUNCTUATION_MAP) {
+    out = out.replace(pattern, replacement);
+  }
+  return out;
+}
+
+/**
+ * Rewrites CJK sentence punctuation left inside an English translation into
+ * its ASCII counterpart. Hy-MT2 carries the source's full-width comma over a
+ * Markdown link boundary (`](url)，text`) at byte-identical positions in every
+ * sample, so re-sampling never fixes it and the mapping is deterministic
+ * instead. Fenced code blocks are carried over verbatim and stay untouched.
+ */
+export function normalizeEnglishPunctuation(text) {
+  const value = typeof text === "string" ? text : "";
+  let cursor = 0;
+  let out = "";
+  for (const match of value.matchAll(FENCED_BLOCK_PATTERN)) {
+    out += mapEnglishPunctuation(value.slice(cursor, match.index)) + match[0];
+    cursor = match.index + match[0].length;
+  }
+  return out + mapEnglishPunctuation(value.slice(cursor));
+}
 const DEGENERATE_REPEAT_PATTERN = /(.{12,80})\1{2,}/;
 const FIELD_PLACEHOLDER_PATTERN = /\[\[html-block-\d+\]\]/;
 
