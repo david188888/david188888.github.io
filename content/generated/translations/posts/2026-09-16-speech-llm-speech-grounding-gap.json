@@ -1,7 +1,7 @@
 {
   "version": 3,
   "pipeline": "hy-mt2-v3",
-  "glossary": "11d4aa0a",
+  "glossary": "c1f0a7ed",
   "sourcePath": "content/posts/2026-09-16-speech-llm-speech-grounding-gap.mdx",
   "sourceHash": "90b7b85da13767cdb627e62cee2dc9bf6db12f8aaa9a3a5507fe00ec3e548931",
   "sourceLanguage": "zh",
@@ -19,7 +19,7 @@
   },
   "mode": "hy-mt2",
   "title": "The Safety Gap in Large Speech Models: Hidden Within Audio Signals",
-  "excerpt": "A large speech model can hear sounds, but it doesn’t necessarily use them to make judgments. This paper analyzes the multi-layer fault chain of the speech grounding gap based on the evaluations from VoxPrivacy and VoxSafeBench, discussing why end-to-end approaches exacerbate this gap and which three types of companies will ultimately possess speech safety capabilities.",
+  "excerpt": "A large speech model can hear sounds, but it doesn’t necessarily use them to make judgments. This paper analyzes the multi-layer failure chain of the speech grounding gap based on the evaluations from VoxPrivacy and VoxSafeBench, discussing why end-to-end approaches exacerbate this gap and which three types of companies will ultimately possess speech safety capabilities.",
   "tags": [
     "AI",
     "Speech",
@@ -44,12 +44,12 @@
         }
       ]
     },
-    "069bcaa19cfcdb4be5a7ee4162e519359da6fdb1dbcb2cd71ab300c95c1e95fc": {
+    "1fcb580bf9b4d085243aff156690f7e0ac48ee291a7655155af8f15f42caa283": {
       "kind": "excerpt",
       "source": "语音大模型能听见声音，未必会用声音做判断。本文沿 VoxPrivacy 与 VoxSafeBench 的评测拆开 speech grounding gap 的多层故障链，讨论端到端路线为什么放大这一缺口，以及语音安全能力最终会落到哪三类公司手上。",
       "context": "",
-      "translation": "A large speech model can hear sounds, but it doesn’t necessarily use them to make judgments. This paper analyzes the multi-layer fault chain of the speech grounding gap based on the evaluations from VoxPrivacy and VoxSafeBench, discussing why end-to-end approaches exacerbate this gap and which three types of companies will ultimately possess speech safety capabilities.",
-      "termsHash": "fb33fc78",
+      "translation": "A large speech model can hear sounds, but it doesn’t necessarily use them to make judgments. This paper analyzes the multi-layer failure chain of the speech grounding gap based on the evaluations from VoxPrivacy and VoxSafeBench, discussing why end-to-end approaches exacerbate this gap and which three types of companies will ultimately possess speech safety capabilities.",
+      "termsHash": "8b6a09a1",
       "terms": [
         {
           "source": "语音大模型",

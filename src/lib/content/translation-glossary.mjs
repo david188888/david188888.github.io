@@ -159,6 +159,20 @@ function canonicalPresent(text, target) {
   return new RegExp(`(?<![\\w-])${pattern}(?![\\w-])`, "i").test(text);
 }
 
+/**
+ * Deterministic code-unit ordering.
+ *
+ * `localeCompare` collates differently per host locale (zh_CN and C disagree),
+ * and this comparator feeds both the glossary hash and the per-unit terms hash —
+ * which are cache identity. A locale-dependent comparison makes the same
+ * content hash to two different versions, so caches written on a developer
+ * machine go stale the moment CI builds them.
+ */
+function compareCodeUnits(a, b) {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
 /** Whether one source-side spelling occurs in the text. */
 function matchesKey(text, key, sourceLanguage) {
   if (sourceLanguage === "zh") return text.includes(key);
@@ -193,7 +207,7 @@ export function selectGlossaryTerms(text, sourceLanguage, entries = TRANSLATION_
     });
   }
 
-  return matched.sort((a, b) => b.source.length - a.source.length || a.source.localeCompare(b.source));
+  return matched.sort((a, b) => b.source.length - a.source.length || compareCodeUnits(a.source, b.source));
 }
 
 /** Sorted, whitespace-free form so cosmetic edits never change a hash. */
@@ -206,7 +220,7 @@ function canonicalEntry(entry) {
       ? Object.fromEntries(
           Object.entries(entry.forbid)
             .map(([side, values]) => [side, [...values].sort()])
-            .sort(([a], [b]) => a.localeCompare(b))
+            .sort(([a], [b]) => compareCodeUnits(a, b))
         )
       : null,
   };
@@ -216,7 +230,7 @@ function canonicalEntry(entry) {
 export function createGlossaryHash(entries = TRANSLATION_GLOSSARY) {
   const canonical = entries
     .map(canonicalEntry)
-    .sort((a, b) => (a.zh[0] ?? "").localeCompare(b.zh[0] ?? ""));
+    .sort((a, b) => compareCodeUnits(a.zh[0] ?? "", b.zh[0] ?? ""));
 
   return createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
 }
@@ -236,7 +250,7 @@ export function createTermsHash(terms) {
       enforce: Boolean(term.enforce),
       forbid: [...term.forbid].sort(),
     }))
-    .sort((a, b) => a.source.localeCompare(b.source));
+    .sort((a, b) => compareCodeUnits(a.source, b.source));
 
   return createHash("sha256").update(JSON.stringify(canonical)).digest("hex").slice(0, 8);
 }
