@@ -18,7 +18,7 @@ interface MastheadProps {
 
 const mainNavMessageKeys = {
   Publications: "publications",
-  Insights: "insights",
+  Memos: "insights",
   Internships: "internships",
   CV: "cv",
 } as const;

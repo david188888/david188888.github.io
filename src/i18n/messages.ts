@@ -23,6 +23,8 @@ export interface Messages {
   };
   pages: {
     home: {
+      metadataTitle: string;
+      metadataDescription: string;
       lead: string;
       currentFocusLabel: string;
       readInsights: string;
@@ -132,7 +134,7 @@ export const messages: Record<Locale, Messages> = {
   en: {
     nav: {
       publications: "Publications",
-      insights: "Insights",
+      insights: "Memos",
       internships: "Internships",
       cv: "CV",
       contact: "Contact",
@@ -152,9 +154,12 @@ export const messages: Record<Locale, Messages> = {
     },
     pages: {
       home: {
+        metadataTitle: "Industry Memos · AI Infrastructure & Supply Chain",
+        metadataDescription:
+          "Industry memos by HongYu Liu — AI infrastructure and supply chain, consumer and platform markets, and how technical change becomes a business fact.",
         lead: "I build trustworthy speech and language systems, with research spanning proactive interaction, privacy evaluation, and end-to-end spoken dialogue intelligence.",
         currentFocusLabel: "Current Focus:",
-        readInsights: "Read Insights",
+        readInsights: "Read Memos",
         downloadCv: "Download CV",
         roles: [
           "SLM Trustworthiness",
@@ -162,25 +167,25 @@ export const messages: Record<Locale, Messages> = {
           "Agentic Speech Intelligence",
           "End-to-End Spoken Dialogue Systems",
         ],
-        insightsTitle: "Insights",
-        insightsCta: "Open Blog & Ideas",
+        insightsTitle: "Industry Memos",
+        insightsCta: "Open Industry Memos",
         educationTitle: "Education",
         internshipTitle: "Internship",
         researchTitle: "Research",
       },
       insights: {
-        metadataTitle: "Blog & Ideas",
+        metadataTitle: "Industry Memos",
         metadataDescription:
-          "Blog and idea notes by HongYu Liu on industries, companies, and notable reporting.",
-        eyebrow: "Insights",
-        title: "Blog & Ideas",
+          "Memos by HongYu Liu on industries, companies, and notable reporting.",
+        eyebrow: "Industry Memos",
+        title: "Industry Memos",
         subtitle: "This is where I regularly write analysis and judgment pieces about industries.",
-        publishedEyebrow: "Published essays",
-        publishedTitle: "Recent notes and essays.",
+        publishedEyebrow: "Published memos",
+        publishedTitle: "Recent memos.",
         futureNote:
           "Future published essays can be wired to MDX without changing this page structure.",
         backHome: "Back to homepage",
-        footerLabel: "Blog & Ideas",
+        footerLabel: "Industry Memos",
         articleLabel: "Article",
         readingLabel: "Reading",
         annotations: {
@@ -205,7 +210,7 @@ export const messages: Record<Locale, Messages> = {
           hiddenPlaceholder: "Hidden note · click to restore",
           unlock: "Sign in to annotate",
         },
-        backToInsights: "Back to Insights",
+        backToInsights: "Back to memos",
       },
       cv: {
         title: "Curriculum Vitae",
@@ -226,15 +231,15 @@ export const messages: Record<Locale, Messages> = {
       posts: {
         title: "Posts",
         description:
-          "The older sample post archive has been retired. New essays, company notes, and reporting commentary now live in the Insights section.",
-        insightsLink: "Go to Insights",
+          "The older sample post archive has been retired. New essays, company notes, and reporting commentary now live in the Industry Memos section.",
+        insightsLink: "Go to Industry Memos",
       },
       sitemap: {
         title: "Sitemap",
         pages: {
           home: "Home",
           publications: "Publications",
-          insights: "Insights",
+          insights: "Memos",
           cv: "CV",
           teaching: "Teaching",
           talks: "Talks",
@@ -285,7 +290,7 @@ export const messages: Record<Locale, Messages> = {
   zh: {
     nav: {
       publications: "论文发表",
-      insights: "随笔洞察",
+      insights: "行业思考",
       internships: "实习经历",
       cv: "简历",
       contact: "联系",
@@ -305,9 +310,12 @@ export const messages: Record<Locale, Messages> = {
     },
     pages: {
       home: {
+        metadataTitle: "行业思考 · AI 基础设施与产业链 · 消费与平台",
+        metadataDescription:
+          "刘泓宇的行业思考：AI 基础设施与产业链、消费与平台市场，以及技术变化如何成为商业事实。",
         lead: "我专注于构建可信的语音与语言系统，研究方向涵盖主动交互、隐私评估，以及端到端语音对话智能。",
         currentFocusLabel: "当前关注：",
-        readInsights: "阅读随笔",
+        readInsights: "阅读行业思考",
         downloadCv: "下载简历",
         roles: [
           "语音语言模型可信性",
@@ -315,24 +323,24 @@ export const messages: Record<Locale, Messages> = {
           "智能体语音智能",
           "端到端语音对话系统",
         ],
-        insightsTitle: "随笔洞察",
-        insightsCta: "打开随笔与想法",
+        insightsTitle: "行业思考",
+        insightsCta: "打开行业思考",
         educationTitle: "教育经历",
         internshipTitle: "实习经历",
         researchTitle: "研究成果",
       },
       insights: {
-        metadataTitle: "随笔与想法",
+        metadataTitle: "行业思考",
         metadataDescription:
-          "HongYu Liu 关于行业、公司和重要报道的随笔与观察。",
-        eyebrow: "随笔洞察",
-        title: "随笔与想法",
+          "刘泓宇 关于行业、公司和重要报道的思考与观察。",
+        eyebrow: "行业思考",
+        title: "行业思考",
         subtitle: "这里平常会写一些对行业的分析与判断。",
         publishedEyebrow: "已发布文章",
-        publishedTitle: "近期笔记与长文。",
+        publishedTitle: "近期思考与长文。",
         futureNote: "未来发布的文章可以接入 MDX，而无需改变这个页面结构。",
         backHome: "返回首页",
-        footerLabel: "随笔与想法",
+        footerLabel: "行业思考",
         articleLabel: "文章",
         readingLabel: "正文",
         annotations: {
@@ -357,7 +365,7 @@ export const messages: Record<Locale, Messages> = {
           hiddenPlaceholder: "已隐藏的批注 · 点击恢复",
           unlock: "登录后启用批注",
         },
-        backToInsights: "返回随笔洞察",
+        backToInsights: "返回行业思考",
       },
       cv: {
         title: "简历",
@@ -378,15 +386,15 @@ export const messages: Record<Locale, Messages> = {
       posts: {
         title: "文章归档",
         description:
-          "旧的示例文章归档已经移除。新的长文、公司笔记和报道评论现在放在随笔洞察页面。",
-        insightsLink: "前往随笔洞察",
+          "旧的示例文章归档已经移除。新的长文、公司笔记和报道评论现在放在行业思考页面。",
+        insightsLink: "前往行业思考",
       },
       sitemap: {
         title: "站点地图",
         pages: {
           home: "首页",
           publications: "论文发表",
-          insights: "随笔洞察",
+          insights: "行业思考",
           cv: "简历",
           teaching: "教学经历",
           talks: "演讲报告",

@@ -73,6 +73,7 @@ export function InsightArticlePageView({
   return (
     <AlignedPageShell
       locale={locale}
+      className="aligned-page-shell--article"
       sections={buildInsightArticleSections(locale, post)}
     />
   );

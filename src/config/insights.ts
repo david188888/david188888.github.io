@@ -20,7 +20,7 @@ export interface InsightContent {
 export const localizedInsightContent: Record<Locale, InsightContent> = {
   en: {
     featuredInsight: {
-      title: "Notes on companies, industries, and the reports that move them.",
+      title: "Memos on companies, industries, and the reports that move them.",
       description:
         "A public notebook for analysis that does not fit inside a CV: industry structure, company strategy, and reactions to important reporting.",
     },
@@ -53,7 +53,7 @@ export const localizedInsightContent: Record<Locale, InsightContent> = {
   },
   zh: {
     featuredInsight: {
-      title: "关于公司、行业和关键报道的观察笔记。",
+      title: "关于公司、行业和关键报道的观察与思考。",
       description:
         "这里是我公开整理分析的地方，内容包括行业结构、公司战略，以及对重要报道的判断，不局限于简历能承载的信息。",
     },
@@ -61,7 +61,7 @@ export const localizedInsightContent: Record<Locale, InsightContent> = {
       {
         title: "行业笔记",
         category: "行业分析",
-        cadence: "长文随笔",
+        cadence: "长文思考",
         description:
           "系统记录技术周期、市场结构、AI 基础设施、消费平台，以及重大变化背后的激励机制。",
         tags: ["AI", "平台", "市场"],

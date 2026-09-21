@@ -123,10 +123,9 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 }
 .ed-root .profile { padding-block: 15px 0; }
 .ed-root .eyebrow { font-size: 10px; letter-spacing: 0.15em; color: var(--ed-accent-text); line-height: 1.6; font-weight: 600; }
-.ed-root .name { font: normal clamp(62px, 6.8vw, 100px) / 0.96 Georgia, "Times New Roman", serif; letter-spacing: -0.065em; margin-top: 24px; }
-.ed-root .name span { display: block; }
+.ed-root .name { font: normal clamp(34px, 3.6vw, 48px) / 1.15 Georgia, "Times New Roman", serif; letter-spacing: -0.02em; margin-top: 20px; }
+.ed-root .profile-tags { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; color: var(--ed-muted); font-size: 13px; line-height: 1.8; }
 .ed-root .role { margin-top: 30px; font-size: 15px; font-weight: 500; letter-spacing: 0.08em; }
-.ed-root .intro { margin-top: 16px; max-width: 27em; color: var(--ed-muted); font-size: 14px; line-height: 1.95; }
 .ed-root .contact { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 28px; font-size: 12px; }
 .ed-root .contact a { padding-block: 4px; border-bottom: 1px solid var(--ed-line); }
 .ed-root .contact a:hover { color: var(--ed-accent-text); border-color: var(--ed-accent-text); }
@@ -138,7 +137,12 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .latest-insight-carousel { min-width: 0; }
 .ed-root .latest-insight-viewport { overflow: hidden; }
 .ed-root .latest-insight-track { display: flex; align-items: stretch; transition: transform 0.45s ease; }
-.ed-root .latest-insight-slide { flex: 0 0 100%; min-width: 0; padding-right: 1px; }
+.ed-root .latest-insight-slide { position: relative; flex: 0 0 100%; min-width: 0; padding-right: 1px; }
+.ed-root .latest-insight-slide .read::after { content: ""; position: absolute; inset: 0; }
+.ed-root .latest-insight-slide:hover .read,
+.ed-root .latest-insight-slide:focus-within .read { color: var(--ed-accent-text); }
+.ed-root .latest-insight-slide:hover .read span:last-child,
+.ed-root .latest-insight-slide:focus-within .read span:last-child { transform: translateX(5px); }
 .ed-root .latest-insight-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-top: 18px; color: var(--ed-muted); }
 .ed-root .latest-insight-buttons,
 .ed-root .latest-insight-dots { display: flex; align-items: center; gap: 6px; }
@@ -219,6 +223,13 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .project-actions { display: flex; gap: 24px; flex-wrap: wrap; font-size: 12px; color: var(--ed-accent-text); }
 .ed-root .project-actions a { border-bottom: 1px solid var(--ed-line); padding-block: 6px; }
 .ed-root .project-actions a:hover { border-color: var(--ed-accent-text); }
+/* Whole-card click: the figure's link stretches over the feature card, while
+   the repository links in .project-actions stay independently clickable. */
+.ed-root .project-feature { position: relative; }
+.ed-root .project-feature .project-image a::after { content: ""; position: absolute; inset: 0; }
+.ed-root .project-feature .project-actions { position: relative; z-index: 1; }
+.ed-root .project-feature:hover .project-name,
+.ed-root .project-feature:focus-within .project-name { color: var(--ed-accent-text); }
 .ed-root .project-image { margin: 4px 0 0; min-width: 0; }
 .ed-root .project-image img { display: block; width: 100%; max-width: 100%; height: auto; border: 1px solid var(--ed-line); }
 .ed-root .project-image figcaption { font-size: 10px; line-height: 1.8; color: var(--ed-muted); margin-top: 9px; }
@@ -267,7 +278,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 850px) {
   .ed-root .hero { gap: 40px; }
-  .ed-root .name { font-size: 65px; }
+  .ed-root .name { font-size: 40px; }
   .ed-root .feature h2 { font-size: 30px; }
   .ed-root .quotation { padding: 18px; }
   .ed-root .quotation p { font-size: 16px; }
@@ -295,12 +306,9 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .latest-insight-toggle { margin-left: 0; }
   .ed-root .hero { grid-template-columns: 1fr; padding-block: 24px 36px; gap: 40px; }
   .ed-root .profile { padding: 0; }
-  .ed-root .name { font-size: clamp(50px, 15vw, 72px); line-height: 1; margin-top: 18px; }
-  .ed-root .name span { display: inline; }
-  .ed-root .name span + span::before { content: " "; }
+  .ed-root .name { font-size: clamp(30px, 9vw, 40px); line-height: 1.15; margin-top: 16px; }
   .ed-root .role { margin-top: 20px; }
-  .ed-root .intro { max-width: 34em; }
-  .ed-root .profile-foot { display: none; }
+  .ed-root .profile-foot { margin-top: 28px; }
   .ed-root .feature h2 { font-size: 31px; margin-top: 24px; }
   .ed-root .feature-meta { font-size: 9px; }
   .ed-root .quotation { margin-top: 22px; }
@@ -536,3 +544,26 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .supply-chain-risk-flow { stroke: var(--ed-accent); }
 .ed-root .supply-chain-risk-arrow { fill: var(--ed-accent); }
 .ed-root .supply-chain-diagram figcaption { color: var(--ed-muted); }
+
+/* Spacing corrections for the aligned shell pages: the container's top padding
+   left a ~133px dead band under the masthead, the list page's H1 sat flush
+   against its summary, and the article page's excerpt floated ~115px above the
+   first body section. */
+.ed-root .aligned-page-container { padding-top: clamp(28px, 4vw, 44px); }
+.ed-root .aligned-section-marker { padding-top: 30px; padding-bottom: 30px; }
+.ed-root .aligned-section-content { padding-top: 28px; padding-bottom: clamp(34px, 5vw, 48px); }
+.ed-root .home-hero-summary { margin-top: 18px; }
+.ed-root .home-evidence-list { margin-top: 26px; }
+.ed-root .aligned-page-shell--article .aligned-section-row:first-child .aligned-section-content { padding-bottom: 30px; }
+
+/* Same direction on narrow screens, where globals.css stacks the rail above the
+   content and swaps in a flat `padding: 1rem 0.2rem 2.8rem`. The marker's bottom
+   padding is reset to globals.css's 0 there: in the stacked layout it becomes a
+   gap between the rail label and the content, so the desktop value would loosen
+   the page instead of tightening it. */
+@media (max-width: 650px) {
+  .ed-root .aligned-page-container { padding-top: 24px; }
+  .ed-root .aligned-section-marker { padding-top: 24px; padding-bottom: 0; }
+  .ed-root .aligned-section-content { padding-top: 16px; padding-bottom: 36px; }
+  .ed-root .aligned-page-shell--article .aligned-section-row:first-child .aligned-section-content { padding-bottom: 22px; }
+}

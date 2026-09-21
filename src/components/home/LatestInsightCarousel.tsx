@@ -30,7 +30,7 @@ function splitTitle(title: string): [string, string | null] {
 
 const carouselCopy = {
   en: {
-    label: "Latest Insights",
+    label: "Latest memos",
     previous: "Previous article",
     next: "Next article",
     pause: "Pause automatic rotation",
@@ -40,7 +40,7 @@ const carouselCopy = {
     articles: "articles",
   },
   zh: {
-    label: "最新洞察",
+    label: "最新思考",
     previous: "上一篇文章",
     next: "下一篇文章",
     pause: "暂停自动轮播",
@@ -80,7 +80,7 @@ export function LatestInsightCarousel({
     if (!hasMultiple || paused || reducedMotion) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % count);
-    }, 7000);
+    }, 5000);
     return () => window.clearInterval(timer);
   }, [count, hasMultiple, paused, reducedMotion]);
 

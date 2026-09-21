@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { authorConfig } from "@/config/author";
 import { InsightArticlePageView } from "@/components/pages/InsightArticlePageView";
 import { isLocale, type Locale } from "@/i18n/locales";
 import { getLocalizedPost, getPostSlugs } from "@/lib/content/posts";
@@ -14,6 +16,27 @@ export function generateStaticParams() {
     { locale: "en", slug },
     { locale: "zh", slug },
   ]);
+}
+
+// The root layout's template appends the English name, so the article title is
+// set absolutely to keep the localized one.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  if (!isLocale(locale)) notFound();
+
+  try {
+    const post = getLocalizedPost(slug, locale as Locale);
+    return {
+      title: `${post.title} | ${authorConfig.nameLocalized[locale]}`,
+      description: post.excerpt,
+    };
+  } catch {
+    return {};
+  }
 }
 
 export default async function LocalizedInsightArticlePage({

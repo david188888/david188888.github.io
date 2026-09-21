@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { authorConfig } from "@/config/author";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
 import { getMessages } from "@/i18n/messages";
@@ -23,7 +24,7 @@ export function Footer({ locale = defaultLocale }: FooterProps) {
             </Link>
           </div>
           <div className="text-xs text-[var(--global-text-color-light)]">
-            &copy; {new Date().getFullYear()} HongYu Liu. {footer.poweredBy}{" "}
+            &copy; {new Date().getFullYear()} {authorConfig.nameLocalized[locale]}. {footer.poweredBy}{" "}
             <a
               href="https://nextjs.org"
               target="_blank"

@@ -25,15 +25,18 @@ interface HomePageViewProps {
 
 const homeCopy = {
   en: {
-    role: "Speech AI Researcher",
-    focusValue: "Speech Language Models · Trustworthiness · Agentic RL",
-    introduction:
-      "I study trustworthy speech language models, interactional privacy, and spoken dialogue intelligence, with experience carrying research into production systems.",
+    role: "Speech systems research · Industry writing",
+    focusValue: "AI Infrastructure & Supply Chain · Consumer & Platforms",
+    profileTags: [
+      "Trustworthy speech systems",
+      "AI supply chain & consumer markets",
+      "Technical change → business facts",
+    ],
     links: { cv: "View CV", github: "GitHub", email: "Contact me" },
-    profileFoot: "Technical research / Industry notes / Personal writing",
-    featureLabel: "Insights · Latest essay",
+    profileFoot: "Open to strategy research / investment analysis roles",
+    featureLabel: "Industry Memos · Latest memo",
     readArticle: "Read the full article",
-    fallbackCta: "Browse all Insights",
+    fallbackCta: "Browse all Industry Memos",
     educationTitle: "Education",
     educationDescription: "Academic training in software engineering and data science.",
     coursesLabel: "Coursework",
@@ -58,15 +61,14 @@ const homeCopy = {
     footerNote: "Research and personal notes · © 2026",
   },
   zh: {
-    role: "语音 AI 研究者",
-    focusValue: "语音语言模型 · 可信 AI · 智能体强化学习",
-    introduction:
-      "我研究可信语音语言模型、交互隐私与语音对话智能，也关注如何将研究成果落地到生产系统。",
+    role: "语音系统研究 · 行业写作",
+    focusValue: "AI 基础设施与产业链 · 消费与平台",
+    profileTags: ["可信语音系统", "AI 上下游与消费行业", "技术变化 → 商业事实"],
     links: { cv: "查看简历", github: "GitHub", email: "联系我" },
-    profileFoot: "技术研究 / 行业观察 / 个人笔记",
-    featureLabel: "随笔洞察 · 最新文章",
+    profileFoot: "开放战略研究 / 投资分析类机会",
+    featureLabel: "行业思考 · 最新文章",
     readArticle: "阅读全文",
-    fallbackCta: "查看全部随笔洞察",
+    fallbackCta: "查看全部行业思考",
     educationTitle: "教育背景",
     educationDescription: "软件工程与数据科学方向的学习经历。",
     coursesLabel: "主修课程",
@@ -89,7 +91,10 @@ const homeCopy = {
     closingNote: "刘泓宇 · 研究与个人笔记",
     footerNote: "研究与个人笔记 · © 2026",
   },
-} satisfies Record<Locale, Record<string, string | { cv: string; github: string; email: string }>>;
+} satisfies Record<
+  Locale,
+  Record<string, string | readonly string[] | { cv: string; github: string; email: string }>
+>;
 
 const sharedCopy = {
   en: {
@@ -157,8 +162,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
     pullQuote: extractPullQuote(post.body),
   }));
   const insightsHref = localizedHref("/insights/", locale);
-  const [nameFirst, ...nameRest] = authorConfig.name.split(" ");
-  const nameLast = nameRest.join(" ");
 
   return (
     <div className="ed-root">
@@ -170,11 +173,14 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
             <section className="profile" aria-labelledby="profile-name">
               <p className="eyebrow">{copy.focusValue}</p>
               <h1 className="name" id="profile-name">
-                <span>{nameFirst}</span>
-                <span>{nameLast}.</span>
+                {authorConfig.nameLocalized[locale]}
               </h1>
               <p className="role">{copy.role}</p>
-              <p className="intro">{copy.introduction}</p>
+              <ul className="profile-tags">
+                {copy.profileTags.map((tag) => (
+                  <li key={tag}>{tag}</li>
+                ))}
+              </ul>
               <nav className="contact" aria-label={locale === "zh" ? "个人链接" : "Profile links"}>
                 <a href="/files/Resume_en.pdf" target="_blank" rel="noopener">
                   {links.cv}

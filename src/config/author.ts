@@ -1,5 +1,6 @@
 export const authorConfig = {
   name: "HongYu Liu",
+  nameLocalized: { en: "HongYu Liu", zh: "刘泓宇" },
   avatar: "/images/avatar-rainbow.jpg",
   fallbackAvatar: "/images/profile.png",
   email: "david.liu1888888@gmail.com",

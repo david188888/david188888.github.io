@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
+import { authorConfig } from "@/config/author";
 import { localizedHref } from "@/i18n/links";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { EditorialThemeToggle } from "./EditorialThemeToggle";
 
 const sectionLinks = [
-  { id: "insights", href: "/insights/", label: { en: "Insights", zh: "洞察" } },
+  { id: "insights", href: "/insights/", label: { en: "Memos", zh: "行业思考" } },
   { id: "education", href: "#education", label: { en: "Education", zh: "教育" } },
   { id: "experience", href: "#experience", label: { en: "Experience", zh: "实习" } },
   { id: "research", href: "#research", label: { en: "Research", zh: "研究" } },
@@ -36,7 +37,7 @@ export function EditorialMasthead({ locale = defaultLocale, variant = "home" }: 
   return (
     <header className="masthead">
       <Link className="wordmark" href={localizedHref("/", locale)}>
-        HongYu Liu<span>.</span>
+        {authorConfig.nameLocalized[locale]}<span>.</span>
       </Link>
       {variant === "project" ? (
         <nav className="masthead-nav" aria-label={navLabel}>

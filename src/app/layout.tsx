@@ -4,12 +4,13 @@ import { defaultLocale } from "@/i18n/locales";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: {
-    default: "HongYu Liu",
-    template: "%s | HongYu Liu",
-  },
+  // No `template`: every route composes its own title with the name spelled for
+  // its locale. A single `%s | HongYu Liu` template would append the English
+  // name to Chinese pages and could not be bypassed by a child page. (Next's
+  // object form requires `template`, so this is the plain-string form instead.)
+  title: "HongYu Liu",
   description:
-    "Personal academic homepage of HongYu Liu — Speech Language Model, SLM Trustworthiness, Agentic RL researcher.",
+    "Industry memos by HongYu Liu — AI infrastructure and supply chain, consumer and platform markets, and how technical change becomes a business fact.",
   icons: {
     icon: "/images/favicon.ico",
   },

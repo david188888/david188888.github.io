@@ -39,7 +39,7 @@ export function AlignedPageShell({
         </main>
         <footer className="foot">
           <div>
-            <strong>{authorConfig.name}</strong>
+            <strong>{authorConfig.nameLocalized[locale]}</strong>
           </div>
           <p className="foot-note">{footerNote[locale]}</p>
         </footer>

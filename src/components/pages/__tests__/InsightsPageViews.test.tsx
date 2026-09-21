@@ -50,7 +50,7 @@ describe("Insights section builders", () => {
     const article = buildInsightArticleSections("zh", { ...post, locale: "zh" });
     const rail = renderToStaticMarkup(<>{article[0].railContent}</>);
 
-    expect(rail).toContain("返回随笔洞察");
+    expect(rail).toContain("返回行业思考");
     expect(rail).toContain('href="/insights/"');
   });
 });
