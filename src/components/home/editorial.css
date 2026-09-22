@@ -113,65 +113,142 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .ed-theme-switch button:hover { border-color: var(--ed-accent); }
 .ed-root .ed-theme-switch button[aria-pressed="true"] { background: var(--ed-ink); color: var(--ed-bg); border-color: var(--ed-ink); }
 
-/* ── Hero ─────────────────────────────────────────────────────────────── */
-.ed-root .hero {
+/* ── Hero frame ─────────────────────────────────────────────────────── */
+/* One shared frame: profile and latest-insight columns live inside the same
+   top/bottom borders, separated only by a light vertical divider, so the two
+   read as a single editorial composition instead of two floating cards. */
+.ed-root .home-hero { padding-block: 44px 0; }
+.ed-root .home-hero-frame {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  column-gap: clamp(48px, 7vw, 112px);
-  padding-block: 52px 64px;
-  align-items: start;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.65fr);
+  align-items: stretch;
+  border-top: 2px solid var(--ed-accent);
+  border-bottom: 1px solid var(--ed-line);
+  min-height: 430px;
 }
-.ed-root .profile { padding-block: 15px 0; }
-.ed-root .eyebrow { display: grid; gap: 7px; font-size: 10px; letter-spacing: 0.15em; line-height: 1.6; font-weight: 600; }
-.ed-root .eyebrow span:first-child { color: var(--ed-accent-text); }
-.ed-root .eyebrow .eyebrow-secondary { color: var(--ed-muted); font-weight: 500; letter-spacing: 0.2em; }
-/* The name is the cover line: it carries the first screen on its own, so it is
-   set as display type rather than as a heading above the chapters. */
-.ed-root .name { font: normal clamp(46px, 5.2vw, 72px) / 1.08 Georgia, "Times New Roman", serif; letter-spacing: -0.025em; margin-top: 22px; }
-/* Three Chinese characters are about half the width of the roman name at the
-   same size, so the Chinese name is set larger to hold the same column. */
-.ed-root .hero[data-locale="zh"] .name { font-size: clamp(66px, 8.4vw, 116px); line-height: 1.04; letter-spacing: 0.01em; }
-.ed-root .contact { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 34px; font-size: 12px; }
-.ed-root .contact a { padding-block: 4px; border-bottom: 1px solid var(--ed-line); }
+.ed-root .profile,
+.ed-root .insight-wrap { padding-block: 40px 38px; }
+.ed-root .profile { display: flex; flex-direction: column; padding-right: clamp(32px, 4vw, 52px); }
+.ed-root .insight-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-left: clamp(32px, 4vw, 52px);
+  border-left: 1px solid var(--ed-line);
+}
+.ed-root .insight-wrap .feature { flex: 1; display: flex; flex-direction: column; }
+.ed-root .section-label {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 0 0 28px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ed-muted);
+}
+.ed-root .section-label::before { content: ""; width: 27px; height: 1px; background: var(--ed-accent); flex: 0 0 auto; }
+.ed-root .name {
+  margin: 0 0 14px;
+  font-family: Georgia, var(--ed-serif);
+  font-size: clamp(42px, 3.9vw, 54px);
+  line-height: 1.06;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+.ed-root .profile-copy { max-width: 24em; color: var(--ed-muted); font-size: 15px; line-height: 1.95; }
+.ed-root .profile-footer { margin-top: auto; padding-top: 40px; }
+.ed-root .contact { display: flex; gap: 22px; flex-wrap: wrap; font-size: 13px; font-weight: 600; }
+.ed-root .contact a { padding-block: 4px; border-bottom: 1px solid var(--ed-line); transition: color 0.2s, border-color 0.2s; }
 .ed-root .contact a:hover { color: var(--ed-accent-text); border-color: var(--ed-accent-text); }
-.ed-root .profile-foot { margin-top: 58px; display: flex; gap: 14px; align-items: center; font-size: 10px; letter-spacing: 0.08em; color: var(--ed-muted); }
-.ed-root .profile-foot::before { content: ""; width: 28px; height: 1px; background: var(--ed-accent); }
+.ed-root .profile-foot { display: flex; align-items: center; gap: 11px; margin-top: 30px; font-size: 12px; line-height: 1.55; color: var(--ed-muted); }
+.ed-root .profile-foot .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ed-accent); box-shadow: 0 0 0 5px var(--ed-wash); flex: 0 0 auto; }
+
+/* ── Investment Lens ─────────────────────────────────────────────────── */
+/* A thin bridge between the hero frame and the record below, deliberately
+   lighter than a chapter. */
+.ed-root .lens-bridge {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 36px;
+  padding-block: 30px 34px;
+  border-bottom: 1px solid var(--ed-line);
+}
+.ed-root .lens-kicker { margin-bottom: 7px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--ed-accent-text); }
+.ed-root .lens-caption { font-size: 12px; line-height: 1.6; color: var(--ed-muted); }
+.ed-root .lens-flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ed-root .lens-step { position: relative; padding: 2px 28px 2px 0; }
+.ed-root .lens-step + .lens-step { padding-left: 28px; border-left: 1px solid var(--ed-line); }
+.ed-root .lens-no { margin-bottom: 7px; font-family: Georgia, var(--ed-serif); font-size: 12px; color: var(--ed-accent-text); }
+.ed-root .lens-name { margin-bottom: 5px; font-size: 14px; font-weight: 700; }
+.ed-root .lens-desc { font-size: 12px; line-height: 1.65; color: var(--ed-muted); max-width: 300px; }
 
 /* ── Featured insight ─────────────────────────────────────────────────── */
-.ed-root .feature { border-top: 3px solid var(--ed-accent); padding-top: 18px; }
-.ed-root .latest-insight-carousel { min-width: 0; }
-.ed-root .latest-insight-viewport { overflow: hidden; }
-.ed-root .latest-insight-track { display: flex; align-items: stretch; transition: transform 0.45s ease; }
-.ed-root .latest-insight-slide { position: relative; flex: 0 0 100%; min-width: 0; padding-right: 1px; }
+.ed-root .latest-insight-carousel { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.ed-root .carousel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.ed-root .carousel-head .section-label { margin-bottom: 0; }
+.ed-root .carousel-controls { display: flex; align-items: center; gap: 8px; }
+.ed-root .carousel-counter { margin: 0 8px 0 0; min-width: 46px; text-align: right; font-size: 11px; letter-spacing: 0.08em; color: var(--ed-muted); font-variant-numeric: tabular-nums; }
+.ed-root .carousel-controls button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid var(--ed-line);
+  background: transparent;
+  color: var(--ed-muted);
+  transition: color 0.2s, border-color 0.2s;
+}
+.ed-root .carousel-controls button:hover:not(:disabled),
+.ed-root .carousel-controls button:focus-visible { border-color: var(--ed-accent); color: var(--ed-accent-text); }
+.ed-root .carousel-controls button:disabled { cursor: default; opacity: 0.45; }
+.ed-root .latest-insight-viewport { overflow: hidden; min-width: 0; flex: 1; }
+.ed-root .latest-insight-track { display: flex; align-items: stretch; transition: transform 0.5s cubic-bezier(0.22, 0.75, 0.25, 1); }
+.ed-root .latest-insight-slide { position: relative; flex: 0 0 100%; min-width: 0; display: flex; flex-direction: column; padding-right: 8px; }
 .ed-root .latest-insight-slide .read::after { content: ""; position: absolute; inset: 0; }
-.ed-root .latest-insight-slide:hover .read,
-.ed-root .latest-insight-slide:focus-within .read { color: var(--ed-accent-text); }
 .ed-root .latest-insight-slide:hover .read span:last-child,
 .ed-root .latest-insight-slide:focus-within .read span:last-child { transform: translateX(5px); }
-.ed-root .latest-insight-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-top: 18px; color: var(--ed-muted); }
-.ed-root .latest-insight-buttons,
-.ed-root .latest-insight-dots { display: flex; align-items: center; gap: 6px; }
-.ed-root .latest-insight-controls button { border: 1px solid var(--ed-line); background: transparent; color: var(--ed-muted); min-width: 30px; min-height: 30px; padding: 4px 8px; }
-.ed-root .latest-insight-controls button:hover:not(:disabled),
-.ed-root .latest-insight-controls button:focus-visible { border-color: var(--ed-accent); color: var(--ed-accent-text); }
-.ed-root .latest-insight-controls button:disabled { cursor: default; opacity: 0.45; }
-.ed-root .latest-insight-dots button { width: 8px; min-width: 8px; height: 8px; min-height: 8px; border-radius: 50%; padding: 0; }
-.ed-root .latest-insight-dots button.is-active { border-color: var(--ed-accent); background: var(--ed-accent); }
-.ed-root .latest-insight-count { margin: 0; font-size: 10px; letter-spacing: 0.08em; }
-.ed-root .latest-insight-toggle { margin-left: auto; font-size: 12px; }
-.ed-root .feature-meta { display: flex; justify-content: space-between; gap: 16px; font-size: 10px; letter-spacing: 0.11em; color: var(--ed-muted); }
+.ed-root .feature-meta { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 22px; font-size: 12px; letter-spacing: 0.04em; color: var(--ed-muted); }
 .ed-root .feature-meta strong { font-weight: 500; color: var(--ed-accent-text); }
-.ed-root .feature h2 { font-family: var(--ed-serif); font-size: clamp(29px, 3.2vw, 46px); font-weight: 500; line-height: 1.42; letter-spacing: -0.025em; margin-top: 33px; max-width: 17em; }
-.ed-root .feature h2 span { display: block; }
-.ed-root .feature h2 .subject { color: var(--ed-accent-text); }
-.ed-root .excerpt { font-size: 13px; line-height: 1.95; color: var(--ed-muted); margin-top: 24px; max-width: 43em; }
-.ed-root .quotation { margin: 30px 0 0; padding: 23px 24px; background: var(--ed-wash); }
-.ed-root .quotation::before { content: "\201C"; font: 58px / 1 Georgia, serif; color: var(--ed-accent-text); display: block; height: 37px; }
-.ed-root .quotation p { font-family: var(--ed-serif); font-size: 18px; line-height: 1.8; }
-.ed-root .quotation cite { display: block; font-size: 10px; font-style: normal; color: var(--ed-muted); margin-top: 13px; }
-.ed-root .read { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-block: 16px; border-top: 1px solid var(--ed-line); font-size: 12px; gap: 16px; }
-.ed-root .read span:last-child { font-size: 23px; color: var(--ed-accent-text); transition: transform 0.2s; }
-.ed-root .read:hover { color: var(--ed-accent-text); }
+.ed-root .feature h2,
+.ed-root .latest-insight-slide h2 {
+  font-family: Georgia, var(--ed-serif);
+  font-size: clamp(28px, 2.9vw, 40px);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  margin: 0 0 18px;
+  max-width: 21em;
+}
+.ed-root .feature h2 span,
+.ed-root .latest-insight-slide h2 span { display: block; }
+.ed-root .feature h2 .subject,
+.ed-root .latest-insight-slide h2 .subject { color: var(--ed-accent-text); }
+.ed-root .excerpt { font-size: 14px; line-height: 1.9; color: var(--ed-muted); margin: 0 0 24px; max-width: 46em; }
+.ed-root .quotation {
+  margin: 0 0 27px;
+  padding: 16px 20px;
+  border-left: 2px solid var(--ed-accent);
+  background: color-mix(in srgb, var(--ed-accent) 5%, transparent);
+}
+.ed-root .quotation p { font-family: Georgia, var(--ed-serif); font-size: 17px; line-height: 1.8; }
+.ed-root .quotation cite { display: block; font-size: 10px; font-style: normal; color: var(--ed-muted); margin-top: 10px; }
+.ed-root .read {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  width: max-content;
+  margin-top: auto;
+  padding-block: 6px;
+  color: var(--ed-accent-text);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.ed-root .read span:last-child { font-size: 21px; transition: transform 0.2s; }
 .ed-root .read:hover span:last-child { transform: translateX(5px); }
 
 /* ── Chapters ─────────────────────────────────────────────────────────── */
@@ -287,13 +364,17 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 850px) {
-  .ed-root .hero { gap: 40px; }
-  .ed-root .name { font-size: 54px; }
-  .ed-root .hero[data-locale="zh"] .name { font-size: 84px; }
-  .ed-root .feature h2 { font-size: 30px; }
-  .ed-root .quotation { padding: 18px; }
+  .ed-root .home-hero-frame { grid-template-columns: 1fr; min-height: 0; }
+  .ed-root .profile { padding-block: 36px 30px; padding-right: 0; }
+  .ed-root .insight-wrap { padding: 30px 0 36px; border-left: 0; border-top: 1px solid var(--ed-line); }
+  .ed-root .feature h2,
+  .ed-root .latest-insight-slide h2 { font-size: 30px; }
+  .ed-root .quotation { padding: 14px 16px; }
   .ed-root .quotation p { font-size: 16px; }
-  .ed-root .profile-foot { margin-top: 36px; }
+  .ed-root .lens-bridge { grid-template-columns: 1fr; gap: 18px; }
+  .ed-root .lens-flow { grid-template-columns: 1fr; }
+  .ed-root .lens-step { padding: 0; }
+  .ed-root .lens-step + .lens-step { padding-left: 0; border-left: 0; border-top: 1px solid var(--ed-line); padding-top: 18px; margin-top: 18px; }
   .ed-root .chapter { grid-template-columns: minmax(0, 0.5fr) minmax(0, 1.5fr); gap: 30px; }
   .ed-root .experience-row { grid-template-columns: 1fr; gap: 14px; }
   .ed-root .record-period { margin-top: 8px; }
@@ -313,16 +394,19 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .masthead-divider { height: 22px; }
   .ed-root .ed-theme-switch { gap: 4px; }
   .ed-root .ed-theme-switch button { padding-inline: 8px; }
-  .ed-root .latest-insight-controls { gap: 9px 11px; }
-  .ed-root .latest-insight-toggle { margin-left: 0; }
-  .ed-root .hero { grid-template-columns: 1fr; padding-block: 24px 36px; gap: 40px; }
-  .ed-root .profile { padding: 0; }
-  .ed-root .name { font-size: clamp(40px, 12vw, 56px); line-height: 1.1; margin-top: 18px; }
-  .ed-root .hero[data-locale="zh"] .name { font-size: clamp(52px, 15vw, 76px); line-height: 1.08; }
-  .ed-root .profile-foot { margin-top: 40px; }
-  .ed-root .feature h2 { font-size: 31px; margin-top: 24px; }
-  .ed-root .feature-meta { font-size: 9px; }
-  .ed-root .quotation { margin-top: 22px; }
+  .ed-root .home-hero { padding-top: 28px; }
+  .ed-root .profile { padding-block: 26px 28px; }
+  .ed-root .insight-wrap { padding: 26px 0 28px; }
+  .ed-root .section-label { margin-bottom: 22px; }
+  .ed-root .name { font-size: clamp(38px, 11vw, 48px); }
+  .ed-root .profile-footer { padding-top: 32px; }
+  .ed-root .carousel-head { align-items: center; }
+  .ed-root .feature-meta { flex-direction: column; align-items: flex-start; gap: 8px; font-size: 11px; }
+  .ed-root .feature h2,
+  .ed-root .latest-insight-slide h2 { font-size: 28px; }
+  .ed-root .quotation { margin-bottom: 22px; }
+  .ed-root .quotation p { font-size: 16px; }
+  .ed-root .lens-bridge { padding-block: 25px 28px; }
   .ed-root .chapter { grid-template-columns: 1fr; gap: 28px; padding-block: 35px 42px; }
   .ed-root .chapter-head { gap: 10px; }
   .ed-root .chapter-head p { max-width: none; }

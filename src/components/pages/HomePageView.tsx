@@ -23,15 +23,79 @@ interface HomePageViewProps {
   locale?: Locale;
 }
 
-const homeCopy = {
+interface HomeLinkCopy {
+  cv: string;
+  github: string;
+  email: string;
+}
+
+interface LensStepCopy {
+  no: string;
+  name: string;
+  desc: string;
+}
+
+interface HomeCopy {
+  profileLabel: string;
+  profileSummary: string;
+  links: HomeLinkCopy;
+  profileFoot: string;
+  featureLabel: string;
+  readArticle: string;
+  fallbackCta: string;
+  lensCaption: string;
+  lensSteps: readonly LensStepCopy[];
+  educationTitle: string;
+  educationDescription: string;
+  coursesLabel: string;
+  experienceTitle: string;
+  experienceDescription: string;
+  researchTitle: string;
+  researchDescription: string;
+  paperLabel: string;
+  projectsTitle: string;
+  projectsDescription: string;
+  projectKicker: string;
+  projectCaption: string;
+  projectDetail: string;
+  upstreamLabel: string;
+  openSourceKicker: string;
+  competitionsKicker: string;
+  competitionsTitle: string;
+  repositoryLabel: string;
+  closingNote: string;
+  footerNote: string;
+}
+
+const homeCopy: Record<Locale, HomeCopy> = {
   en: {
-    eyebrow: "Speech-language models · Safety and privacy",
-    eyebrowSecondary: "AI supply-chain research",
+    profileLabel: "Profile",
+    profileSummary:
+      "Background in software engineering and data science. I focus on how technology moves toward products and commercialization, and how those shifts redistribute value across the industry chain.",
     links: { cv: "View CV", github: "GitHub", email: "Contact me" },
     profileFoot: "Open to strategy research / investment analysis roles",
     featureLabel: "Industry Memos · Latest memo",
     readArticle: "Read the full article",
     fallbackCta: "Browse all Industry Memos",
+    lensCaption:
+      "A bridge between the opening frame above and the record below, not a second hero.",
+    lensSteps: [
+      {
+        no: "01",
+        name: "Technology Shift",
+        desc: "What capability, cost structure, or interaction model has changed structurally?",
+      },
+      {
+        no: "02",
+        name: "Product & Commercialization",
+        desc: "How does it enter real use cases and form a sustainable revenue and cost structure?",
+      },
+      {
+        no: "03",
+        name: "Value Redistribution",
+        desc: "Where do bargaining power, profit pools, and investment opportunities move across the value chain?",
+      },
+    ],
     educationTitle: "Education",
     educationDescription: "Academic training in software engineering and data science.",
     coursesLabel: "Coursework",
@@ -55,13 +119,20 @@ const homeCopy = {
     footerNote: "Research and personal notes · © 2026",
   },
   zh: {
-    eyebrow: "语音语言模型 · 安全与隐私",
-    eyebrowSecondary: "AI 产业链研究",
+    profileLabel: "Profile",
+    profileSummary:
+      "软件工程与数据科学教育背景。关注技术如何走向产品与商业化，以及变化如何沿产业链重新分配价值。",
     links: { cv: "查看简历", github: "GitHub", email: "联系我" },
     profileFoot: "开放战略研究 / 投资分析类机会",
     featureLabel: "行业思考 · 最新文章",
     readArticle: "阅读全文",
     fallbackCta: "查看全部行业思考",
+    lensCaption: "作为首页上半部分与正文履历之间的过渡，而不是另一个主视觉模块。",
+    lensSteps: [
+      { no: "01", name: "技术变化", desc: "什么能力、成本或交互方式出现结构性变化。" },
+      { no: "02", name: "产品与商业化", desc: "它如何进入真实场景，并形成可持续收入与成本结构。" },
+      { no: "03", name: "价值重新分配", desc: "产业链上的议价权、利润池与投资机会因此流向哪里。" },
+    ],
     educationTitle: "教育背景",
     educationDescription: "软件工程与数据科学方向的学习经历。",
     coursesLabel: "主修课程",
@@ -83,10 +154,7 @@ const homeCopy = {
     closingNote: "刘泓宇 · 研究与个人笔记",
     footerNote: "研究与个人笔记 · © 2026",
   },
-} satisfies Record<
-  Locale,
-  Record<string, string | readonly string[] | { cv: string; github: string; email: string }>
->;
+};
 
 const sharedCopy = {
   en: {
@@ -136,7 +204,7 @@ function extractPullQuote(body: string): string | null {
 export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
   const copy = homeCopy[locale];
   const summary = sharedCopy[locale].projects.summary;
-  const links = copy.links as { cv: string; github: string; email: string };
+  const links = copy.links;
   const education = getHomeEducation(locale);
   const internships = getHomeInternships(locale);
   const papers = getHomePublications(locale);
@@ -161,50 +229,80 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
       <div className="ed-site">
         <EditorialMasthead locale={locale} />
         <main>
-          <div className="hero" data-locale={locale}>
-            <section className="profile" aria-labelledby="profile-name">
-              <p className="eyebrow">
-                <span>{copy.eyebrow}</span>
-                <span className="eyebrow-secondary">{copy.eyebrowSecondary}</span>
-              </p>
-              <h1 className="name" id="profile-name">
-                {authorConfig.nameLocalized[locale]}
-              </h1>
-              <nav className="contact" aria-label={locale === "zh" ? "个人链接" : "Profile links"}>
-                <a href="/files/Resume_en.pdf" target="_blank" rel="noopener">
-                  {links.cv}
-                </a>
-                <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener">
-                  {links.github}
-                </a>
-                <a href={`mailto:${authorConfig.email}`}>{links.email}</a>
-              </nav>
-              <p className="profile-foot">{copy.profileFoot}</p>
+          <div className="home-hero">
+            <section
+              className="home-hero-frame"
+              aria-label={locale === "zh" ? "个人简介与最新文章" : "Profile and latest writing"}
+            >
+              <aside className="profile" aria-labelledby="profile-name">
+                <p className="section-label">{copy.profileLabel}</p>
+                <h1 className="name" id="profile-name">
+                  {authorConfig.nameLocalized[locale]}
+                </h1>
+                <p className="profile-copy">{copy.profileSummary}</p>
+                <div className="profile-footer">
+                  <nav className="contact" aria-label={locale === "zh" ? "个人链接" : "Profile links"}>
+                    <a href="/files/Resume_en.pdf" target="_blank" rel="noopener">
+                      {links.cv} <span aria-hidden="true">↗</span>
+                    </a>
+                    <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener">
+                      {links.github} <span aria-hidden="true">↗</span>
+                    </a>
+                    <a href={`mailto:${authorConfig.email}`}>
+                      {links.email} <span aria-hidden="true">↗</span>
+                    </a>
+                  </nav>
+                  <p className="profile-foot">
+                    <span className="dot" aria-hidden="true" />
+                    <span>{copy.profileFoot}</span>
+                  </p>
+                </div>
+              </aside>
+
+              <div className="insight-wrap" id="insights">
+                {latestCards.length > 0 ? (
+                  <LatestInsightCarousel
+                    locale={locale}
+                    cards={latestCards}
+                    featureLabel={copy.featureLabel}
+                    readArticleLabel={copy.readArticle}
+                    pullQuoteLabel={locale === "zh" ? "摘自本文" : "From this article"}
+                  />
+                ) : (
+                  <article className="feature" aria-labelledby="feature-title">
+                    <div className="feature-meta">
+                      <strong>{copy.featureLabel}</strong>
+                    </div>
+                    <h2 id="feature-title">
+                      <span>{featuredInsight.title}</span>
+                    </h2>
+                    <p className="excerpt">{featuredInsight.description}</p>
+                    <Link className="read" href={insightsHref}>
+                      <span>{copy.fallbackCta}</span>
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                  </article>
+                )}
+              </div>
             </section>
 
-            {latestCards.length > 0 ? (
-              <LatestInsightCarousel
-                locale={locale}
-                cards={latestCards}
-                featureLabel={copy.featureLabel}
-                readArticleLabel={copy.readArticle}
-                pullQuoteLabel={locale === "zh" ? "摘自本文" : "From this article"}
-              />
-            ) : (
-              <article className="feature" aria-labelledby="feature-title">
-                <div className="feature-meta">
-                  <strong>{copy.featureLabel}</strong>
-                </div>
-                <h2 id="feature-title">
-                  <span>{featuredInsight.title}</span>
-                </h2>
-                <p className="excerpt">{featuredInsight.description}</p>
-                <Link className="read" href={insightsHref}>
-                  <span>{copy.fallbackCta}</span>
-                  <span aria-hidden="true">↗</span>
-                </Link>
-              </article>
-            )}
+            <section className="lens-bridge" aria-label={locale === "zh" ? "投资视角" : "Investment lens"}>
+              <div className="lens-heading">
+                <p className="lens-kicker">Investment Lens</p>
+                <p className="lens-caption">{copy.lensCaption}</p>
+              </div>
+              <ol className="lens-flow">
+                {copy.lensSteps.map((step) => (
+                  <li className="lens-step" key={step.no}>
+                    <p className="lens-no" aria-hidden="true">
+                      {step.no}
+                    </p>
+                    <p className="lens-name">{step.name}</p>
+                    <p className="lens-desc">{step.desc}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
           </div>
 
           <section id="education" className="chapter" aria-labelledby="education-title">
