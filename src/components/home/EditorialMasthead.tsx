@@ -37,7 +37,7 @@ export function EditorialMasthead({ locale = defaultLocale, variant = "home" }: 
   return (
     <header className="masthead">
       <Link className="wordmark" href={localizedHref("/", locale)}>
-        {authorConfig.nameLocalized[locale]}<span>.</span>
+        {locale === "zh" ? "主页" : "Home"}<span>.</span>
       </Link>
       {variant === "project" ? (
         <nav className="masthead-nav" aria-label={navLabel}>

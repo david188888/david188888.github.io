@@ -10,6 +10,21 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes ed-bubble {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ed-accent) 28%, transparent); }
+  50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--ed-accent) 0%, transparent); }
+}
+
+@keyframes ed-opportunity-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ed-opportunity-pulse {
+  0%, 100% { background: transparent; }
+  50% { background: color-mix(in srgb, var(--ed-accent) 6%, transparent); }
+}
+
 .ed-root {
   color-scheme: light;
   --ed-bg: #f6f3ee;
@@ -89,7 +104,8 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 }
 .ed-root .wordmark { font-family: Georgia, serif; font-size: 23px; letter-spacing: -1px; white-space: nowrap; }
 .ed-root .wordmark span { color: var(--ed-accent-text); }
-.ed-root .masthead-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; font-size: 12px; color: var(--ed-muted); }
+.ed-root .masthead-nav { display: flex; flex-wrap: nowrap; justify-content: center; gap: clamp(24px, 2.3vw, 34px); font-size: 15px; font-weight: 600; color: var(--ed-muted); }
+.ed-root .masthead-nav a { white-space: nowrap; }
 .ed-root .masthead-nav a:hover { color: var(--ed-accent-text); }
 .ed-root .masthead-tools { display: flex; align-items: center; gap: 12px; justify-content: flex-end; min-width: 0; }
 .ed-root .masthead-lang { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 12px; color: var(--ed-muted); }
@@ -147,7 +163,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   text-transform: uppercase;
   color: var(--ed-muted);
 }
-.ed-root .section-label::before { content: ""; width: 27px; height: 1px; background: var(--ed-accent); flex: 0 0 auto; }
+.ed-root .section-label::before { display: none; }
 .ed-root .name {
   margin: 0 0 14px;
   font-family: Georgia, var(--ed-serif);
@@ -157,12 +173,12 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   letter-spacing: -0.025em;
 }
 .ed-root .profile-copy { max-width: 24em; color: var(--ed-muted); font-size: 15px; line-height: 1.95; }
-.ed-root .profile-footer { margin-top: auto; padding-top: 40px; }
+.ed-root .profile-footer { margin-top: 34px; padding-top: 0; }
 .ed-root .contact { display: flex; gap: 22px; flex-wrap: wrap; font-size: 13px; font-weight: 600; }
 .ed-root .contact a { padding-block: 4px; border-bottom: 1px solid var(--ed-line); transition: color 0.2s, border-color 0.2s; }
 .ed-root .contact a:hover { color: var(--ed-accent-text); border-color: var(--ed-accent-text); }
-.ed-root .profile-foot { display: flex; align-items: center; gap: 11px; margin-top: 30px; font-size: 13px; line-height: 1.55; font-weight: 600; color: var(--ed-ink); }
-.ed-root .profile-foot .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ed-accent); box-shadow: 0 0 0 5px var(--ed-wash); flex: 0 0 auto; }
+.ed-root .profile-foot { display: flex; align-items: center; gap: 11px; margin-top: 30px; padding: 11px 14px; font-size: 15px; line-height: 1.55; font-weight: 700; color: var(--ed-accent-text); animation: ed-opportunity-enter 0.8s cubic-bezier(0.22, 0.75, 0.25, 1) both, ed-opportunity-pulse 2.8s ease-in-out 0.8s infinite; }
+.ed-root .profile-foot .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ed-accent); box-shadow: 0 0 0 5px var(--ed-wash); flex: 0 0 auto; animation: ed-bubble 2.4s ease-in-out infinite; }
 
 /* ── Investment Lens ─────────────────────────────────────────────────── */
 /* A thin bridge between the hero frame and the record below, deliberately
@@ -397,7 +413,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .insight-wrap { padding: 26px 0 28px; }
   .ed-root .section-label { margin-bottom: 22px; }
   .ed-root .name { font-size: clamp(38px, 11vw, 48px); }
-  .ed-root .profile-footer { padding-top: 32px; }
+  .ed-root .profile-footer { margin-top: 28px; }
   .ed-root .carousel-head { align-items: center; }
   .ed-root .feature-meta { flex-direction: column; align-items: flex-start; gap: 8px; font-size: 11px; }
   .ed-root .feature h2,
@@ -429,6 +445,8 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .latest-insight-track { transition: none; }
   html:has(.ed-root) { scroll-behavior: auto; }
   .ed-root .reveal-on-load { animation: none !important; }
+  .ed-root .profile-foot,
+  .ed-root .profile-foot .dot { animation: none !important; }
 }
 
 /* ── Insights list and article pages ──────────────────────────────────────

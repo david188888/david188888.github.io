@@ -61,7 +61,6 @@ interface HomeCopy {
   competitionsKicker: string;
   competitionsTitle: string;
   repositoryLabel: string;
-  closingNote: string;
   footerNote: string;
 }
 
@@ -110,7 +109,6 @@ const homeCopy: Record<Locale, HomeCopy> = {
     competitionsKicker: "Competitions & Modeling",
     competitionsTitle: "Mathematical modeling",
     repositoryLabel: "View repository ↗",
-    closingNote: "HongYu Liu · Research and personal notes",
     footerNote: "Research and personal notes · © 2026",
   },
   zh: {
@@ -144,7 +142,6 @@ const homeCopy: Record<Locale, HomeCopy> = {
     competitionsKicker: "竞赛与建模",
     competitionsTitle: "数学建模实践",
     repositoryLabel: "查看参赛仓库 ↗",
-    closingNote: "刘泓宇 · 研究与个人笔记",
     footerNote: "研究与个人笔记 · © 2026",
   },
 };
@@ -474,7 +471,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                 <span>Be hungry,</span>
                 <span className="slogan-em">bet on yourself</span>
               </h2>
-              <p>{copy.closingNote}</p>
             </div>
             <div className="closing-links">
               <a href={`mailto:${authorConfig.email}`}>{authorConfig.email} ↗</a>
