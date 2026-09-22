@@ -48,7 +48,7 @@ describe("aligned page CSS contracts", () => {
 
   it("restores a scoped editorial rhythm without changing the annotation grid", () => {
     expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose\s*\{[\s\S]*?font-size:\s*17px[\s\S]*?line-height:\s*1\.85/);
-    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose \.insight-body > p[\s\S]*?margin-top:\s*1\.25em/);
+    expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose \.insight-body > p[\s\S]*?margin-top:\s*1\.8em/);
     expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose \.insight-body > h2[\s\S]*?margin-top:\s*2\.8em/);
     expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose code::before[\s\S]*?content:\s*none/);
     expect(editorialCss).toMatch(/\.ed-root \.aligned-article-prose code::after[\s\S]*?content:\s*none/);

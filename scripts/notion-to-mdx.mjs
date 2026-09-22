@@ -532,6 +532,9 @@ export function convertBodySection(section, options = {}) {
 
     switch (block.type) {
       case "divider":
+        // A Notion divider becomes a `---` line, which the site renders as a
+        // section rule. Dropping it here silently lost an author's structure.
+        chunks.push("---");
         break;
 
       case "paragraph":

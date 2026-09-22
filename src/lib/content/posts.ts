@@ -6,7 +6,7 @@ import { defaultLocale } from "@/i18n/locales";
 import { createAnnotationIdFactory } from "./annotation-ids.mjs";
 import { createSourceHash, findCacheInconsistencies, isTranslationCacheFresh } from "./cache";
 import { extractInlineMarks, restoreInlineMarks } from "./inline-marks.mjs";
-import { splitMarkdownSegments } from "./markdown-segments.mjs";
+import { isThematicBreak, splitMarkdownSegments } from "./markdown-segments.mjs";
 import { detectSourceLanguage, getTargetLanguage } from "./language";
 import { fitEmbeddedSvgText } from "./svg-text-fit.mjs";
 
@@ -374,6 +374,7 @@ function renderMarkdownBlock(trimmed: string): string {
     const code = trimmed.replace(/^```[^\n]*\n?/, "").replace(/\n?```$/, "");
     return `<pre><code>${escapeHtml(code)}</code></pre>`;
   }
+  if (isThematicBreak(trimmed)) return "<hr />";
   if (trimmed.startsWith("### ")) return `<h3>${renderInlineMarkdown(trimmed.slice(4))}</h3>`;
   if (trimmed.startsWith("## ")) return `<h2>${renderInlineMarkdown(trimmed.slice(3))}</h2>`;
   if (trimmed.startsWith("# ")) return `<h1>${renderInlineMarkdown(trimmed.slice(2))}</h1>`;

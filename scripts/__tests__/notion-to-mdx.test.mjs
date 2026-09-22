@@ -244,6 +244,18 @@ describe("block splitting", () => {
     expect(blocks[1]).toMatchObject({ type: "paragraph" });
   });
 
+  it("emits a Notion divider as a `---` line so the section rule survives", () => {
+    const { chunks } = convertBodySection("上一节正文\n---\n下一节正文");
+
+    expect(chunks).toEqual(["上一节正文", "---", "下一节正文"]);
+  });
+
+  it("keeps a divider out of the paragraphs around it", () => {
+    const blocks = splitBlocks("上一节正文\n---\n下一节正文");
+
+    expect(blocks.map((block) => block.type)).toEqual(["paragraph", "divider", "paragraph"]);
+  });
+
   it("keeps an embedded HTML figure as a single block", () => {
     const blocks = splitBlocks('<figure class="demo">\n  <svg><text>Flow</text></svg>\n</figure>\n后文');
 

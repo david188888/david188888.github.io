@@ -25,13 +25,8 @@ interface HomePageViewProps {
 
 const homeCopy = {
   en: {
-    role: "Speech systems research · Industry writing",
-    focusValue: "AI Infrastructure & Supply Chain · Consumer & Platforms",
-    profileTags: [
-      "Trustworthy speech systems",
-      "AI supply chain & consumer markets",
-      "Technical change → business facts",
-    ],
+    eyebrow: "Speech-language models · Safety and privacy",
+    eyebrowSecondary: "AI supply-chain research",
     links: { cv: "View CV", github: "GitHub", email: "Contact me" },
     profileFoot: "Open to strategy research / investment analysis roles",
     featureLabel: "Industry Memos · Latest memo",
@@ -56,14 +51,12 @@ const homeCopy = {
     competitionsKicker: "Competitions & Modeling",
     competitionsTitle: "Mathematical modeling",
     repositoryLabel: "View repository ↗",
-    closingTitle: "Stay in touch.",
     closingNote: "HongYu Liu · Research and personal notes",
     footerNote: "Research and personal notes · © 2026",
   },
   zh: {
-    role: "语音系统研究 · 行业写作",
-    focusValue: "AI 基础设施与产业链 · 消费与平台",
-    profileTags: ["可信语音系统", "AI 上下游与消费行业", "技术变化 → 商业事实"],
+    eyebrow: "语音语言模型 · 安全与隐私",
+    eyebrowSecondary: "AI 产业链研究",
     links: { cv: "查看简历", github: "GitHub", email: "联系我" },
     profileFoot: "开放战略研究 / 投资分析类机会",
     featureLabel: "行业思考 · 最新文章",
@@ -87,7 +80,6 @@ const homeCopy = {
     competitionsKicker: "竞赛与建模",
     competitionsTitle: "数学建模实践",
     repositoryLabel: "查看参赛仓库 ↗",
-    closingTitle: "保持联系。",
     closingNote: "刘泓宇 · 研究与个人笔记",
     footerNote: "研究与个人笔记 · © 2026",
   },
@@ -169,18 +161,15 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
       <div className="ed-site">
         <EditorialMasthead locale={locale} />
         <main>
-          <div className="hero">
+          <div className="hero" data-locale={locale}>
             <section className="profile" aria-labelledby="profile-name">
-              <p className="eyebrow">{copy.focusValue}</p>
+              <p className="eyebrow">
+                <span>{copy.eyebrow}</span>
+                <span className="eyebrow-secondary">{copy.eyebrowSecondary}</span>
+              </p>
               <h1 className="name" id="profile-name">
                 {authorConfig.nameLocalized[locale]}
               </h1>
-              <p className="role">{copy.role}</p>
-              <ul className="profile-tags">
-                {copy.profileTags.map((tag) => (
-                  <li key={tag}>{tag}</li>
-                ))}
-              </ul>
               <nav className="contact" aria-label={locale === "zh" ? "个人链接" : "Profile links"}>
                 <a href="/files/Resume_en.pdf" target="_blank" rel="noopener">
                   {links.cv}
@@ -392,7 +381,10 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
 
           <section id="contact" className="closing" aria-labelledby="contact-title">
             <div>
-              <h2 id="contact-title">{copy.closingTitle}</h2>
+              <h2 id="contact-title" className="slogan">
+                <span>Be hungry,</span>
+                <span className="slogan-em">bet on yourself</span>
+              </h2>
               <p>{copy.closingNote}</p>
             </div>
             <div className="closing-links">

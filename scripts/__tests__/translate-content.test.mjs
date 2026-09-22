@@ -544,6 +544,20 @@ describe("body units for incremental reuse", () => {
     expect(assembleBody(plan.units, plan.trailing)).toBe(body);
   });
 
+  it("carries a `---` divider over verbatim instead of offering it to the model", () => {
+    const body = "前段。\n\n---\n\n## 小节\n\n后段。";
+    const plan = extractBodyUnits(body);
+    const divider = plan.units.find((unit) => unit.text.trim() === "---");
+
+    expect(divider.kind).toBe("verbatim");
+    expect(divider.source).toBe("");
+    // The divider must not swallow the heading that follows it.
+    expect(plan.units.some((unit) => unit.kind === "prose" && unit.text.startsWith("## "))).toBe(
+      true
+    );
+    expect(assembleBody(plan.units, plan.trailing)).toBe(body);
+  });
+
   it("splits an oversized block into pieces that concatenate exactly", () => {
     const paragraphs = Array.from({ length: 6 }, (_v, index) => `第${index}段 ` + "字".repeat(120));
     const block = paragraphs.join("\n\n");

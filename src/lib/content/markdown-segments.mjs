@@ -25,6 +25,23 @@ const HTML_COMMENT_START_PATTERN = /^\s*<!--/;
 const CODE_FENCE_PATTERN = /^[ \t]*(`{3,}|~{3,})/;
 
 /**
+ * A standalone `---` line separates one section from the next. The three
+ * CommonMark forms are accepted so a `***` divider does not silently become a
+ * paragraph of punctuation, but `---` is what the Notion converter emits and
+ * what the syntax doc documents.
+ */
+const THEMATIC_BREAK_PATTERN = /^(?:-[ \t]*){3,}$|^(?:\*[ \t]*){3,}$|^(?:_[ \t]*){3,}$/;
+
+/**
+ * True when a whole block is nothing but a divider line. Shared by the site
+ * renderer (which turns it into `<hr>`) and the translation pipeline (which
+ * carries it over verbatim instead of asking the model to translate "---").
+ */
+export function isThematicBreak(text) {
+  return typeof text === "string" && THEMATIC_BREAK_PATTERN.test(text.trim());
+}
+
+/**
  * Splits a markdown source string into ordered segments.
  *
  * `markdown` segments keep their original line structure and are safe to feed

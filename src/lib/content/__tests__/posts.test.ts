@@ -59,6 +59,20 @@ describe("renderMarkdownToHtml", () => {
     expect(html).not.toContain("<div>");
   });
 
+  it("renders a `---` divider as a section rule instead of a paragraph of dashes", () => {
+    const html = renderMarkdownToHtml("第一段。\n\n---\n\n## 下一节\n\n第二段。");
+
+    expect(html).toContain("<hr />");
+    expect(html).toContain("<h2>下一节</h2>");
+    // The literal dashes must never reach the page as text.
+    expect(html).not.toContain("<p>---</p>");
+  });
+
+  it("recognises the other CommonMark divider forms", () => {
+    expect(renderMarkdownToHtml("上。\n\n***\n\n下。")).toContain("<hr />");
+    expect(renderMarkdownToHtml("上。\n\n___\n\n下。")).toContain("<hr />");
+  });
+
   // The renderer (markdown-it) treats `~~~` as a fence too, so the block
   // splitter has to agree: otherwise an HTML-looking line inside a tilde
   // fence would be promoted to a live author-authored HTML block.

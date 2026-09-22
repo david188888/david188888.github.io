@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { splitMarkdownSegments } from "../src/lib/content/markdown-segments.mjs";
+import { isThematicBreak, splitMarkdownSegments } from "../src/lib/content/markdown-segments.mjs";
 import {
   buildTerminologyBlock,
   createTermsHash,
@@ -833,6 +833,19 @@ export function extractBodyUnits(body) {
         gap = "";
 
         if (block.kind === "placeholder") {
+          units.push({
+            kind: "verbatim",
+            text: block.text,
+            source: "",
+            context: "",
+            leading: blockLeading,
+          });
+          continue;
+        }
+
+        // A `---` divider carries no language, so it is carried over like a
+        // CJK-free fence: sending "---" to the model invites it back rewritten.
+        if (isThematicBreak(block.text)) {
           units.push({
             kind: "verbatim",
             text: block.text,

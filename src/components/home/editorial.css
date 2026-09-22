@@ -122,11 +122,16 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   align-items: start;
 }
 .ed-root .profile { padding-block: 15px 0; }
-.ed-root .eyebrow { font-size: 10px; letter-spacing: 0.15em; color: var(--ed-accent-text); line-height: 1.6; font-weight: 600; }
-.ed-root .name { font: normal clamp(34px, 3.6vw, 48px) / 1.15 Georgia, "Times New Roman", serif; letter-spacing: -0.02em; margin-top: 20px; }
-.ed-root .profile-tags { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; color: var(--ed-muted); font-size: 13px; line-height: 1.8; }
-.ed-root .role { margin-top: 30px; font-size: 15px; font-weight: 500; letter-spacing: 0.08em; }
-.ed-root .contact { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 28px; font-size: 12px; }
+.ed-root .eyebrow { display: grid; gap: 7px; font-size: 10px; letter-spacing: 0.15em; line-height: 1.6; font-weight: 600; }
+.ed-root .eyebrow span:first-child { color: var(--ed-accent-text); }
+.ed-root .eyebrow .eyebrow-secondary { color: var(--ed-muted); font-weight: 500; letter-spacing: 0.2em; }
+/* The name is the cover line: it carries the first screen on its own, so it is
+   set as display type rather than as a heading above the chapters. */
+.ed-root .name { font: normal clamp(46px, 5.2vw, 72px) / 1.08 Georgia, "Times New Roman", serif; letter-spacing: -0.025em; margin-top: 22px; }
+/* Three Chinese characters are about half the width of the roman name at the
+   same size, so the Chinese name is set larger to hold the same column. */
+.ed-root .hero[data-locale="zh"] .name { font-size: clamp(66px, 8.4vw, 116px); line-height: 1.04; letter-spacing: 0.01em; }
+.ed-root .contact { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 34px; font-size: 12px; }
 .ed-root .contact a { padding-block: 4px; border-bottom: 1px solid var(--ed-line); }
 .ed-root .contact a:hover { color: var(--ed-accent-text); border-color: var(--ed-accent-text); }
 .ed-root .profile-foot { margin-top: 58px; display: flex; gap: 14px; align-items: center; font-size: 10px; letter-spacing: 0.08em; color: var(--ed-muted); }
@@ -249,7 +254,12 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 
 /* ── Closing and footer ───────────────────────────────────────────────── */
 .ed-root .closing { border-top: 3px solid var(--ed-accent); padding-block: 48px 55px; display: flex; justify-content: space-between; align-items: center; gap: 30px; }
-.ed-root .closing h2 { font: 400 clamp(29px, 3.7vw, 45px) / 1.4 var(--ed-serif); }
+.ed-root .closing h2.slogan {
+  font: italic 400 clamp(30px, 3.8vw, 47px) / 1.3 Georgia, "Times New Roman", var(--ed-serif);
+  letter-spacing: -0.01em;
+}
+.ed-root .closing h2.slogan span { display: block; }
+.ed-root .closing h2.slogan .slogan-em { color: var(--ed-accent-text); }
 .ed-root .closing p { font-size: 13px; line-height: 1.9; color: var(--ed-muted); margin-top: 12px; }
 .ed-root .closing-links { display: flex; flex-direction: column; gap: 17px; align-items: flex-start; min-width: 0; }
 .ed-root .closing-links a { font-size: 13px; border-bottom: 1px solid var(--ed-line); padding-bottom: 5px; overflow-wrap: anywhere; max-width: 100%; }
@@ -278,7 +288,8 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 850px) {
   .ed-root .hero { gap: 40px; }
-  .ed-root .name { font-size: 40px; }
+  .ed-root .name { font-size: 54px; }
+  .ed-root .hero[data-locale="zh"] .name { font-size: 84px; }
   .ed-root .feature h2 { font-size: 30px; }
   .ed-root .quotation { padding: 18px; }
   .ed-root .quotation p { font-size: 16px; }
@@ -306,9 +317,9 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .latest-insight-toggle { margin-left: 0; }
   .ed-root .hero { grid-template-columns: 1fr; padding-block: 24px 36px; gap: 40px; }
   .ed-root .profile { padding: 0; }
-  .ed-root .name { font-size: clamp(30px, 9vw, 40px); line-height: 1.15; margin-top: 16px; }
-  .ed-root .role { margin-top: 20px; }
-  .ed-root .profile-foot { margin-top: 28px; }
+  .ed-root .name { font-size: clamp(40px, 12vw, 56px); line-height: 1.1; margin-top: 18px; }
+  .ed-root .hero[data-locale="zh"] .name { font-size: clamp(52px, 15vw, 76px); line-height: 1.08; }
+  .ed-root .profile-foot { margin-top: 40px; }
   .ed-root .feature h2 { font-size: 31px; margin-top: 24px; }
   .ed-root .feature-meta { font-size: 9px; }
   .ed-root .quotation { margin-top: 22px; }
@@ -433,7 +444,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 }
 .ed-root .aligned-article-prose .insight-body > p,
 .ed-root .aligned-article-prose .insight-body > .note-pair > p {
-  margin-top: 1.25em;
+  margin-top: 1.8em;
   line-height: inherit;
 }
 .ed-root .aligned-article-prose .insight-body > h1,
@@ -449,6 +460,15 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .aligned-article-prose .insight-body > h1 + *,
 .ed-root .aligned-article-prose .insight-body > h2 + * { margin-top: 0.9em; }
 .ed-root .aligned-article-prose .insight-body > h3 + * { margin-top: 0.7em; }
+/* A `---` divider closes the section above it, so it takes the space that
+   already separated the sections rather than adding new space. The heading's
+   own margin-top collapses into the rule's bottom margin, which is why the
+   bottom side is zero. */
+.ed-root .aligned-article-prose .insight-body > hr {
+  margin: 2.6em 0 0;
+  border: 0;
+  border-top: 1px solid var(--ed-line);
+}
 .ed-root .aligned-article-prose .insight-body > ul,
 .ed-root .aligned-article-prose .insight-body > ol {
   margin-top: 1.15em;
