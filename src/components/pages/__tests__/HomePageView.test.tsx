@@ -46,7 +46,8 @@ describe("HomePageView", () => {
     sectionOrder.slice(1).forEach((id, index) => {
       expect(html.indexOf(`id="${sectionOrder[index]}"`)).toBeLessThan(html.indexOf(`id="${id}"`));
     });
-    expect(html.indexOf('class="feature"')).toBeLessThan(html.indexOf('id="education"'));
+    expect(html.indexOf('aria-roledescription="carousel"')).toBeLessThan(html.indexOf('class="lens-bridge"'));
+    expect(html.indexOf('class="lens-bridge"')).toBeLessThan(html.indexOf('id="education"'));
     expect(html).toContain("HongYu Liu");
     expect(html).toContain("South China Normal University");
     expect(html).toContain("Insta360");
@@ -82,15 +83,17 @@ describe("HomePageView", () => {
     expect(html).not.toContain("future-post");
   });
 
-  it("represents the newest published insights in an accessible localized carousel", () => {
+  it("represents the newest published insights in an accessible auto-advancing carousel", () => {
     const posts = getPublishedPosts("en").slice(0, 5);
     const html = renderToStaticMarkup(<HomePageView locale="en" />);
 
     expect(html).toContain('aria-roledescription="carousel"');
     expect(html).toContain("Previous article");
     expect(html).toContain("Next article");
-    expect(html).toContain("Pause automatic rotation");
-    expect(html).toContain(`${posts.length} ${posts.length === 1 ? "article" : "articles"}`);
+    expect(html).toContain(`1 / ${posts.length}`);
+    expect(html).not.toContain("latest-insight-dots");
+    expect(html).not.toContain("latest-insight-toggle");
+    expect(html).not.toContain("Pause automatic rotation");
 
     const postLinks = posts.map((post) => `/en/insights/${post.slug}/`);
     expect((html.match(/class="latest-insight-slide"/g) ?? [])).toHaveLength(posts.length);
@@ -98,10 +101,38 @@ describe("HomePageView", () => {
       expect(html).toContain(`href="${href}"`);
       if (index > 0) expect(html.indexOf(postLinks[index - 1])).toBeLessThan(html.indexOf(href));
     });
-    expect(html).toContain(`href="${postLinks[0]}" class="read" tabindex="0"`);
+    // The slide title is the article link; only the active slide is focusable.
+    expect(html).toContain(`href="${postLinks[0]}" class="slide-link" tabindex="0"`);
     postLinks.slice(1).forEach((href) => {
-      expect(html).toContain(`href="${href}" class="read" tabindex="-1"`);
+      expect(html).toContain(`href="${href}" class="slide-link" tabindex="-1"`);
     });
+    expect(html).not.toContain("Read the full article");
+    expect(html).not.toContain('class="read"');
+  });
+
+  it.each(["en", "zh"] as const)("leads with the confirmed profile positioning for %s", (locale) => {
+    const html = renderToStaticMarkup(<HomePageView locale={locale} />);
+
+    const summary =
+      locale === "zh"
+        ? "软件工程与数据科学教育背景。关注技术如何走向产品与商业化，以及变化如何沿产业链重新分配价值。"
+        : "Background in software engineering and data science. I focus on how technology moves toward products and commercialization, and how those shifts redistribute value across the industry chain.";
+    expect(html).toContain(summary);
+    expect(html).not.toContain("语音语言模型 · 安全与隐私");
+    expect(html).not.toContain("AI 产业链研究");
+    expect(html).not.toContain("Speech-language models");
+    expect(html).not.toContain("AI supply-chain research");
+  });
+
+  it("bridges the hero and the record with the three-step investment lens", () => {
+    const html = renderToStaticMarkup(<HomePageView locale="zh" />);
+
+    expect(html).toContain("Investment Lens");
+    expect(html).toContain("技术变化");
+    expect(html).toContain("产品与商业化");
+    expect(html).toContain("价值重新分配");
+    expect(html.indexOf('class="home-hero-frame"')).toBeLessThan(html.indexOf('class="lens-bridge"'));
+    expect(html.indexOf('class="lens-bridge"')).toBeLessThan(html.indexOf('id="education"'));
   });
 
   it.each(["en", "zh"] as const)("renders every configured profile record for %s", (locale) => {

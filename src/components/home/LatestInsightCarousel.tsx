@@ -18,7 +18,6 @@ interface LatestInsightCarouselProps {
   locale: Locale;
   cards: readonly LatestInsightCard[];
   featureLabel: string;
-  readArticleLabel: string;
   pullQuoteLabel: string;
 }
 
@@ -33,40 +32,36 @@ const carouselCopy = {
     label: "Latest memos",
     previous: "Previous article",
     next: "Next article",
-    pause: "Pause automatic rotation",
-    resume: "Resume automatic rotation",
-    slide: "Go to article",
-    article: "article",
-    articles: "articles",
   },
   zh: {
     label: "最新思考",
     previous: "上一篇文章",
     next: "下一篇文章",
-    pause: "暂停自动轮播",
-    resume: "恢复自动轮播",
-    slide: "查看第",
-    article: "篇文章",
-    articles: "篇文章",
   },
 } as const;
 
+const AUTO_ADVANCE_MS = 2000;
+
+/**
+ * Auto-advances so the latest writing stays in view, pauses while the reader
+ * points at or focuses the carousel, and never rotates under
+ * prefers-reduced-motion. The slide title is the link to the article — there
+ * is no separate read-more row.
+ */
 export function LatestInsightCarousel({
   locale,
   cards,
   featureLabel,
-  readArticleLabel,
   pullQuoteLabel,
 }: LatestInsightCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [pointerPaused, setPointerPaused] = useState(false);
   const [focusPaused, setFocusPaused] = useState(false);
-  const [userPaused, setUserPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const copy = carouselCopy[locale];
   const count = cards.length;
   const hasMultiple = count > 1;
-  const paused = pointerPaused || focusPaused || userPaused;
+  const paused = pointerPaused || focusPaused;
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -80,7 +75,7 @@ export function LatestInsightCarousel({
     if (!hasMultiple || paused || reducedMotion) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % count);
-    }, 5000);
+    }, AUTO_ADVANCE_MS);
     return () => window.clearInterval(timer);
   }, [count, hasMultiple, paused, reducedMotion]);
 
@@ -89,11 +84,10 @@ export function LatestInsightCarousel({
   const move = (offset: number) => {
     setActiveIndex((current) => (current + offset + count) % count);
   };
-  const articleNoun = locale === "zh" ? copy.articles : count === 1 ? copy.article : copy.articles;
 
   return (
     <section
-      className="feature latest-insight-carousel"
+      className="latest-insight-carousel"
       aria-label={copy.label}
       aria-roledescription="carousel"
       onPointerEnter={() => setPointerPaused(true)}
@@ -103,6 +97,23 @@ export function LatestInsightCarousel({
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusPaused(false);
       }}
     >
+      <div className="carousel-head">
+        <p className="section-label">{featureLabel}</p>
+        {hasMultiple ? (
+          <div className="carousel-controls" aria-label={copy.label}>
+            <p className="carousel-counter" aria-live="off">
+              {activeIndex + 1} / {count}
+            </p>
+            <button type="button" onClick={() => move(-1)} aria-label={copy.previous}>
+              <span aria-hidden="true">←</span>
+            </button>
+            <button type="button" onClick={() => move(1)} aria-label={copy.next}>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        ) : null}
+      </div>
+
       <div className="latest-insight-viewport">
         <div
           className="latest-insight-track"
@@ -119,12 +130,14 @@ export function LatestInsightCarousel({
                 aria-label={`${index + 1} / ${count}`}
               >
                 <div className="feature-meta">
-                  <strong>{featureLabel}</strong>
+                  <span>{card.tags.join(" · ")}</span>
                   {card.date ? <time dateTime={card.date}>{card.date.replaceAll("-", ".")}</time> : null}
                 </div>
                 <h2 id={index === 0 ? "feature-title" : undefined}>
-                  <span>{titleHead}</span>
-                  {titleSubject ? <span className="subject">{titleSubject}</span> : null}
+                  <Link className="slide-link" href={card.href} tabIndex={isActive ? 0 : -1}>
+                    <span>{titleHead}</span>
+                    {titleSubject ? <span className="subject">{titleSubject}</span> : null}
+                  </Link>
                 </h2>
                 <p className="excerpt">{card.excerpt}</p>
                 {card.pullQuote ? (
@@ -133,52 +146,10 @@ export function LatestInsightCarousel({
                     <cite>{pullQuoteLabel}</cite>
                   </blockquote>
                 ) : null}
-                <Link className="read" href={card.href} tabIndex={isActive ? 0 : -1}>
-                  <span>
-                    {readArticleLabel} &nbsp; / &nbsp; {card.tags.join(" · ")}
-                  </span>
-                  <span aria-hidden="true">↗</span>
-                </Link>
               </article>
             );
           })}
         </div>
-      </div>
-
-      <div className="latest-insight-controls">
-        <div className="latest-insight-buttons">
-          <button type="button" onClick={() => move(-1)} disabled={!hasMultiple} aria-label={copy.previous}>
-            <span aria-hidden="true">←</span>
-          </button>
-          <button type="button" onClick={() => move(1)} disabled={!hasMultiple} aria-label={copy.next}>
-            <span aria-hidden="true">→</span>
-          </button>
-        </div>
-        <p className="latest-insight-count" aria-live="off">
-          {locale === "zh" ? `${activeIndex + 1} / ${count} ${copy.articles}` : `${activeIndex + 1} / ${count} ${articleNoun}`}
-        </p>
-        <div className="latest-insight-dots" role="group" aria-label={copy.label}>
-          {cards.map((card, index) => (
-            <button
-              key={card.slug}
-              type="button"
-              className={index === activeIndex ? "is-active" : undefined}
-              aria-label={locale === "zh" ? `${copy.slide}${index + 1}${copy.article}` : `${copy.slide} ${index + 1}`}
-              aria-current={index === activeIndex ? "true" : undefined}
-              onClick={() => setActiveIndex(index)}
-            />
-          ))}
-        </div>
-        <button
-          type="button"
-          className="latest-insight-toggle"
-          onClick={() => setUserPaused((current) => !current)}
-          disabled={!hasMultiple || reducedMotion}
-          aria-label={userPaused ? copy.resume : copy.pause}
-          aria-pressed={userPaused}
-        >
-          <span aria-hidden="true">{userPaused || reducedMotion ? "▶" : "Ⅱ"}</span>
-        </button>
       </div>
     </section>
   );
