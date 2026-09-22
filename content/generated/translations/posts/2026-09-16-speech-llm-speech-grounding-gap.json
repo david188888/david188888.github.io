@@ -3,7 +3,7 @@
   "pipeline": "hy-mt2-v3",
   "glossary": "c1f0a7ed",
   "sourcePath": "content/posts/2026-09-16-speech-llm-speech-grounding-gap.mdx",
-  "sourceHash": "7a9684a37f658b8df91e3f8e145f33c4551568672071181e618d80228467d659",
+  "sourceHash": "47498df4a1a974df259971d75847018d201efc57fdccdb11d206967005df3ef6",
   "sourceLanguage": "zh",
   "targetLanguage": "en",
   "model": "hy-mt2-7b",
