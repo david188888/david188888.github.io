@@ -23,7 +23,9 @@ describe("EditorialMasthead", () => {
     expect(html).toContain('class="masthead-tools"');
     expect(html.indexOf('class="wordmark"')).toBeLessThan(html.indexOf('class="masthead-nav"'));
     expect(html.indexOf('class="masthead-nav"')).toBeLessThan(html.indexOf('class="masthead-tools"'));
-    expect(html).toContain("项目与开源");
+    expect(html).toContain("行业分析和思考");
+    expect(html).toContain("科研");
+    expect(html).toContain("项目与竞赛");
     expect(html).toContain("联系");
   });
 

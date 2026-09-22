@@ -6,11 +6,11 @@ import { defaultLocale, type Locale } from "@/i18n/locales";
 import { EditorialThemeToggle } from "./EditorialThemeToggle";
 
 const sectionLinks = [
-  { id: "insights", href: "/insights/", label: { en: "Memos", zh: "行业思考" } },
+  { id: "insights", href: "/insights/", label: { en: "Industry Analysis & Memos", zh: "行业分析和思考" } },
   { id: "education", href: "#education", label: { en: "Education", zh: "教育" } },
   { id: "experience", href: "#experience", label: { en: "Experience", zh: "实习" } },
-  { id: "research", href: "#research", label: { en: "Research", zh: "研究" } },
-  { id: "projects", href: "#projects", label: { en: "Projects", zh: "项目与开源" } },
+  { id: "research", href: "#research", label: { en: "Research", zh: "科研" } },
+  { id: "projects", href: "#projects", label: { en: "Projects & Competitions", zh: "项目与竞赛" } },
   { id: "contact", href: "#contact", label: { en: "Contact", zh: "联系" } },
 ];
 

@@ -109,8 +109,16 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .masthead-nav a:hover { color: var(--ed-accent-text); }
 .ed-root .masthead-tools { display: flex; align-items: center; gap: 12px; justify-content: flex-end; min-width: 0; }
 .ed-root .masthead-lang { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 12px; color: var(--ed-muted); }
-.ed-root .masthead-lang a:hover { color: var(--ed-accent-text); }
-.ed-root .masthead-lang a[aria-current="page"] { color: var(--ed-ink); }
+.ed-root .masthead-lang { position: relative; display: flex; align-items: center; flex-shrink: 0; font-size: 12px; color: var(--ed-muted); }
+.ed-root .masthead-lang-trigger { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--ed-line); border-radius: 2px; padding: 7px 9px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.ed-root .masthead-lang-trigger:hover { color: var(--ed-accent-text); }
+.ed-root .masthead-globe { position: relative; width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; }
+.ed-root .masthead-globe::before { content: ""; position: absolute; inset: 3px 5px; border-right: 1px solid currentColor; border-left: 1px solid currentColor; border-radius: 50%; }
+.ed-root .masthead-globe::after { content: ""; position: absolute; top: 7px; right: 2px; left: 2px; border-top: 1px solid currentColor; }
+.ed-root .masthead-lang-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 10; display: grid; min-width: 112px; gap: 2px; padding: 6px; border: 1px solid var(--ed-line); background: var(--ed-bg); box-shadow: 0 8px 24px rgb(32 35 31 / 8%); }
+.ed-root .masthead-lang-menu a { padding: 7px 8px; color: var(--ed-muted); text-decoration: none; white-space: nowrap; }
+.ed-root .masthead-lang-menu a:hover,
+.ed-root .masthead-lang-menu a.active { background: var(--ed-bg); color: var(--ed-ink); }
 .ed-root .masthead-divider { width: 1px; height: 24px; flex: 0 0 1px; background: var(--ed-line); }
 
 /* ── Theme control ────────────────────────────────────────────────────── */
