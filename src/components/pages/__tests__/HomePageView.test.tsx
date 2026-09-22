@@ -83,7 +83,7 @@ describe("HomePageView", () => {
     expect(html).not.toContain("future-post");
   });
 
-  it("represents the newest published insights in an accessible manual carousel", () => {
+  it("represents the newest published insights in an accessible auto-advancing carousel", () => {
     const posts = getPublishedPosts("en").slice(0, 5);
     const html = renderToStaticMarkup(<HomePageView locale="en" />);
 
@@ -93,6 +93,7 @@ describe("HomePageView", () => {
     expect(html).toContain(`1 / ${posts.length}`);
     expect(html).not.toContain("latest-insight-dots");
     expect(html).not.toContain("latest-insight-toggle");
+    expect(html).not.toContain("Pause automatic rotation");
 
     const postLinks = posts.map((post) => `/en/insights/${post.slug}/`);
     expect((html.match(/class="latest-insight-slide"/g) ?? [])).toHaveLength(posts.length);
@@ -100,10 +101,13 @@ describe("HomePageView", () => {
       expect(html).toContain(`href="${href}"`);
       if (index > 0) expect(html.indexOf(postLinks[index - 1])).toBeLessThan(html.indexOf(href));
     });
-    expect(html).toContain(`href="${postLinks[0]}" class="read" tabindex="0"`);
+    // The slide title is the article link; only the active slide is focusable.
+    expect(html).toContain(`href="${postLinks[0]}" class="slide-link" tabindex="0"`);
     postLinks.slice(1).forEach((href) => {
-      expect(html).toContain(`href="${href}" class="read" tabindex="-1"`);
+      expect(html).toContain(`href="${href}" class="slide-link" tabindex="-1"`);
     });
+    expect(html).not.toContain("Read the full article");
+    expect(html).not.toContain('class="read"');
   });
 
   it.each(["en", "zh"] as const)("leads with the confirmed profile positioning for %s", (locale) => {

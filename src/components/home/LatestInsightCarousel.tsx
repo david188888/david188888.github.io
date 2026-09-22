@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Locale } from "@/i18n/locales";
 
 export interface LatestInsightCard {
@@ -18,7 +18,6 @@ interface LatestInsightCarouselProps {
   locale: Locale;
   cards: readonly LatestInsightCard[];
   featureLabel: string;
-  readArticleLabel: string;
   pullQuoteLabel: string;
 }
 
@@ -41,22 +40,44 @@ const carouselCopy = {
   },
 } as const;
 
+const AUTO_ADVANCE_MS = 2000;
+
 /**
- * Manual, reader-paced carousel: long-form titles, excerpts and quotes are meant
- * to be read, not rotated away on a timer, so there is no autoplay — only
- * Prev/Next and a counter, with the controls placed in the header row.
+ * Auto-advances so the latest writing stays in view, pauses while the reader
+ * points at or focuses the carousel, and never rotates under
+ * prefers-reduced-motion. The slide title is the link to the article — there
+ * is no separate read-more row.
  */
 export function LatestInsightCarousel({
   locale,
   cards,
   featureLabel,
-  readArticleLabel,
   pullQuoteLabel,
 }: LatestInsightCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [pointerPaused, setPointerPaused] = useState(false);
+  const [focusPaused, setFocusPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const copy = carouselCopy[locale];
   const count = cards.length;
   const hasMultiple = count > 1;
+  const paused = pointerPaused || focusPaused;
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setReducedMotion(media.matches);
+    updatePreference();
+    media.addEventListener("change", updatePreference);
+    return () => media.removeEventListener("change", updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (!hasMultiple || paused || reducedMotion) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % count);
+    }, AUTO_ADVANCE_MS);
+    return () => window.clearInterval(timer);
+  }, [count, hasMultiple, paused, reducedMotion]);
 
   if (count === 0) return null;
 
@@ -65,7 +86,17 @@ export function LatestInsightCarousel({
   };
 
   return (
-    <section className="latest-insight-carousel" aria-label={copy.label} aria-roledescription="carousel">
+    <section
+      className="latest-insight-carousel"
+      aria-label={copy.label}
+      aria-roledescription="carousel"
+      onPointerEnter={() => setPointerPaused(true)}
+      onPointerLeave={() => setPointerPaused(false)}
+      onFocusCapture={() => setFocusPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusPaused(false);
+      }}
+    >
       <div className="carousel-head">
         <p className="section-label">{featureLabel}</p>
         {hasMultiple ? (
@@ -103,8 +134,10 @@ export function LatestInsightCarousel({
                   {card.date ? <time dateTime={card.date}>{card.date.replaceAll("-", ".")}</time> : null}
                 </div>
                 <h2 id={index === 0 ? "feature-title" : undefined}>
-                  <span>{titleHead}</span>
-                  {titleSubject ? <span className="subject">{titleSubject}</span> : null}
+                  <Link className="slide-link" href={card.href} tabIndex={isActive ? 0 : -1}>
+                    <span>{titleHead}</span>
+                    {titleSubject ? <span className="subject">{titleSubject}</span> : null}
+                  </Link>
                 </h2>
                 <p className="excerpt">{card.excerpt}</p>
                 {card.pullQuote ? (
@@ -113,10 +146,6 @@ export function LatestInsightCarousel({
                     <cite>{pullQuoteLabel}</cite>
                   </blockquote>
                 ) : null}
-                <Link className="read" href={card.href} tabIndex={isActive ? 0 : -1}>
-                  <span>{readArticleLabel}</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
               </article>
             );
           })}

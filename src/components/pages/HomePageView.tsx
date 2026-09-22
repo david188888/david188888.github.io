@@ -41,9 +41,7 @@ interface HomeCopy {
   links: HomeLinkCopy;
   profileFoot: string;
   featureLabel: string;
-  readArticle: string;
   fallbackCta: string;
-  lensCaption: string;
   lensSteps: readonly LensStepCopy[];
   educationTitle: string;
   educationDescription: string;
@@ -75,10 +73,7 @@ const homeCopy: Record<Locale, HomeCopy> = {
     links: { cv: "View CV", github: "GitHub", email: "Contact me" },
     profileFoot: "Open to strategy research / investment analysis roles",
     featureLabel: "Industry Memos · Latest memo",
-    readArticle: "Read the full article",
     fallbackCta: "Browse all Industry Memos",
-    lensCaption:
-      "A bridge between the opening frame above and the record below, not a second hero.",
     lensSteps: [
       {
         no: "01",
@@ -125,9 +120,7 @@ const homeCopy: Record<Locale, HomeCopy> = {
     links: { cv: "查看简历", github: "GitHub", email: "联系我" },
     profileFoot: "开放战略研究 / 投资分析类机会",
     featureLabel: "行业思考 · 最新文章",
-    readArticle: "阅读全文",
     fallbackCta: "查看全部行业思考",
-    lensCaption: "作为首页上半部分与正文履历之间的过渡，而不是另一个主视觉模块。",
     lensSteps: [
       { no: "01", name: "技术变化", desc: "什么能力、成本或交互方式出现结构性变化。" },
       { no: "02", name: "产品与商业化", desc: "它如何进入真实场景，并形成可持续收入与成本结构。" },
@@ -265,7 +258,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                     locale={locale}
                     cards={latestCards}
                     featureLabel={copy.featureLabel}
-                    readArticleLabel={copy.readArticle}
                     pullQuoteLabel={locale === "zh" ? "摘自本文" : "From this article"}
                   />
                 ) : (
@@ -289,7 +281,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
             <section className="lens-bridge" aria-label={locale === "zh" ? "投资视角" : "Investment lens"}>
               <div className="lens-heading">
                 <p className="lens-kicker">Investment Lens</p>
-                <p className="lens-caption">{copy.lensCaption}</p>
               </div>
               <ol className="lens-flow">
                 {copy.lensSteps.map((step) => (
