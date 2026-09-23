@@ -29,6 +29,7 @@
   color-scheme: light;
   --ed-bg: #f6f3ee;
   --ed-ink: #24211f;
+  --ed-body-ink: #38332f;
   --ed-muted: #706863;
   --ed-accent: #783d49;
   --ed-accent-text: #783d49;
@@ -49,6 +50,7 @@ html[data-ed-theme="dark"] .ed-root {
   color-scheme: dark;
   --ed-bg: #17191c;
   --ed-ink: #ece7df;
+  --ed-body-ink: #ded8d0;
   --ed-muted: #aea79e;
   --ed-accent: #a0525f;
   --ed-accent-text: #d998a1;
@@ -694,4 +696,226 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .aligned-section-marker { padding-top: 24px; padding-bottom: 0; }
   .ed-root .aligned-section-content { padding-top: 16px; padding-bottom: 36px; }
   .ed-root .aligned-page-shell--article .aligned-section-row:first-child .aligned-section-content { padding-bottom: 22px; }
+}
+
+/* ── Insights reading layout ──────────────────────────────────────────────
+   Keep the shared editorial palette and masthead. The index and article use a
+   quiet reading column; wide figures and desktop side notes may extend right
+   of the prose without increasing the line length. */
+.ed-root .aligned-page-shell--insights-list,
+.ed-root .aligned-page-shell--article {
+  --insight-serif: "Spectral", "Noto Serif SC", "Songti SC", STSong, Georgia, serif;
+}
+
+.ed-root .aligned-page-shell--insights-list .aligned-page-container {
+  width: min(100%, 780px);
+  padding-top: clamp(35px, 5vw, 65px);
+  padding-bottom: 120px;
+}
+.ed-root .aligned-page-shell--article .aligned-page-container {
+  width: 100%;
+  padding-top: clamp(35px, 5vw, 64px);
+  padding-bottom: 110px;
+}
+.ed-root .aligned-page-shell--insights-list .aligned-section-list,
+.ed-root .aligned-page-shell--article .aligned-section-list { border: 0; }
+.ed-root .aligned-page-shell--insights-list .aligned-quick-nav,
+.ed-root .aligned-page-shell--article .aligned-quick-nav { display: none; }
+.ed-root .aligned-page-shell--insights-list .aligned-section-row,
+.ed-root .aligned-page-shell--article .aligned-section-row {
+  display: block;
+  border: 0;
+}
+.ed-root .aligned-page-shell--insights-list .aligned-section-rail,
+.ed-root .aligned-page-shell--article .aligned-section-rail { display: none; }
+.ed-root .aligned-page-shell--insights-list .aligned-section-content,
+.ed-root .aligned-page-shell--article .aligned-section-content {
+  padding: 0;
+  border: 0;
+}
+
+/* Dated index: the date anchors each entry without a box around the prose. */
+.ed-root .aligned-page-shell--insights-list .aligned-section-row:first-child .aligned-section-content { padding-bottom: 52px; }
+.ed-root .aligned-page-shell--insights-list .home-kicker { margin-bottom: 18px; }
+.ed-root .aligned-page-shell--insights-list .home-hero-title,
+.ed-root .aligned-page-shell--insights-list[data-locale="zh"] .home-hero-title {
+  max-width: none;
+  margin-top: 0;
+  font-family: var(--insight-serif);
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 500;
+  line-height: 1.22;
+  letter-spacing: -0.035em;
+}
+.ed-root .aligned-page-shell--insights-list .home-hero-summary {
+  max-width: 38em;
+  margin-top: 18px;
+  font-size: 17px;
+  line-height: 1.75;
+}
+.ed-root .insights-list-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ed-ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.ed-root .insights-list-caption span:last-child { color: var(--ed-muted); font-weight: 400; }
+.ed-root .aligned-page-shell--insights-list .home-evidence-list { margin-top: 12px; }
+.ed-root .aligned-page-shell--insights-list .home-latest-insight {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 24px;
+  margin: 0;
+  padding: 27px 0 30px;
+  border: 0;
+  border-bottom: 1px solid var(--ed-line);
+  background: transparent;
+  transform: none;
+}
+.ed-root .aligned-page-shell--insights-list .home-latest-insight:hover,
+.ed-root .aligned-page-shell--insights-list .home-latest-insight:focus-visible {
+  border-color: var(--ed-line);
+  background: transparent;
+  transform: none;
+}
+.ed-root .aligned-page-shell--insights-list .home-latest-insight time {
+  padding-top: 7px;
+  color: var(--ed-muted);
+  font: 12px/1.5 ui-monospace, "SFMono-Regular", monospace;
+  letter-spacing: 0;
+}
+.ed-root .aligned-page-shell--insights-list .insight-index-title {
+  margin: 0 0 9px;
+  color: var(--ed-ink);
+  font-family: var(--insight-serif);
+  font-size: clamp(22px, 2.4vw, 27px);
+  font-weight: 500;
+  line-height: 1.42;
+  letter-spacing: -0.025em;
+}
+.ed-root .aligned-page-shell--insights-list .insight-index-excerpt {
+  margin: 0;
+  color: var(--ed-muted);
+  font-size: 15px;
+  line-height: 1.75;
+}
+.ed-root .aligned-page-shell--insights-list .home-latest-insight:hover .insight-index-title,
+.ed-root .aligned-page-shell--insights-list .home-latest-insight:focus-visible .insight-index-title { color: var(--ed-accent-text); }
+
+/* The reading progress line sits under the article masthead only. */
+.ed-root .ed-reading-masthead {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--ed-line);
+  background: var(--ed-bg);
+}
+.ed-root .ed-reading-masthead .masthead { padding-block: 20px; }
+.ed-root .insight-reading-progress {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--ed-accent-text);
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+.ed-root .aligned-page-shell--article .aligned-section-content {
+  width: min(100%, 690px);
+  margin-inline: auto;
+}
+.ed-root .aligned-page-shell--article .aligned-section-row:first-child .aligned-section-content { padding-bottom: 40px; }
+.ed-root .insight-article-back {
+  display: inline-block;
+  margin-bottom: 48px;
+  color: var(--ed-muted);
+  font-size: 13px;
+}
+.ed-root .insight-article-back:hover { color: var(--ed-accent-text); }
+.ed-root .insight-article-header .home-kicker { display: block; margin-bottom: 19px; }
+.ed-root .aligned-page-shell--article .home-hero-title,
+.ed-root .aligned-page-shell--article[data-locale="zh"] .home-hero-title {
+  max-width: none;
+  margin-top: 0;
+  color: var(--ed-ink);
+  font-family: var(--insight-serif);
+  font-size: clamp(37px, 3.7vw, 46px);
+  font-weight: 500;
+  line-height: 1.27;
+  letter-spacing: -0.03em;
+}
+.ed-root .aligned-page-shell--article .home-hero-summary {
+  max-width: none;
+  margin-top: 24px;
+  color: var(--ed-muted);
+  font-size: 16px;
+  line-height: 1.8;
+}
+.ed-root .aligned-page-shell--article .insight-reading-section .aligned-section-content {
+  padding-top: 26px;
+  border-top: 1px solid var(--ed-line);
+}
+.ed-root .aligned-page-shell--article .aligned-article-prose {
+  max-width: 100%;
+  color: var(--ed-body-ink);
+  --tw-prose-body: var(--ed-body-ink);
+  font-family: var(--insight-serif);
+  font-size: 17.5px;
+  line-height: 1.8;
+}
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body {
+  width: calc(100% + 220px);
+  grid-template-columns: minmax(0, 690px) minmax(0, 1fr);
+  column-gap: 24px;
+}
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > p,
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair > p {
+  margin-top: 1.5em;
+  line-height: inherit;
+}
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > h1,
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > h2,
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > h3 {
+  font-family: var(--insight-serif);
+  font-weight: 500;
+}
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > h1 { font-size: 32px; line-height: 1.35; margin-top: 2.3em; }
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > h2 { font-size: 27px; line-height: 1.4; margin-top: 2.1em; }
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > h3 { font-size: 22px; line-height: 1.45; margin-top: 1.9em; }
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > hr { margin-top: 2.5em; }
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > hr + h2 { margin-top: 1.4em; }
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > :first-child,
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair:first-child > p:first-child { margin-top: 0; }
+
+@media (max-width: 1151px) {
+  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair > .side-note,
+  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .side-note { grid-column: 1; }
+}
+
+@media (max-width: 650px) {
+  .ed-root .ed-reading-masthead .masthead { grid-template-areas: "wordmark tools"; padding-block: 15px; }
+  .ed-root .ed-reading-masthead .masthead-nav { display: none; }
+  .ed-root:has(.aligned-page-shell--insights-list) .masthead { grid-template-areas: "wordmark tools"; }
+  .ed-root:has(.aligned-page-shell--insights-list) .masthead-nav { display: none; }
+  .ed-root .aligned-page-shell--insights-list .aligned-page-container,
+  .ed-root .aligned-page-shell--article .aligned-page-container { padding-top: 33px; }
+  .ed-root .aligned-page-shell--insights-list .aligned-section-row:first-child .aligned-section-content { padding-bottom: 42px; }
+  .ed-root .aligned-page-shell--insights-list .home-latest-insight { display: block; padding-block: 23px 26px; }
+  .ed-root .aligned-page-shell--insights-list .home-latest-insight time { display: block; padding: 0 0 8px; }
+  .ed-root .aligned-page-shell--article .home-hero-title,
+  .ed-root .aligned-page-shell--article[data-locale="zh"] .home-hero-title { font-size: 37px; line-height: 1.32; }
+  .ed-root .aligned-page-shell--article .aligned-article-prose { font-size: 16px; line-height: 1.82; }
+  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > h2 { font-size: 24px; }
+  .ed-root .insight-article-back { margin-bottom: 38px; }
 }

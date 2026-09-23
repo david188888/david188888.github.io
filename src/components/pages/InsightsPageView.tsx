@@ -35,7 +35,11 @@ export function buildInsightsSections(
       label: insights.publishedEyebrow,
       content: (
         <>
-          <h2 className="aligned-content-title">{insights.publishedTitle}</h2>
+          <h2 className="sr-only">{insights.publishedTitle}</h2>
+          <div className="insights-list-caption" aria-hidden="true">
+            <span>{insights.publishedEyebrow}</span>
+            <span>{String(posts.length).padStart(2, "0")} {locale === "zh" ? "篇 · 最新在前" : "memos · newest first"}</span>
+          </div>
           <div className="home-evidence-list">
             {posts.length > 0 ? (
               posts.map((post) => (
@@ -44,9 +48,11 @@ export function buildInsightsSections(
                   href={localizedHref(`/insights/${post.slug}/`, locale)}
                   className="home-latest-insight"
                 >
-                  {post.date ? <span>{post.date}</span> : null}
-                  <h3>{post.title}</h3>
-                  {post.excerpt ? <p>{post.excerpt}</p> : null}
+                  {post.date ? <time dateTime={post.date}>{post.date}</time> : null}
+                  <div className="insight-index-copy">
+                    <h3 className="insight-index-title">{post.title}</h3>
+                    {post.excerpt ? <p className="insight-index-excerpt">{post.excerpt}</p> : null}
+                  </div>
                 </Link>
               ))
             ) : (
