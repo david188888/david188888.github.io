@@ -6,6 +6,7 @@ import {
   internshipRecords,
   publicationRecords,
 } from "@/config/profile";
+import { authorConfig } from "@/config/author";
 import { competitionRecords, openSourceProjects } from "@/config/projects";
 import { getPublishedPosts } from "@/lib/content/posts";
 
@@ -52,6 +53,13 @@ describe("HomePageView", () => {
     expect(html).toContain("South China Normal University");
     expect(html).toContain("Insta360");
     expect(html).not.toContain("home-section-rail");
+  });
+
+  it("links the profile to the configured Google Scholar page", () => {
+    const html = renderToStaticMarkup(<HomePageView locale="en" />);
+
+    expect(html).toContain(`href="${authorConfig.googlescholar.replaceAll("&", "&amp;")}"`);
+    expect(html).toContain("Google Scholar");
   });
 
   it("shows the coursework recorded for each degree", () => {
