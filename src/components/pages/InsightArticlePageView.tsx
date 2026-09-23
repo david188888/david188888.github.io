@@ -26,10 +26,12 @@ export function buildInsightArticleSections(
     {
       id: "article",
       label: insights.articleLabel,
-      railContent: <Link href={insightsHref}>{insights.backToInsights}</Link>,
       content: (
-        <header>
-          {post.date ? <p className="home-kicker">{post.date}</p> : null}
+        <header className="insight-article-header">
+          <Link className="insight-article-back" href={insightsHref}>
+            ← {insights.backToInsights}
+          </Link>
+          {post.date ? <time className="home-kicker" dateTime={post.date}>{post.date}</time> : null}
           <h1 className="home-hero-title">{post.title}</h1>
           {post.excerpt ? <p className="home-hero-summary">{post.excerpt}</p> : null}
         </header>
@@ -74,6 +76,7 @@ export function InsightArticlePageView({
     <AlignedPageShell
       locale={locale}
       className="aligned-page-shell--article"
+      readingProgress
       sections={buildInsightArticleSections(locale, post)}
     />
   );

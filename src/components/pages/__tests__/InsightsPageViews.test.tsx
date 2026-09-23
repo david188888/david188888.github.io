@@ -46,11 +46,11 @@ describe("Insights section builders", () => {
     expect(html).toContain("<h2>Section</h2>");
   });
 
-  it("keeps a localized return link when no article table of contents exists", () => {
+  it("keeps a localized return link above the article", () => {
     const article = buildInsightArticleSections("zh", { ...post, locale: "zh" });
-    const rail = renderToStaticMarkup(<>{article[0].railContent}</>);
+    const header = renderToStaticMarkup(<>{article[0].content}</>);
 
-    expect(rail).toContain("返回行业思考");
-    expect(rail).toContain('href="/insights/"');
+    expect(header).toContain("返回行业思考");
+    expect(header).toContain('href="/insights/"');
   });
 });
