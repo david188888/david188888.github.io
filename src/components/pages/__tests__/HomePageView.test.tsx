@@ -161,8 +161,10 @@ describe("TradingAgentsPageView", () => {
 
     expect(html).toContain("https://github.com/david188888/TradingAgents");
     expect(html).toContain("https://github.com/TauricResearch/TradingAgents");
-    expect(html).toContain("/images/tradingagents-console.png");
+    expect(html).toContain('poster="/images/tradingagents-demo-poster.jpg"');
+    expect(html).toContain('src="/videos/tradingagents-demo.mp4"');
     expect(html).toContain(locale === "zh" ? "上游与个人扩展" : "Upstream and personal extension");
     expect(html).toContain(locale === "zh" ? "不构成投资建议" : "not investment advice");
+    expect(html).toContain(locale === "zh" ? "一条已完成的 002335.SZ 研究样例" : "A completed 002335.SZ research-only sample");
   });
 });
