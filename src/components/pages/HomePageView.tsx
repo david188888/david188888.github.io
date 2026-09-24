@@ -26,6 +26,7 @@ interface HomePageViewProps {
 interface HomeLinkCopy {
   cv: string;
   github: string;
+  googleScholar: string;
   email: string;
 }
 
@@ -69,7 +70,7 @@ const homeCopy: Record<Locale, HomeCopy> = {
     profileLabel: "Profile",
     profileSummary:
       "Background in software engineering and data science. I focus on how technology moves toward products and commercialization, and how those shifts redistribute value across the industry chain.",
-    links: { cv: "View CV", github: "GitHub", email: "Contact me" },
+    links: { cv: "View CV", github: "GitHub", googleScholar: "Google Scholar", email: "Contact me" },
     profileFoot: "Open to strategy research / investment analysis roles",
     featureLabel: "Industry Memos · Latest memo",
     fallbackCta: "Browse all Industry Memos",
@@ -115,7 +116,7 @@ const homeCopy: Record<Locale, HomeCopy> = {
     profileLabel: "Profile",
     profileSummary:
       "软件工程与数据科学教育背景。关注技术如何走向产品与商业化，以及变化如何沿产业链重新分配价值。",
-    links: { cv: "查看简历", github: "GitHub", email: "联系我" },
+    links: { cv: "查看简历", github: "GitHub", googleScholar: "Google Scholar", email: "联系我" },
     profileFoot: "开放战略研究 / 投资分析类机会",
     featureLabel: "行业思考 · 最新文章",
     fallbackCta: "查看全部行业思考",
@@ -238,6 +239,11 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                     <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener">
                       {links.github} <span aria-hidden="true">↗</span>
                     </a>
+                    {authorConfig.googlescholar && (
+                      <a href={authorConfig.googlescholar} target="_blank" rel="noopener">
+                        {links.googleScholar} <span aria-hidden="true">↗</span>
+                      </a>
+                    )}
                     <a href={`mailto:${authorConfig.email}`}>
                       {links.email} <span aria-hidden="true">↗</span>
                     </a>

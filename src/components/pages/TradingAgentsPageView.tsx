@@ -18,8 +18,9 @@ const copy = {
       "Built on TauricResearch/TradingAgents, extended for A-share research with additional data sources, evidence-quality checks, and a research workspace. The goal is not only to produce a report, but to keep the reasoning, disagreement, and uncertainty inspectable.",
     repository: "My repository ↗",
     upstream: "Upstream project ↗",
+    demoLabel: "Project demo",
     caption:
-      "Actual run supplied by the author. “Reference range unavailable” reflects the evidence state of that run; it is not an independently verified market conclusion.",
+      "A completed 002335.SZ research-only sample. English annotations guide the original Chinese interface; figures shown are illustrative research outputs, not investment advice.",
     attributionKicker: "Upstream and personal extension",
     attributionTitle: "Keep the collaborative analysis, add the research process.",
     attributionBody:
@@ -58,8 +59,9 @@ const copy = {
       "在 TauricResearch/TradingAgents 的多智能体金融分析框架基础上，扩展 A 股数据接入、证据质量检查和研究工作台。重点不只是生成一份报告，而是让分析依据、分歧和不确定性可以被查看与追溯。",
     repository: "我的项目仓库 ↗",
     upstream: "上游项目 ↗",
+    demoLabel: "项目演示",
     caption:
-      "用户提供的实际运行截图。图中“参考区间不可用”反映该次运行的证据状态；不代表经过独立核验的市场结论。",
+      "一条已完成的 002335.SZ 研究样例。英文导读对应原始中文界面；视频中的数值仅为研究样例，不构成投资建议。",
     attributionKicker: "上游与个人扩展",
     attributionTitle: "保留协作分析，补上研究流程。",
     attributionBody:
@@ -97,6 +99,7 @@ const copy = {
   intro: string;
   repository: string;
   upstream: string;
+  demoLabel: string;
   caption: string;
   attributionKicker: string;
   attributionTitle: string;
@@ -133,14 +136,20 @@ export function TradingAgentsPageView({ locale = defaultLocale }: TradingAgentsP
               </a>
             </div>
           </header>
-          <figure className="project-image detail-image">
-            <img
-              src={tradingAgentsProject.screenshot}
-              width={tradingAgentsProject.screenshotWidth}
-              height={tradingAgentsProject.screenshotHeight}
-              alt={text.caption}
-            />
-            <figcaption>{text.caption}</figcaption>
+          <figure className="project-image detail-image project-demo">
+            <p className="project-kicker">{text.demoLabel}</p>
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              poster="/images/tradingagents-demo-poster.jpg"
+              aria-label={text.caption}
+              aria-describedby="tradingagents-demo-caption"
+            >
+              <source src="/videos/tradingagents-demo.mp4" type="video/mp4" />
+              {text.caption}
+            </video>
+            <figcaption id="tradingagents-demo-caption">{text.caption}</figcaption>
           </figure>
           <div className="detail-content">
             <section className="detail-section">

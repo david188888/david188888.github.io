@@ -376,6 +376,9 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .detail-hero h2 { font: 500 clamp(22px, 3vw, 32px) / 1.6 var(--ed-serif); }
 .ed-root .detail-intro { color: var(--ed-muted); font-size: 15px; line-height: 1.95; max-width: 54em; }
 .ed-root .detail-image { margin: 0 0 48px; }
+.ed-root .project-demo .project-kicker { margin-bottom: 12px; color: var(--ed-accent-text); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+.ed-root .project-demo video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid var(--ed-line); background: var(--ed-wash); }
+.ed-root .project-demo figcaption { max-width: 80em; }
 .ed-root .detail-content { max-width: 860px; margin-inline: auto; }
 .ed-root .detail-section { padding-block: 32px; border-top: 1px solid var(--ed-line); display: grid; gap: 15px; }
 .ed-root .detail-section h2 { font: 500 26px / 1.5 var(--ed-serif); }

@@ -6,6 +6,7 @@ import {
   internshipRecords,
   publicationRecords,
 } from "@/config/profile";
+import { authorConfig } from "@/config/author";
 import { competitionRecords, openSourceProjects } from "@/config/projects";
 import { getPublishedPosts } from "@/lib/content/posts";
 
@@ -52,6 +53,13 @@ describe("HomePageView", () => {
     expect(html).toContain("South China Normal University");
     expect(html).toContain("Insta360");
     expect(html).not.toContain("home-section-rail");
+  });
+
+  it("links the profile to the configured Google Scholar page", () => {
+    const html = renderToStaticMarkup(<HomePageView locale="en" />);
+
+    expect(html).toContain(`href="${authorConfig.googlescholar.replaceAll("&", "&amp;")}"`);
+    expect(html).toContain("Google Scholar");
   });
 
   it("shows the coursework recorded for each degree", () => {
@@ -161,8 +169,10 @@ describe("TradingAgentsPageView", () => {
 
     expect(html).toContain("https://github.com/david188888/TradingAgents");
     expect(html).toContain("https://github.com/TauricResearch/TradingAgents");
-    expect(html).toContain("/images/tradingagents-console.png");
+    expect(html).toContain('poster="/images/tradingagents-demo-poster.jpg"');
+    expect(html).toContain('src="/videos/tradingagents-demo.mp4"');
     expect(html).toContain(locale === "zh" ? "上游与个人扩展" : "Upstream and personal extension");
     expect(html).toContain(locale === "zh" ? "不构成投资建议" : "not investment advice");
+    expect(html).toContain(locale === "zh" ? "一条已完成的 002335.SZ 研究样例" : "A completed 002335.SZ research-only sample");
   });
 });
