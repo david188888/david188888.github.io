@@ -30,12 +30,18 @@ Gemfile.lock
 .jekyll-cache/
 
 # Misc
-CLAUDE.md
 photo.jpg
 local/
 .context/
 .superpowers/
 .worktrees/
+
+# Agent tooling: only the personal layer is ignored. Shared config
+# (CLAUDE.md, AGENTS.md, .claude/settings.json, .codex/config.toml) is tracked.
+.claude/settings.local.json
+.claude/skills/
+.claude/worktrees/
+.codex/config.local.toml
 
 # Local translation diagnostics
 local/translation-diagnostics/
