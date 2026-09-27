@@ -2,7 +2,7 @@
 
 个人学术主页：Next.js 静态导出，部署到 GitHub Pages。中英双路由；博客文章在
 Notion 里写作、同步为 MDX，再由本机 Hy-MT2 模型翻译成另一语言。
-项目规则以本文件为准（`.gitignore` 忽略了 `CLAUDE.md`）。
+项目规则以本文件为准；`CLAUDE.md` 只做 `@AGENTS.md` 导入，供 Claude Code 读取同一份规则。
 
 ## 怎么跑
 

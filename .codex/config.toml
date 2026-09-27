@@ -1,0 +1,12 @@
+# GitHub MCP. The token is read from the GITHUB_PAT environment variable so no
+# credential is ever written into this tracked file.
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp"
+bearer_token_env_var = "GITHUB_PAT"
+
+[mcp_servers.tavily-mcp]
+command = "npx"
+args = [
+    "-y",
+    "tavily-mcp@latest",
+]
