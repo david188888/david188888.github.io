@@ -15,7 +15,7 @@ const copy = {
     title: "TradingAgents",
     subtitle: "A multi-agent research workspace for the A-share market",
     intro:
-      "Built on TauricResearch/TradingAgents, extended for A-share research with additional data sources, evidence-quality checks, and a research workspace. The goal is not only to produce a report, but to keep the reasoning, disagreement, and uncertainty inspectable.",
+      "A local, LangGraph-based multi-agent research framework built on TauricResearch/TradingAgents and extended for A-share research with additional data sources, evidence-quality checks, and a research workspace. Its public modes are company_research and holding_review. The goal is not only to produce a report, but to keep the reasoning, disagreement, and uncertainty inspectable.",
     repository: "My repository ↗",
     upstream: "Upstream project ↗",
     demoLabel: "Project demo",
@@ -24,7 +24,7 @@ const copy = {
     attributionKicker: "Upstream and personal extension",
     attributionTitle: "Keep the collaborative analysis, add the research process.",
     attributionBody:
-      "Upstream provides a multi-agent framework of analysts, bull and bear researchers, and trading and risk roles. This project keeps that open-source foundation, turns the default flow toward research, and adds a data and interaction layer for the A-share market. The extensions below belong to the fork; the upstream architecture is credited as upstream.",
+      "Upstream provides a multi-agent framework of analysts, bull and bear researchers, and trading and risk roles. This project keeps that open-source foundation, turns the default flow toward research, and adds a data and interaction layer for the A-share market. The extensions below belong to the fork; the upstream architecture is credited as upstream. The former Trader and three-role risk debate are retired from the current execution graph. Some A-share data adapters were informed by Simon Lin's a-stock-data.",
     featuresTitle: "Main extensions",
     features: [
       {
@@ -33,15 +33,15 @@ const copy = {
       },
       {
         title: "Evidence quality checks",
-        body: "An evidence steward checks reliability and cross-source agreement, separating pass, low-confidence, and stop states so thin material becomes an explicit part of the research result.",
+        body: "An evidence steward checks coverage, contradictions, and provenance, separating PASS, LOW_CONFIDENCE, and FAIL_STOP states so thin material becomes an explicit part of the research result. An unexpected gate fault also terminates the run.",
       },
       {
         title: "Local web workspace",
-        body: "A local React and TypeScript interface with a FastAPI and SSE backend organises batch runs, live progress, and layered reading of the analysis.",
+        body: "A local React and TypeScript interface with a FastAPI and SSE backend organises batch runs, live progress, and layered reading of the analysis. The server binds to 127.0.0.1 only and needs no Node.js at runtime; the report, Reader, and audit views read persisted results rather than fetching new evidence.",
       },
       {
         title: "Research-oriented flow",
-        body: "Connects analysts, the bull-bear debate, and research synthesis into company research and holding review. It does not emit orders, position sizes, or buy and sell instructions by default.",
+        body: "Connects the market, sentiment, news, and fundamentals analysts, the bull-bear debate, and research synthesis into the company_research and holding_review modes. The four analysts can be selected and ordered; the convergence path after them is fixed. It does not emit orders, position sizes, or buy and sell instructions by default.",
       },
     ],
     evidenceTitle: "Insufficient evidence is a result too.",
@@ -56,7 +56,7 @@ const copy = {
     title: "TradingAgents",
     subtitle: "面向 A 股研究的多智能体工作台",
     intro:
-      "在 TauricResearch/TradingAgents 的多智能体金融分析框架基础上，扩展 A 股数据接入、证据质量检查和研究工作台。重点不只是生成一份报告，而是让分析依据、分歧和不确定性可以被查看与追溯。",
+      "一个基于 LangGraph 的本地多智能体研究框架，在 TauricResearch/TradingAgents 的基础上扩展 A 股数据接入、证据质量检查和研究工作台。当前公开模式为 company_research 和 holding_review。重点不只是生成一份报告，而是让分析依据、分歧和不确定性可以被查看与追溯。",
     repository: "我的项目仓库 ↗",
     upstream: "上游项目 ↗",
     demoLabel: "项目演示",
@@ -65,7 +65,7 @@ const copy = {
     attributionKicker: "上游与个人扩展",
     attributionTitle: "保留协作分析，补上研究流程。",
     attributionBody:
-      "上游提供由分析师、多空研究员及交易与风险角色组成的多智能体框架。本项目沿用其开源基础，将默认流程调整为研究导向，并围绕 A 股场景补充数据和交互层。以下为 fork 中的扩展，不将上游架构列为个人原创。",
+      "上游提供由分析师、多空研究员及交易与风险角色组成的多智能体框架。本项目沿用其开源基础，将默认流程调整为研究导向，并围绕 A 股场景补充数据和交互层。以下为 fork 中的扩展，不将上游架构列为个人原创。旧版 Trader 和三方风险辩论已从当前执行图中移除。部分 A 股数据适配器参考了 Simon Lin 的 a-stock-data。",
     featuresTitle: "主要扩展",
     features: [
       {
@@ -74,15 +74,15 @@ const copy = {
       },
       {
         title: "证据质量检查",
-        body: "由 Evidence Steward 检查可信度与跨来源一致性，区分通过、低置信度和停止分析三种状态，让材料不足显式进入研究结果。",
+        body: "由 Evidence Steward 检查覆盖度、矛盾和来源，区分 PASS、LOW_CONFIDENCE 和 FAIL_STOP 三种状态，让材料不足显式进入研究结果。意外的检查故障同样会终止本次运行。",
       },
       {
         title: "本地 Web 工作台",
-        body: "以 React 与 TypeScript 构建本地界面，后端使用 FastAPI 与 SSE，组织批量任务、实时进度和分层阅读。",
+        body: "以 React 与 TypeScript 构建本地界面，后端使用 FastAPI 与 SSE，组织批量任务、实时进度和分层阅读。服务仅绑定 127.0.0.1，运行时无需 Node.js；报告、Reader 与审计视图读取已保存的运行结果，不会现场重新取数。",
       },
       {
         title: "研究型流程",
-        body: "将分析师、多空辩论与研究汇总连接为公司研究与持仓复核流程。默认不输出订单、仓位或买卖指令。",
+        body: "将市场、情绪、新闻与基本面四位分析师、多空辩论与研究汇总连接为 company_research 和 holding_review 两种公开模式。四位分析师可选可排序，其后的收敛流程固定。默认不输出订单、仓位或买卖指令。",
       },
     ],
     evidenceTitle: "证据不足，也是研究结果。",
