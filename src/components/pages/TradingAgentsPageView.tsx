@@ -1,3 +1,4 @@
+import Link from "next/link";
 import "@/components/home/editorial.css";
 import { EditorialMasthead } from "@/components/home/EditorialMasthead";
 import { editorialThemeScript } from "@/components/home/editorialTheme";
@@ -177,7 +178,7 @@ export function TradingAgentsPageView({ locale = defaultLocale }: TradingAgentsP
         </main>
         <footer className="foot">
           <div>
-            <a href={localizedHref("/#projects", locale)}>{text.backToProjects}</a>
+            <Link href={localizedHref("/#projects", locale)}>{text.backToProjects}</Link>
           </div>
           <p className="foot-note">{text.footerNote}</p>
         </footer>

@@ -54,6 +54,10 @@ Build the static site:
 npm run build
 ```
 
+Navigation uses client-side route transitions and intent-based language
+prefetching. See [navigation performance](docs/navigation-performance.md) for the
+behavior contract and production-build verification procedure.
+
 ## Common Content Updates
 
 Profile content is centralized in `src/config/profile.ts`, and the projects
