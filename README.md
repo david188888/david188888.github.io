@@ -115,10 +115,10 @@ imported by the components that need it. It is unlayered, so it overrides the
 pages were retinted without editing `globals.css`.
 
 The Insights index lists published posts newest first by the frontmatter `date`.
-Its article template keeps prose in a narrow reading column, lets figures and
-side notes use the space beside it on wide screens, and shows reading progress
-under the sticky masthead. These rules live in `editorial.css` and apply to new
-posts without per-article styling.
+The index uses a 900px column, while the article template caps titles and prose
+at 780px. Figures and side notes can use the space beside the prose on wide
+screens, and reading progress appears under the sticky masthead. These rules
+live in `editorial.css` and apply to new posts without per-article styling.
 
 ## Bilingual Site
 
