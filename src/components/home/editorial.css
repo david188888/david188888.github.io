@@ -709,9 +709,10 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .aligned-page-shell--article {
   --insight-serif: "Spectral", "Noto Serif SC", "Songti SC", STSong, Georgia, serif;
 }
+.ed-root .aligned-page-shell--article { --insight-reading-width: 780px; }
 
 .ed-root .aligned-page-shell--insights-list .aligned-page-container {
-  width: min(100%, 780px);
+  width: min(100%, 900px);
   padding-top: clamp(35px, 5vw, 65px);
   padding-bottom: 120px;
 }
@@ -830,7 +831,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   pointer-events: none;
 }
 .ed-root .aligned-page-shell--article .aligned-section-content {
-  width: min(100%, 690px);
+  width: min(100%, var(--insight-reading-width));
   margin-inline: auto;
 }
 .ed-root .aligned-page-shell--article .aligned-section-row:first-child .aligned-section-content { padding-bottom: 40px; }
@@ -874,7 +875,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 }
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body {
   width: calc(100% + 220px);
-  grid-template-columns: minmax(0, 690px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, var(--insight-reading-width)) minmax(0, 1fr);
   column-gap: 24px;
 }
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > p,
@@ -896,7 +897,9 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > :first-child,
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair:first-child > p:first-child { margin-top: 0; }
 
-@media (max-width: 1151px) {
+/* The 780px prose plus its 220px note/figure extension needs enough room
+   to stay inside the editorial page gutter. */
+@media (max-width: 1370px) {
   .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body {
     width: 100%;
     grid-template-columns: minmax(0, 1fr);
