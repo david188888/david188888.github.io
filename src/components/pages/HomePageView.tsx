@@ -194,6 +194,7 @@ function extractPullQuote(body: string): string | null {
 
 export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
   const copy = homeCopy[locale];
+  const resumePdfHref = locale === "zh" ? "/files/Resume_zh.pdf" : "/files/Resume_en.pdf";
   const summary = sharedCopy[locale].projects.summary;
   const links = copy.links;
   const education = getHomeEducation(locale);
@@ -233,7 +234,7 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                 <p className="profile-copy">{copy.profileSummary}</p>
                 <div className="profile-footer">
                   <nav className="contact" aria-label={locale === "zh" ? "个人链接" : "Profile links"}>
-                    <a href="/files/Resume_en.pdf" target="_blank" rel="noopener">
+                    <a href={resumePdfHref} target="_blank" rel="noopener">
                       {links.cv} <span aria-hidden="true">↗</span>
                     </a>
                     <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener">
@@ -480,7 +481,7 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
             </div>
             <div className="closing-links">
               <a href={`mailto:${authorConfig.email}`}>{authorConfig.email} ↗</a>
-              <a href="/files/Resume_en.pdf" target="_blank" rel="noopener">
+              <a href={resumePdfHref} target="_blank" rel="noopener">
                 {links.cv} ↗
               </a>
               <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener">
