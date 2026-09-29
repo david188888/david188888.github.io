@@ -57,6 +57,7 @@ export function CVPageView({ locale = defaultLocale }: LocaleViewProps) {
   const education = getCvEducation(locale);
   const publications = getCvPublications(locale);
   const internships = getCvInternships(locale);
+  const resumePdfHref = locale === "zh" ? "/files/Resume_zh.pdf" : "/files/Resume_en.pdf";
 
   return (
     <div>
@@ -66,7 +67,7 @@ export function CVPageView({ locale = defaultLocale }: LocaleViewProps) {
 
       <p className="mb-4 text-[var(--global-text-color-light)]">
         <Link
-          href="/files/Resume_en.pdf"
+          href={resumePdfHref}
           target="_blank"
           className="text-[var(--global-link-color)] underline font-medium"
         >

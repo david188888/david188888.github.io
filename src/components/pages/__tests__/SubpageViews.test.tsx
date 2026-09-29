@@ -23,6 +23,7 @@ describe("profile subpages", () => {
   it.each(["en", "zh"] as const)("renders every CV record for %s", (locale) => {
     const html = renderToStaticMarkup(<CVPageView locale={locale} />);
 
+    expect(html).toContain(`href="/files/Resume_${locale}.pdf"`);
     educationRecords.forEach((record) => expect(html).toContain(escapeHtml(record.institution[locale])));
     internshipRecords.forEach((record) => expect(html).toContain(escapeHtml(record.role[locale])));
     publicationRecords.forEach((record) => expect(html).toContain(escapeHtml(record.title[locale])));
