@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link, { useLinkStatus } from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { localeLabels, locales, type Locale } from "@/i18n/locales";
 import { getLocaleFromPathname, switchLocalePathname } from "@/i18n/routing";
 import { useEffect, useRef, useState } from "react";
@@ -11,12 +11,36 @@ interface LanguageSwitcherProps {
   variant?: "masthead" | "editorial";
 }
 
+function SwitchStatus({ locale }: { locale: Locale }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span role="status" className="ml-1 text-xs">
+      {pending ? (locale === "zh" ? "切换中…" : "Switching…") : ""}
+    </span>
+  );
+}
+
 export function LanguageSwitcher({ variant = "masthead" }: LanguageSwitcherProps) {
+  const router = useRouter();
   const pathname = usePathname() ?? "/";
   const currentLocale = getLocaleFromPathname(pathname);
   const isEditorial = variant === "editorial";
   const [open, setOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setOpen(false);
+    // The root layout's inline script only runs on a full document load.
+    document.documentElement.lang = currentLocale;
+  }, [pathname, currentLocale]);
+
+  function prefetchAlternateLocale() {
+    for (const locale of locales) {
+      if (locale !== currentLocale) {
+        router.prefetch(switchLocalePathname(pathname, locale));
+      }
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -55,7 +79,12 @@ export function LanguageSwitcher({ variant = "masthead" }: LanguageSwitcherProps
         aria-label={`Language: ${localeLabels[currentLocale]}`}
         aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onPointerEnter={prefetchAlternateLocale}
+        onFocus={prefetchAlternateLocale}
+        onClick={() => {
+          if (!open) prefetchAlternateLocale();
+          setOpen((value) => !value);
+        }}
       >
         {isEditorial && <span className="masthead-globe" aria-hidden="true" />}
         <span>Language</span>
@@ -67,31 +96,38 @@ export function LanguageSwitcher({ variant = "masthead" }: LanguageSwitcherProps
           role="menu"
           aria-label="Language options"
         >
-      {locales.map((locale) => {
-        const isActive = locale === currentLocale;
-        return (
-          <Link
-            key={locale}
-            href={switchLocalePathname(pathname, locale)}
-            onClick={() => handleSelect(locale)}
-            aria-current={isActive ? "page" : undefined}
-            role="menuitem"
-            className={
-              isEditorial
-                ? isActive
-                  ? "active"
-                  : undefined
-                : `rounded px-1.5 py-0.5 text-xs no-underline transition-colors ${
-                    isActive
-                      ? "font-bold text-[var(--global-masthead-link-color)]"
-                      : "text-[var(--global-masthead-link-color)] hover:text-[var(--global-masthead-link-color-hover)]"
-                  }`
-            }
-          >
-            {locale === "en" ? "English" : localeLabels[locale]}
-          </Link>
-        );
-      })}
+          {locales.map((locale) => {
+            const isActive = locale === currentLocale;
+            return (
+              <Link
+                key={locale}
+                href={switchLocalePathname(pathname, locale)}
+                onClick={() => handleSelect(locale)}
+                onNavigate={(event) => {
+                  if (isActive) {
+                    event.preventDefault();
+                    setOpen(false);
+                  }
+                }}
+                aria-current={isActive ? "page" : undefined}
+                role="menuitem"
+                className={
+                  isEditorial
+                    ? isActive
+                      ? "active"
+                      : undefined
+                    : `rounded px-1.5 py-0.5 text-xs no-underline transition-colors ${
+                        isActive
+                          ? "font-bold text-[var(--global-masthead-link-color)]"
+                          : "text-[var(--global-masthead-link-color)] hover:text-[var(--global-masthead-link-color-hover)]"
+                      }`
+                }
+              >
+                {locale === "en" ? "English" : localeLabels[locale]}
+                <SwitchStatus locale={currentLocale} />
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

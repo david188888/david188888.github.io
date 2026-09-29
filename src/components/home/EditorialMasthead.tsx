@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
-import { authorConfig } from "@/config/author";
 import { localizedHref } from "@/i18n/links";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { EditorialThemeToggle } from "./EditorialThemeToggle";
@@ -47,11 +46,14 @@ export function EditorialMasthead({ locale = defaultLocale, variant = "home" }: 
         </nav>
       ) : (
         <nav className="masthead-nav" aria-label={navLabel}>
-          {sectionLinks.map((item) => (
-            <a key={item.id} href={sectionHref(item.href, variant, locale)}>
-              {item.label[locale]}
-            </a>
-          ))}
+          {sectionLinks.map((item) => {
+            const href = sectionHref(item.href, variant, locale);
+            return href.startsWith("#") ? (
+              <a key={item.id} href={href}>{item.label[locale]}</a>
+            ) : (
+              <Link key={item.id} href={href}>{item.label[locale]}</Link>
+            );
+          })}
         </nav>
       )}
       <div className="masthead-tools">
