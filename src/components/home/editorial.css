@@ -709,10 +709,13 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .aligned-page-shell--article {
   --insight-serif: "Spectral", "Noto Serif SC", "Songti SC", STSong, Georgia, serif;
 }
-.ed-root .aligned-page-shell--article { --insight-reading-width: 780px; }
+.ed-root .aligned-page-shell--article {
+  --insight-reading-width: 880px;
+  --insight-note-gutter: 200px;
+}
 
 .ed-root .aligned-page-shell--insights-list .aligned-page-container {
-  width: min(100%, 900px);
+  width: min(100%, 1040px);
   padding-top: clamp(35px, 5vw, 65px);
   padding-bottom: 120px;
 }
@@ -873,11 +876,17 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   font-size: 17.5px;
   line-height: 1.8;
 }
+/* 无批注时正文独占整列；有批注才分出右侧批注槽。 */
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body {
-  width: calc(100% + 220px);
-  grid-template-columns: minmax(0, var(--insight-reading-width)) minmax(0, 1fr);
+  grid-template-columns: minmax(0, var(--insight-reading-width));
   column-gap: 24px;
 }
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body:has(.side-note) {
+  width: calc(100% + var(--insight-note-gutter, 200px));
+  grid-template-columns: minmax(0, var(--insight-reading-width)) minmax(0, 1fr);
+}
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair > .side-note,
+.ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .side-note { grid-column: 2; }
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > p,
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair > p {
   margin-top: 1.5em;
@@ -897,16 +906,16 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > :first-child,
 .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair:first-child > p:first-child { margin-top: 0; }
 
-/* The 780px prose plus its 220px note/figure extension needs enough room
-   to stay inside the editorial page gutter. */
-@media (max-width: 1370px) {
-  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body {
+/* 有批注时正文加批注槽共 1080px，放不进编辑版页边距时批注回落到正文下方。
+   纯正文（无批注）没有这条限制，最大可用宽度是 880px。 */
+@media (max-width: 1260px) {
+  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body:has(.side-note) {
     width: 100%;
     grid-template-columns: minmax(0, 1fr);
     column-gap: 0;
   }
-  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .note-pair > .side-note,
-  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body > .side-note { grid-column: 1; }
+  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body:has(.side-note) > .note-pair > .side-note,
+  .ed-root .aligned-page-shell--article .aligned-article-prose .insight-body:has(.side-note) > .side-note { grid-column: 1; }
 }
 
 @media (max-width: 650px) {
