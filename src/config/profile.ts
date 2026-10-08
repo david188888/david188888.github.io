@@ -117,22 +117,6 @@ export const internshipRecords: readonly InternshipRecord[] = [
 
 export const publicationRecords: readonly PublicationRecord[] = [
   {
-    id: "voxsafebench",
-    date: "2026-04-01",
-    paperUrl: "https://arxiv.org/abs/2604.14548",
-    category: "conferences",
-    venue: { en: "NeurIPS 2026 · Under Review", zh: "NeurIPS 2026 · 审稿中" },
-    authorship: { en: "Second author", zh: "第二作者" },
-    title: {
-      en: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
-      zh: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
-    },
-    description: {
-      en: "Introduced a benchmark for evaluating social alignment in speech language models across safety, fairness, and privacy dimensions.",
-      zh: "提出用于评估语音语言模型社会对齐能力的基准，覆盖安全、公平与隐私维度。",
-    },
-  },
-  {
     id: "voxprivacy",
     date: "2026-01-01",
     paperUrl: "https://arxiv.org/abs/2601.19956",
@@ -146,6 +130,22 @@ export const publicationRecords: readonly PublicationRecord[] = [
     description: {
       en: "Introduced a multi-user benchmark for measuring interactional privacy risks in speech-language models.",
       zh: "提出面向多用户场景的基准，用于衡量语音语言模型的交互隐私风险。",
+    },
+  },
+  {
+    id: "voxsafebench",
+    date: "2026-04-01",
+    paperUrl: "https://arxiv.org/abs/2604.14548",
+    category: "conferences",
+    venue: { en: "NeurIPS 2026 · Under Review", zh: "NeurIPS 2026 · 审稿中" },
+    authorship: { en: "Second author", zh: "第二作者" },
+    title: {
+      en: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
+      zh: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
+    },
+    description: {
+      en: "Introduced a benchmark for evaluating social alignment in speech language models across safety, fairness, and privacy dimensions.",
+      zh: "提出用于评估语音语言模型社会对齐能力的基准，覆盖安全、公平与隐私维度。",
     },
   },
   {
