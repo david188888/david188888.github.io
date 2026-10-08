@@ -457,7 +457,9 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                 {competitions.map((competition) => (
                   <article className="contest" key={competition.id}>
                     <h4>{competition.name}</h4>
-                    <p className="contest-award">{competition.award}</p>
+                    <p className="contest-award">
+                      {competition.award} · {competition.awardTopPercent}
+                    </p>
                     {competition.topic ? (
                       <p className="contest-description">{competition.topic}</p>
                     ) : null}

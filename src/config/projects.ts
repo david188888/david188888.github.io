@@ -21,6 +21,7 @@ export interface CompetitionRecord {
   id: string;
   name: LocalizedText;
   award: LocalizedText;
+  awardTopPercent: LocalizedText;
   topic?: LocalizedText;
   repositoryUrl?: string;
 }
@@ -81,6 +82,7 @@ export const competitionRecords: readonly CompetitionRecord[] = [
       zh: "2025 Mathematical Contest in Modeling（MCM，美国大学生数学建模竞赛）",
     },
     award: { en: "Honorable Mention", zh: "Honorable Mention（H 奖）" },
+    awardTopPercent: { en: "Top 32 Percent", zh: "获奖比例前约 32%" },
     topic: {
       en: "Olympic medal table model: statistical modeling, machine learning, and uncertainty analysis of medal prediction and its drivers.",
       zh: "奥运奖牌表模型：结合统计建模、机器学习与不确定性分析，研究奖牌预测及其影响因素。",
@@ -94,6 +96,7 @@ export const competitionRecords: readonly CompetitionRecord[] = [
       zh: "2023 年第十三届 MathorCup 高校数学建模挑战赛",
     },
     award: { en: "Second Prize (Undergraduate Group)", zh: "本科生组二等奖" },
+    awardTopPercent: { en: "Top 20–21 Percent", zh: "获奖比例前约 20–21%" },
     topic: {
       en: "Logistics network scheduling, transport, and structural optimization with the NSGA-II genetic algorithm.",
       zh: "基于 NSGA-II 遗传算法的物流网络调度运输和结构优化问题。",
@@ -107,6 +110,7 @@ export const competitionRecords: readonly CompetitionRecord[] = [
       zh: "2023 年广东省大学生数学建模竞赛暨全国大学生数学建模竞赛广东省分赛",
     },
     award: { en: "Second Prize (Undergraduate Group)", zh: "二等奖（本科组）" },
+    awardTopPercent: { en: "Top 25 Percent", zh: "获奖比例前约 25%" },
   },
 ];
 
@@ -130,6 +134,7 @@ export function getCompetitionRecords(locale: Locale) {
     id: record.id,
     name: record.name[locale],
     award: record.award[locale],
+    awardTopPercent: record.awardTopPercent[locale],
     topic: record.topic ? record.topic[locale] : null,
     repositoryUrl: record.repositoryUrl,
   }));
