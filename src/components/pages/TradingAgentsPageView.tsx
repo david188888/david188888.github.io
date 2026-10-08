@@ -14,82 +14,82 @@ const copy = {
   en: {
     kicker: "Project work / Extending an open-source framework",
     title: "TradingAgents",
-    subtitle: "A multi-agent research workspace for the A-share market",
+    subtitle: "A local multi-agent research workbench for China A-shares",
     intro:
-      "A local, LangGraph-based multi-agent research framework built on TauricResearch/TradingAgents and extended for A-share research with additional data sources, evidence-quality checks, and a research workspace. Its public modes are company_research and holding_review. The goal is not only to produce a report, but to keep the reasoning, disagreement, and uncertainty inspectable.",
+      "Turns company information, disclosures, financials and prices into reviewable research records. Built on TauricResearch/TradingAgents, it helps researchers identify key evidence, doubts and what to verify next across company research, catalyst research, holding review and batch research.",
     repository: "My repository ↗",
     upstream: "Upstream project ↗",
-    demoLabel: "Project demo",
+    demoLabel: "24-second project demo",
     caption:
-      "A completed 002335.SZ research-only sample. English annotations guide the original Chinese interface; figures shown are illustrative research outputs, not investment advice.",
+      "The current Reader displays a saved 002130.SZ sample from 6 October 2026, recorded with the earlier V5 workflow. English narration and captions accompany the original Chinese interface; the sample retains partial / LOW_CONFIDENCE limitations.",
     attributionKicker: "Upstream and personal extension",
-    attributionTitle: "Keep the collaborative analysis, add the research process.",
+    attributionTitle: "From collaborative analysis to evidence-linked research.",
     attributionBody:
-      "Upstream provides a multi-agent framework of analysts, bull and bear researchers, and trading and risk roles. This project keeps that open-source foundation, turns the default flow toward research, and adds a data and interaction layer for the A-share market. The extensions below belong to the fork; the upstream architecture is credited as upstream. The former Trader and three-role risk debate are retired from the current execution graph. Some A-share data adapters were informed by Simon Lin's a-stock-data.",
-    featuresTitle: "Main extensions",
+      "TauricResearch provides the open-source multi-agent foundation. This fork develops the A-share evidence kernel, specialist and challenge design, and local Web workbench described below. Some A-share data adapters were informed by Simon Lin's a-stock-data. The maintained Web flow uses a Python research runner; classic LangGraph workflows remain compatibility paths.",
+    featuresTitle: "Architecture and Agent design",
     features: [
       {
-        title: "A-share data access",
-        body: "Connects exchange quotes, fundamentals, and other market sources so analysis starts from inputs that match the local market rather than a generic feed.",
+        title: "A-share evidence chain",
+        body: "Public company information, official disclosures, financials and prices retain their sources, timestamps and coverage limits, so judgments can be traced back to their inputs.",
       },
       {
-        title: "Evidence quality checks",
-        body: "An evidence steward checks coverage, contradictions, and provenance, separating PASS, LOW_CONFIDENCE, and FAIL_STOP states so thin material becomes an explicit part of the research result. An unexpected gate fault also terminates the run.",
+        title: "Specialists, challenge and synthesis",
+        body: "Operating, event and market specialists form hypotheses without reading one another's drafts. An independent challenger tests assumptions; synthesis combines evidence, doubts and next steps.",
       },
       {
-        title: "Local web workspace",
-        body: "A local React and TypeScript interface with a FastAPI and SSE backend organises batch runs, live progress, and layered reading of the analysis. The server binds to 127.0.0.1 only and needs no Node.js at runtime; the report, Reader, and audit views read persisted results rather than fetching new evidence.",
+        title: "Code-owned boundaries",
+        body: "Code controls evidence admission, deterministic calculations, reference validation and persistence. Baseline research is saved independently before an optional focus response, which cannot rewrite its conclusions.",
       },
       {
-        title: "Research-oriented flow",
-        body: "Connects the market, sentiment, news, and fundamentals analysts, the bull-bear debate, and research synthesis into the company_research and holding_review modes. The four analysts can be selected and ordered; the convergence path after them is fixed. It does not emit orders, position sizes, or buy and sell instructions by default.",
+        title: "A local, traceable workbench",
+        body: "React and TypeScript present runs through a FastAPI and SSE backend on 127.0.0.1. Reader and Markdown share saved records; reading does not fetch new data or invoke models. Web is maintained; legacy CLI analysis is not.",
       },
     ],
-    evidenceTitle: "Insufficient evidence is a result too.",
+    evidenceTitle: "Make the limits visible.",
     evidenceBody:
-      "In the screenshot the valuation module does not force a price view; it lists why the historical sample is too short and peer valuation observations are unavailable. Fact entries carry their sources. Known and unknown sit in the same workspace.",
-    note: "Continuously extended and maintained on top of TauricResearch/TradingAgents. The project is for research only, is not investment advice, and does not present or promise investment returns.",
+      "Public sources can be missing, rate-limited or unable to establish historical availability. A completed run may remain partial / LOW_CONFIDENCE. Passing evidence checks does not establish economic causes or fair value, and improved predictive accuracy has not been demonstrated.",
+    note: "Research only. The system does not generate orders or target positions, is not investment advice, and does not promise investment returns.",
     backToProjects: "← Back to projects",
     footerNote: "Research and personal notes · © 2026",
   },
   zh: {
     kicker: "项目实践 / 开源框架扩展",
     title: "TradingAgents",
-    subtitle: "面向 A 股研究的多智能体工作台",
+    subtitle: "面向中国 A 股的本地多 Agent 研究工作台",
     intro:
-      "一个基于 LangGraph 的本地多智能体研究框架，在 TauricResearch/TradingAgents 的基础上扩展 A 股数据接入、证据质量检查和研究工作台。当前公开模式为 company_research 和 holding_review。重点不只是生成一份报告，而是让分析依据、分歧和不确定性可以被查看与追溯。",
+      "把公司资料、公告、财务与行情组织成可复核的研究记录。在 TauricResearch/TradingAgents 基础上，帮助研究者看清关键依据、主要疑点和下一步需要验证什么，支持公司研究、催化研究、持仓复盘与批量研究。",
     repository: "我的项目仓库 ↗",
     upstream: "上游项目 ↗",
-    demoLabel: "项目演示",
+    demoLabel: "24 秒项目演示",
     caption:
-      "一条已完成的 002335.SZ 研究样例。英文导读对应原始中文界面；视频中的数值仅为研究样例，不构成投资建议。",
+      "当前 Reader 展示一条 2026 年 10 月 6 日保存的 002130.SZ 样例，由此前的 V5 流程生成。英文旁白与字幕对应原始中文界面；样例保留 partial / LOW_CONFIDENCE 的限制。",
     attributionKicker: "上游与个人扩展",
-    attributionTitle: "保留协作分析，补上研究流程。",
+    attributionTitle: "从协作分析，走向可追溯的证据研究。",
     attributionBody:
-      "上游提供由分析师、多空研究员及交易与风险角色组成的多智能体框架。本项目沿用其开源基础，将默认流程调整为研究导向，并围绕 A 股场景补充数据和交互层。以下为 fork 中的扩展，不将上游架构列为个人原创。旧版 Trader 和三方风险辩论已从当前执行图中移除。部分 A 股数据适配器参考了 Simon Lin 的 a-stock-data。",
-    featuresTitle: "主要扩展",
+      "TauricResearch 提供多 Agent 开源基础。本 fork 在其上发展 A 股证据内核、专项与挑战设计，以及下述本地 Web 工作台。部分 A 股数据适配器参考了 Simon Lin 的 a-stock-data。当前维护的 Web 流程使用 Python 研究运行器，经典 LangGraph 流程保留为兼容路径。",
+    featuresTitle: "整体架构与 Agent 设计",
     features: [
       {
-        title: "A 股数据接入",
-        body: "接入行情、基本面及其他市场数据来源，让分析从贴近本地市场的输入开始，而不是依赖通用数据源。",
+        title: "A 股证据链",
+        body: "整合公开公司资料、官方披露、财务与行情，保留来源、时点和覆盖限制，让研究判断可以追溯到输入材料。",
       },
       {
-        title: "证据质量检查",
-        body: "由 Evidence Steward 检查覆盖度、矛盾和来源，区分 PASS、LOW_CONFIDENCE 和 FAIL_STOP 三种状态，让材料不足显式进入研究结果。意外的检查故障同样会终止本次运行。",
+        title: "专项、挑战与综合",
+        body: "经营、事件、市场专项独立形成假设，互不读取其它专项草稿。独立挑战角色检查假设，综合角色整理证据、疑点和下一步。",
       },
       {
-        title: "本地 Web 工作台",
-        body: "以 React 与 TypeScript 构建本地界面，后端使用 FastAPI 与 SSE，组织批量任务、实时进度和分层阅读。服务仅绑定 127.0.0.1，运行时无需 Node.js；报告、Reader 与审计视图读取已保存的运行结果，不会现场重新取数。",
+        title: "代码拥有研究边界",
+        body: "代码负责证据准入、确定性计算、引用校验与保存。基础研究先独立完成并保存，再按需回应用户关注点；补充回应不能改写基础结论。",
       },
       {
-        title: "研究型流程",
-        body: "将市场、情绪、新闻与基本面四位分析师、多空辩论与研究汇总连接为 company_research 和 holding_review 两种公开模式。四位分析师可选可排序，其后的收敛流程固定。默认不输出订单、仓位或买卖指令。",
+        title: "本地、可追溯的工作台",
+        body: "React 与 TypeScript 界面通过 FastAPI 与 SSE 展示任务，服务仅绑定 127.0.0.1。Reader 与 Markdown 读取同一保存记录，阅读不重新取数或调用模型。持续维护 Web，旧版 CLI 分析不再维护。",
       },
     ],
-    evidenceTitle: "证据不足，也是研究结果。",
+    evidenceTitle: "让限制留在研究结果中。",
     evidenceBody:
-      "截图中的估值模块没有强行给出价格判断，而是列出历史样本不足、同行估值观测不可用等原因。事实条目则展示来源与引用入口。已知与未知放在同一个工作界面中。",
-    note: "基于 TauricResearch/TradingAgents 持续扩展与维护。项目仅用于研究，不构成投资建议，也不展示或承诺投资收益。",
+      "公开来源可能缺失、限流或无法确认历史时点。运行完成可能仍是 partial / LOW_CONFIDENCE；证据核查通过不代表经济原因或合理价值已确定，也未证明预测准确率提升。",
+    note: "项目仅用于研究，不生成订单或目标仓位，不构成投资建议，也不承诺投资收益。",
     backToProjects: "← 返回项目与开源",
     footerNote: "研究与个人笔记 · © 2026",
   },
@@ -143,14 +143,18 @@ export function TradingAgentsPageView({ locale = defaultLocale }: TradingAgentsP
               controls
               playsInline
               preload="metadata"
-              poster="/images/tradingagents-demo-poster.jpg"
+              poster={tradingAgentsProject.screenshot}
               aria-label={text.caption}
               aria-describedby="tradingagents-demo-caption"
             >
-              <source src="/videos/tradingagents-demo.mp4" type="video/mp4" />
+              <source src={tradingAgentsProject.demoVideo} type="video/mp4" />
               {text.caption}
             </video>
-            <figcaption id="tradingagents-demo-caption">{text.caption}</figcaption>
+            <figcaption id="tradingagents-demo-caption">
+              {text.caption} {locale === "zh" ? "音乐：" : "Music: "}
+              <a href="https://ende.app/" target="_blank" rel="noopener noreferrer">Sascha Ende / Ende.app</a>
+              {" · Happy Beats Business Moves Vol. 12."}
+            </figcaption>
           </figure>
           <div className="detail-content">
             <section className="detail-section">

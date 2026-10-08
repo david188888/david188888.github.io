@@ -151,13 +151,13 @@ const sharedCopy = {
   en: {
     projects: {
       summary:
-        "Built on TauricResearch/TradingAgents and extended for A-share research with additional data sources, evidence-quality checks, and a local web workspace. Multi-agent analysis is organised into a traceable company-research process that keeps uncertainty visible when evidence is thin, instead of issuing buy or sell instructions.",
+        "A local A-share research workbench built on TauricResearch/TradingAgents. Operating, event and market specialists develop hypotheses for independent challenge and synthesis. Saved evidence keeps conclusions and uncertainties traceable; the project is for research only.",
     },
   },
   zh: {
     projects: {
       summary:
-        "基于 TauricResearch/TradingAgents，面向 A 股研究扩展数据接入、证据质量检查与本地 Web 工作台。将多智能体分析组织为可追溯的公司研究流程，保留证据不足时的不确定性，而非直接输出买卖指令。",
+        "基于 TauricResearch/TradingAgents 的本地 A 股研究工作台。经营、事件、市场专项形成假设，由独立挑战与综合角色审查；保存的证据让结论与不确定性可以追溯，项目仅用于研究。",
     },
   },
 } as const;
@@ -413,8 +413,8 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                       loading="lazy"
                       alt={
                         locale === "zh"
-                          ? "TradingAgents 本地研究工作台：左侧为分析设置与运行记录，右侧展示估值依据不足的说明和带证据引用的事实条目"
-                          : "TradingAgents local research workspace: analysis settings and run history on the left, an explanation of missing valuation anchors and evidence-cited facts on the right"
+                          ? "TradingAgents 项目演示封面：当前 Reader 展示保存的历史研究记录"
+                          : "TradingAgents demo poster: the current Reader displays a saved historical research record"
                       }
                     />
                   </Link>
