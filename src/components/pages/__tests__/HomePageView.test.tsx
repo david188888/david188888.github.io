@@ -87,6 +87,7 @@ describe("HomePageView", () => {
       expect(html).toContain(`${record.award.zh} · ${record.awardTopPercent.zh}`);
       expect(englishHtml).toContain(`${record.award.en} · ${record.awardTopPercent.en}`);
     });
+    expect(englishHtml).not.toContain("Percent");
     expect(html).not.toContain("获奖比例：");
   });
 
