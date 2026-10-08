@@ -35,9 +35,10 @@ export const tradingAgentsProject = {
   repositoryUrl: "https://github.com/david188888/TradingAgents",
   upstreamUrl: "https://github.com/TauricResearch/TradingAgents",
   detailHref: "/projects/tradingagents/",
-  screenshot: "/images/tradingagents-console.png",
-  screenshotWidth: 3008,
-  screenshotHeight: 1472,
+  screenshot: "/images/tradingagents-demo-poster-20261008.jpg",
+  screenshotWidth: 1920,
+  screenshotHeight: 1080,
+  demoVideo: "/videos/tradingagents-demo-20261008.mp4",
 } as const;
 
 export const openSourceProjects: readonly OpenSourceProject[] = [
