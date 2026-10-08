@@ -72,6 +72,7 @@ describe("HomePageView", () => {
 
   it("keeps upstream credit and merged status honest in the projects section", () => {
     const html = renderToStaticMarkup(<HomePageView locale="zh" />);
+    const englishHtml = renderToStaticMarkup(<HomePageView locale="en" />);
 
     expect(html).toContain("TauricResearch/TradingAgents");
     expect(html).toContain("上游项目");
@@ -82,7 +83,11 @@ describe("HomePageView", () => {
       });
     });
     expect(html).not.toContain("已合并");
-    competitionRecords.forEach((record) => expect(html).toContain(record.award.zh));
+    competitionRecords.forEach((record) => {
+      expect(html).toContain(`${record.award.zh} · ${record.awardTopPercent.zh}`);
+      expect(englishHtml).toContain(`${record.award.en} · ${record.awardTopPercent.en}`);
+    });
+    expect(html).not.toContain("获奖比例：");
   });
 
   it("does not show the future sample Insight", () => {
