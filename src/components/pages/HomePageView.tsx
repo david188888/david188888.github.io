@@ -458,6 +458,10 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                   <article className="contest" key={competition.id}>
                     <h4>{competition.name}</h4>
                     <p className="contest-award">{competition.award}</p>
+                    <p className="contest-rate">
+                      <span>{competition.awardRate}</span>
+                      <span>{competition.approximateStanding}</span>
+                    </p>
                     {competition.topic ? (
                       <p className="contest-description">{competition.topic}</p>
                     ) : null}
@@ -478,15 +482,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                 <span>Be hungry,</span>
                 <span className="slogan-em">bet on yourself</span>
               </h2>
-            </div>
-            <div className="closing-links">
-              <a href={`mailto:${authorConfig.email}`}>{authorConfig.email} ↗</a>
-              <a href={resumePdfHref} target="_blank" rel="noopener">
-                {links.cv} ↗
-              </a>
-              <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener">
-                GitHub ↗
-              </a>
             </div>
           </section>
         </main>

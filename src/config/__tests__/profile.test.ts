@@ -97,15 +97,6 @@ const selectorFixtures = {
     ],
     getHomePublications: [
       {
-        id: "voxsafebench",
-        venue: "NeurIPS 2026 · Under Review",
-        authorship: "Second author",
-        title: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
-        description:
-          "Introduced a benchmark for evaluating social alignment in speech language models across safety, fairness, and privacy dimensions.",
-        paperUrl: "https://arxiv.org/abs/2604.14548",
-      },
-      {
         id: "voxprivacy",
         venue: "ICLR 2026 · Poster",
         authorship: "Second author",
@@ -113,6 +104,15 @@ const selectorFixtures = {
         description:
           "Introduced a multi-user benchmark for measuring interactional privacy risks in speech-language models.",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+      },
+      {
+        id: "voxsafebench",
+        venue: "NeurIPS 2026 · Under Review",
+        authorship: "Second author",
+        title: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
+        description:
+          "Introduced a benchmark for evaluating social alignment in speech language models across safety, fairness, and privacy dimensions.",
+        paperUrl: "https://arxiv.org/abs/2604.14548",
       },
       {
         id: "dialoggraph-llm",
@@ -135,15 +135,6 @@ const selectorFixtures = {
     ],
     getCvPublications: [
       {
-        id: "voxsafebench",
-        title: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
-        permalink: "https://arxiv.org/abs/2604.14548",
-        venue: "NeurIPS 2026 · Under Review",
-        date: "2026-04-01",
-        excerpt: "Second author.",
-        paperUrl: "https://arxiv.org/abs/2604.14548",
-      },
-      {
         id: "voxprivacy",
         title: "VoxPrivacy: A Benchmark for Evaluating Interactional Privacy of Speech Language Models",
         permalink: "https://arxiv.org/abs/2601.19956",
@@ -151,6 +142,15 @@ const selectorFixtures = {
         date: "2026-01-01",
         excerpt: "Second author.",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+      },
+      {
+        id: "voxsafebench",
+        title: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
+        permalink: "https://arxiv.org/abs/2604.14548",
+        venue: "NeurIPS 2026 · Under Review",
+        date: "2026-04-01",
+        excerpt: "Second author.",
+        paperUrl: "https://arxiv.org/abs/2604.14548",
       },
       {
         id: "dialoggraph-llm",
@@ -173,17 +173,6 @@ const selectorFixtures = {
     ],
     getPublicationArchive: [
       {
-        id: "voxsafebench",
-        title: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
-        permalink: "https://arxiv.org/abs/2604.14548",
-        venue: "NeurIPS 2026 · Under Review",
-        date: "2026-04-01",
-        excerpt:
-          "Introduced a benchmark for evaluating social alignment in speech language models across safety, fairness, and privacy dimensions; second author.",
-        paperUrl: "https://arxiv.org/abs/2604.14548",
-        category: "conferences",
-      },
-      {
         id: "voxprivacy",
         title: "VoxPrivacy: A Benchmark for Evaluating Interactional Privacy of Speech Language Models",
         permalink: "https://arxiv.org/abs/2601.19956",
@@ -192,6 +181,17 @@ const selectorFixtures = {
         excerpt:
           "Introduced a multi-user benchmark for measuring interactional privacy risks in speech-language models; second author.",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+        category: "conferences",
+      },
+      {
+        id: "voxsafebench",
+        title: "VoxSafeBench: Not Just What Is Said, but Who, How, and Where",
+        permalink: "https://arxiv.org/abs/2604.14548",
+        venue: "NeurIPS 2026 · Under Review",
+        date: "2026-04-01",
+        excerpt:
+          "Introduced a benchmark for evaluating social alignment in speech language models across safety, fairness, and privacy dimensions; second author.",
+        paperUrl: "https://arxiv.org/abs/2604.14548",
         category: "conferences",
       },
       {
@@ -294,20 +294,20 @@ const selectorFixtures = {
     ],
     getHomePublications: [
       {
-        id: "voxsafebench",
-        venue: "NeurIPS 2026 · 审稿中",
-        authorship: "第二作者",
-        title: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
-        description: "提出用于评估语音语言模型社会对齐能力的基准，覆盖安全、公平与隐私维度。",
-        paperUrl: "https://arxiv.org/abs/2604.14548",
-      },
-      {
         id: "voxprivacy",
         venue: "ICLR 2026 · 海报",
         authorship: "第二作者",
         title: "VoxPrivacy：评估语音语言模型交互隐私的基准",
         description: "提出面向多用户场景的基准，用于衡量语音语言模型的交互隐私风险。",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+      },
+      {
+        id: "voxsafebench",
+        venue: "NeurIPS 2026 · 审稿中",
+        authorship: "第二作者",
+        title: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
+        description: "提出用于评估语音语言模型社会对齐能力的基准，覆盖安全、公平与隐私维度。",
+        paperUrl: "https://arxiv.org/abs/2604.14548",
       },
       {
         id: "dialoggraph-llm",
@@ -328,15 +328,6 @@ const selectorFixtures = {
     ],
     getCvPublications: [
       {
-        id: "voxsafebench",
-        title: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
-        permalink: "https://arxiv.org/abs/2604.14548",
-        venue: "NeurIPS 2026 · 审稿中",
-        date: "2026-04-01",
-        excerpt: "第二作者。",
-        paperUrl: "https://arxiv.org/abs/2604.14548",
-      },
-      {
         id: "voxprivacy",
         title: "VoxPrivacy：评估语音语言模型交互隐私的基准",
         permalink: "https://arxiv.org/abs/2601.19956",
@@ -344,6 +335,15 @@ const selectorFixtures = {
         date: "2026-01-01",
         excerpt: "第二作者。",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+      },
+      {
+        id: "voxsafebench",
+        title: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
+        permalink: "https://arxiv.org/abs/2604.14548",
+        venue: "NeurIPS 2026 · 审稿中",
+        date: "2026-04-01",
+        excerpt: "第二作者。",
+        paperUrl: "https://arxiv.org/abs/2604.14548",
       },
       {
         id: "dialoggraph-llm",
@@ -366,16 +366,6 @@ const selectorFixtures = {
     ],
     getPublicationArchive: [
       {
-        id: "voxsafebench",
-        title: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
-        permalink: "https://arxiv.org/abs/2604.14548",
-        venue: "NeurIPS 2026 · 审稿中",
-        date: "2026-04-01",
-        excerpt: "提出用于评估语音语言模型社会对齐能力的基准，覆盖安全、公平与隐私维度；第二作者。",
-        paperUrl: "https://arxiv.org/abs/2604.14548",
-        category: "conferences",
-      },
-      {
         id: "voxprivacy",
         title: "VoxPrivacy：评估语音语言模型交互隐私的基准",
         permalink: "https://arxiv.org/abs/2601.19956",
@@ -383,6 +373,16 @@ const selectorFixtures = {
         date: "2026-01-01",
         excerpt: "提出面向多用户场景的基准，用于衡量语音语言模型的交互隐私风险；第二作者。",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+        category: "conferences",
+      },
+      {
+        id: "voxsafebench",
+        title: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
+        permalink: "https://arxiv.org/abs/2604.14548",
+        venue: "NeurIPS 2026 · 审稿中",
+        date: "2026-04-01",
+        excerpt: "提出用于评估语音语言模型社会对齐能力的基准，覆盖安全、公平与隐私维度；第二作者。",
+        paperUrl: "https://arxiv.org/abs/2604.14548",
         category: "conferences",
       },
       {
