@@ -389,6 +389,30 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .detail-features p { font-size: 13px; }
 .ed-root .detail-note { padding: 20px; background: var(--ed-wash); font-size: 12px; line-height: 1.9; color: var(--ed-muted); margin-bottom: 35px; }
 
+.ed-root .ta-detail .ta-subheading { font-size: 17px; line-height: 1.7; font-weight: 500; margin-top: 6px; }
+.ed-root .ta-detail .ta-flow { padding: 18px 20px; background: var(--ed-wash); }
+.ed-root .ta-detail .ta-flow-label { font-size: 12px; font-weight: 600; color: var(--ed-accent-text); margin-bottom: 10px; }
+.ed-root .ta-detail .ta-flow-steps { display: flex; flex-wrap: wrap; gap: 10px 0; list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.8; }
+.ed-root .ta-detail .ta-flow-steps li { max-width: 100%; overflow-wrap: anywhere; }
+.ed-root .ta-detail .ta-flow-steps li:not(:last-child)::after { content: "→"; color: var(--ed-muted); padding-inline: 12px; }
+.ed-root .ta-detail .ta-source-link { font-size: 12px; }
+.ed-root .ta-detail .ta-source-link a,
+.ed-root .ta-attribution a { border-bottom: 1px solid var(--ed-line); padding-bottom: 2px; overflow-wrap: anywhere; }
+.ed-root .ta-detail .ta-source-link a:hover,
+.ed-root .ta-attribution a:hover { color: var(--ed-accent-text); }
+.ed-root .ta-detail .ta-role-table { table-layout: fixed; border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.85; margin-block: 5px 8px; }
+.ed-root .ta-detail .ta-role-table th,
+.ed-root .ta-detail .ta-role-table td { text-align: left; vertical-align: top; padding: 14px 0; border-bottom: 1px solid var(--ed-line); overflow-wrap: anywhere; }
+.ed-root .ta-detail .ta-role-table th { font-weight: 500; color: var(--ed-ink); }
+.ed-root .ta-detail .ta-role-table th:first-child { width: 24%; padding-right: 20px; }
+.ed-root .ta-detail .ta-role-table thead th { padding-top: 0; color: var(--ed-muted); font-size: 12px; }
+.ed-root .ta-detail .ta-role-table td { color: var(--ed-muted); }
+.ed-root .ta-detail .ta-example-list { display: grid; gap: 20px; margin-block: 6px; }
+.ed-root .ta-detail .ta-example-list > div { padding-left: 18px; border-left: 2px solid var(--ed-line); }
+.ed-root .ta-detail .ta-example-list dt { font-size: 14px; line-height: 1.8; font-weight: 500; margin-bottom: 5px; }
+.ed-root .ta-detail .ta-example-list dd { margin: 0; font-size: 14px; line-height: 1.95; color: var(--ed-muted); }
+.ed-root .ta-attribution { display: grid; gap: 6px; }
+
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 850px) {
   .ed-root .home-hero-frame { grid-template-columns: 1fr; min-height: 0; }
@@ -450,6 +474,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .detail-hero { padding-block: 30px; }
   .ed-root .detail-image { margin-bottom: 30px; }
   .ed-root .detail-features { grid-template-columns: 1fr; gap: 25px; }
+  .ed-root .ta-detail .ta-role-table th:first-child { width: 104px; }
   .ed-root .aligned-article-prose { font-size: 16px; }
 }
 
