@@ -3,7 +3,7 @@
   "pipeline": "hy-mt2-v3",
   "glossary": "c1f0a7ed",
   "sourcePath": "content/posts/2026-09-16-speech-llm-speech-grounding-gap.mdx",
-  "sourceHash": "47498df4a1a974df259971d75847018d201efc57fdccdb11d206967005df3ef6",
+  "sourceHash": "ac02d074d3e5105346587e73f1448810bfd539e5c6cd8199256c57ec67cc34cb",
   "sourceLanguage": "zh",
   "targetLanguage": "en",
   "model": "hy-mt2-7b",
@@ -19,13 +19,13 @@
   },
   "mode": "hy-mt2",
   "title": "The Safety Gap in Large Speech Models: Hidden Within Audio Signals",
-  "excerpt": "A large speech model can hear sounds, but it doesn’t necessarily use them to make judgments. This paper analyzes the multi-layer failure chain of the speech grounding gap based on the evaluations from VoxPrivacy and VoxSafeBench, discussing why end-to-end approaches exacerbate this gap and which three types of companies will ultimately possess speech safety capabilities.",
+  "excerpt": "Even after recognizing acoustic cues, speech models may still fail to provide appropriate responses that ensure safety, privacy, and fairness. This paper explains the findings of VoxPrivacy and VoxSafeBench, focusing on independent evaluations conducted through real-world usage scenarios to facilitate continuous improvement, as well as the application companies that control personal assistants and in-vehicle assistant systems.",
   "tags": [
     "AI",
     "Speech",
     "Safety"
   ],
-  "body": "\n*Examining the gaps in safety and privacy as well as industry opportunities for end-to-end speech models through VoxPrivacy and VoxSafeBench, developed in collaboration with Professor Wu's speech team at CUHK-Shenzhen*\n\nIf two people say exactly the same sentence into the same device, should the large speech model give an identical response?\n\nIf an adult asks how to use a kitchen knife, standard instructions are likely sufficient. When speaking in a child’s voice, the model should add warnings to avoid providing any dangerous steps. When two job applicants claim to have the same level of experience, their accent, gender, and age should not influence the evaluation. If another family member asks about conditions or passwords mentioned in previous conversations, the model must first determine to whom that information belongs and whether it is appropriate to share it at that time.\n\nIn these different situations, the textual content can be exactly the same, but the correct answer depends on the information conveyed by the sound. Some acoustic cues should change the answer, while others should not affect it at all. The speech model needs to know what it has heard, as well as determine which sounds are relevant to the current decision.\n\nVoxPrivacy and VoxSafeBench have jointly revealed a multi-layered failure chain. Some failures occur at the acoustic perception layer, where the models fail to reliably identify the speaker, emotions, or ambient sounds. Other experiments have shown that the models detect child voices and privacy-related cues, yet their responses still do not adjust accordingly. VoxSafeBench refers to this latter type of disconnect as the `speech grounding gap`. The most concerning scenario is when the model hears a sound but fails to understand what that sound implies for the current response.\n\n==blue|It is necessary to clarify a boundary here first. The main subjects of evaluation in these two papers are large speech models, which are capable of directly understanding speech and generating text or speech responses. Speech Agents build upon this by adding persistent states, tool invocation, and action capabilities. As of now, products that truly integrate real-time speech understanding, speech generation, and autonomous tool invocation into a single system are still in their early stages.==This article focuses primarily on large speech models\n\n## Voice interaction is introducing a new form of correctness\n\nTraditional evaluations of language models focus mainly on content. Whether the answers are factually correct, whether the reasoning is valid, whether harmful requests are rejected, and whether sensitive information appears in the output. Once input is converted from text to speech, content remains important, but speech adds three additional sets of information.\n\nThe first group consists of the speakers. Their voices can reveal who is asking at the moment, who provides the historical information, and whether there are any relationships of access among the speakers.\n\nThe second category is expressing states. The same sentence, when spoken by a child, a drunk person, or someone in a state of panic, may require different risk warnings. Speech speed, pitch, pauses, and emotion also affect the model’s ability to determine the intent.\n\nThe third group consists of environmental and paralinguistic information. Children in the background, listeners, alarm sounds, and other overlapping instructions can all affect how an answer should be structured, and may even determine whether the model should continue to respond.\n\nThese three sets of information do not automatically lead to the same strategy. A child’s voice should trigger a more cautious response in cases of dangerous operations. Gender and accent should not result in differential treatment in loan or job evaluations. Disclosure should be restricted when an unknown speaker asks about private memories. The model needs to determine whether a particular acoustic feature should influence the answer in the current task.\n\nThis is more difficult than voice recognition. The recognition task only requires the model to state things like “It’s a child’s voice” or “There is another person in the background.” Safety decisions, on the other hand, need to connect this information with social rules. The model must first determine whether the risk has changed, and then decide whether the information can be disclosed. When dealing with accents and gender, it also needs to disregard differences that are unrelated to the task. If any step is missed, the outcome may not be appropriate. This is precisely the key challenge that voice interaction finds hardest to overcome.\n\nThus, the large speech model is confronted with a second type of correctness. The first type focuses on the content of the response itself. The second type considers who hears this content, to whom it is spoken, in what environment it is delivered, and which differences in the voice should influence the response. It is the latter that determines whether the speech model can move from demonstration products to real-world applications in homes, education, healthcare, customer service, and automotive settings.\n\n---\n\n## What did VoxPrivacy and VoxSafeBench discover\n\n### VoxPrivacy Study on Interaction Privacy in Shared Devices\n\nIt moves the focus from the identification of **private information** to whether that same information can be disclosed to the current speaker.\n\nThe paper divides the tasks into three levels. The first level requires the model to follow explicit confidentiality instructions. The second level asks the model to decide whether to disclose information based on the speaker’s identity. The third level does not tell the model in advance what constitutes a secret; instead, it requires the model to proactively protect sensitive information based on the context. The higher the level, the more the model needs to consider voice data, conversation history, and information flow rules in its decision-making process.\n\nThe initial version of VoxPrivacy contained 7,107 synthetic Chinese and English audio clips totaling 32.86 hours; 18 bilingual volunteers were asked to record 586 real-person audio clips for small-scale testing. For the second and third-level tasks, where it was necessary to decide whether to disclose information based on the speaker and context, the accuracy of most open models ranged from 48% to 52%. After being trained on approximately 4,300 hours of dedicated privacy-related dialogue data, along with around 1,700 hours of general speech task data, Kimi-Audio achieved accuracy rates of 77.57% to 83.93% for the second and third-level tasks in both Chinese and English.\n\nThis result indicates two things. Privacy assessment in shared voice scenarios does not improve naturally with the size of the model. Specifically designing multi-person conversations, secret relationships, and disclosure decision data can significantly enhance performance. The problem is trainable, and the way training data is organized will be crucial.\n\nVoxPrivacy also found that some models lack stability even in basic speaker verification, making it impossible for them to apply speaker-specific privacy rules. ==blue|What is more worth studying are other types of samples: in these cases, the models have obtained or identified speaker information yet still fail to use this information in making disclosure decisions—a topic that will be discussed in detail in the next article on VoxSafeBench.==\n\n### The focus of the VoxSafeBench study is how models utilize social cues in voice\n\nIt expands safety, fairness, and privacy into 22 Chinese-English tasks, dividing the tests into two levels. Tier 1 checks whether the content itself poses a risk. Tier 2 retains seemingly harmless textual content, allowing the speaker, manner of expression, or surrounding environment to determine what response is appropriate.\n\nThe value of this design lies not in ranking the models’ performance, but in identifying the reasons for failure. The paper first uses intermediate perception probes to check whether the models detect child voices, background listeners, or other acoustic cues, and then employs generative tasks to verify whether the responses actually change accordingly. Experiments with child voices and background child voices showed that some models, despite being able to recognize these cues, may still provide warnings intended for adults. Privacy tasks also revealed that even when models identify sensitive information, they may not be able to avoid disclosing it during generation.\n\nFairness tasks serve as essential checks. When the content, qualifications, and task conditions of the benchmarks are consistent, gender, age, and accent should not affect loan or job evaluations. What voice models need to learn is not to adjust their responses upon detecting differences in voice, but rather to determine which acoustic information is relevant to decisions related to safety, privacy, or fairness, and which information must be excluded from such decisions. The core contribution of VoxSafeBench is to make this connection between acoustic cues and response behavior a measurable issue.\n\n---\n\n## The end-to-end approach makes this gap even more significant\n\nTraditional voice systems have typically used a cascaded architecture. Automatic speech recognition first converts sound into text, language models process the text, and speech synthesis then outputs the result. This architecture provides clear intermediate results, which makes it easier to filter keywords, replace models, and identify errors. However, there are also significant drawbacks. The transcribed text loses nuances such as tone, rhythm, overlapping sounds, and some ambient noises, leaving the language models to make decisions based on a compressed version of the input.\n\nEnd-to-end large speech models aim to retain this information by directly learning audio representations and performing understanding, reasoning, and speech generation within the same model or a tightly coupled architecture. This approach offers better opportunities for jointly learning acoustic cues, relevance judgment, and response behaviors, while also reducing information loss caused by transcription. Especially for information in complex acoustic environments, only through effective end-to-end modeling of such data and maintaining an appropriate scale can end-to-end models truly achieve what is meant by “intelligence”.\n\n==blue|Retaining more audio information does not mean it will be used correctly==. VoxSafeBench shows that improvements in perception capabilities can outpace safety alignment. Even if a model knows there are children in the background, it may still provide warnings intended for adults. It can identify demographic characteristics in sounds, but it might also include features that should not influence decision-making in its responses. ==blue|The richer the information, the more complex the boundaries the model must learn==. This further confirms that the current amount and coverage of training data are insufficient.\n\nAlthough end-to-end approaches face challenges such as difficulty in training and management, I remain optimistic about long-term end-to-end architectures, especially those that can, as training and data volumes increase, enable the model to properly incorporate acoustic information to generate accurate responses. Regardless of the architecture used, the model must learn to establish a proper mapping between acoustic information and correct responses.\n\n---\n\n## The next step in training is to link sound to behavior\n\nIf the problem lies between perception and action, the solution cannot simply involve adding another detector. Future speech safety training or alignment must handle at least three things simultaneously.\n\n### Train the model using paired scenarios to determine if sounds are related\n\nThe increasing amount of ordinary speech may not be sufficient to fill this gap. What is more valuable are the minimal contrast samples, in which the textual content remains the same while the acoustic conditions differ, resulting in varying target responses. When an adult voice or a child’s voice poses the same risky question, or when someone asks about the same private information in the presence of others versus alone, different strategies should be employed. On the other hand, when individuals of different genders and accents describe the same experience, the target evaluation should remain consistent.\n\nSuch samples can train the model to understand *when to change and when not to change*. The targeted training results of VoxPrivacy have shown that data constructed around information flows can significantly improve performance. Next, safety, privacy, and fairness need to be incorporated into a unified data design to prevent one capability from deteriorating while another improves.\n\n### Include multi-person relationships and temporal continuity in the dataset\n\nIn real-world voice interactions, there are rarely just isolated audio segments. Who spoke first, who asked questions later, and whether the device or environment changed in between—all of these factors can affect the outcome. The model needs to learn about the relationships between speakers across different turns, and it should also reduce the specificity of its responses when the identity cannot be confirmed, or prompt the user to switch to a private channel.\n\nThe most scarce resource at this level is continuous data that includes the speaker, relationships, changes in scenario, correct decisions, and feedback afterward. Real family and work scenarios involve privacy issues, making it difficult to collect large amounts of such data. Synthetic data can help expand the scope of coverage, but real human data is still necessary to identify pauses, interruptions, dialects, and ambiguous relationships that may not be captured in synthetic scripts. Data collection must also respect principles of informed consent, the right to withdraw consent, and restrictions on data usage; otherwise, a dataset created to address privacy issues could itself introduce new privacy risks.\n\n### Let the model expose uncertainty and accept process supervision\n\nToday’s benchmarks usually only consider the final answer. Whether the model failed to hear the child’s voice or failed to change its strategy after hearing it can only be determined through additional probes. Training and evaluation should include intermediate checks to measure acoustic perception, relevance judgment, and response behavior respectively.\n\nThe production model also needs to learn to stop when it is uncertain. In situations where the speaker is unclear, instructions overlap, or there is background noise, it is usually better to request confirmation, reduce the level of detail provided, or refuse to execute the task, rather than making a confident guess. The key measure of safety capability here is not the number of times the model refuses to respond, but rather its ability to identify which pieces of information it lacks and choose an action that matches the degree of uncertainty.\n\nRuntime tools still hold auxiliary value. Speaker separation, liveness detection, overlapping speech detection, and content moderation can provide additional evidence for the model and help block some known attacks. The core focus must remain on the connection between voice representation, training objectives, and generation strategies.\n\n---\n\n## From Large Speech Model to Voice Agent\n\nThe boundary between large speech models and voice Agents is becoming increasingly blurred. Qwen3.5-Omni can now decide on its own whether to use WebSearch or Function Call during real-time conversations, and it can also determine based on semantics whether a user truly intends to interrupt. Equipped with voice understanding, real-time generation, and certain action capabilities, it can be regarded as a representative example of the transition from large speech models to native voice Agents.\n\nAs of the time of this information, such products are still in their initial stages. Natural interruption handling, low latency, and tool invocation have already been demonstrated, but there is still insufficient public evidence to show whether the models can make appropriate decisions consistently in multi-person, noisy environments, and over long-term interactions. Existing audio evaluation frameworks focus more on recognition, comprehension, reasoning, and dialogue quality, with limited coverage of safety, fairness, and privacy in acoustic contexts.\n\nWhen tools and memory are added, the consequences of the `speech grounding gap` are amplified. Inappropriate responses from a large speech model can lead to erroneous disclosures or biased recommendations. If a voice Agent uses these same judgments to invoke tools, store long-term memories, or alter device settings, the errors will continue to propagate. This does not change the research focus of the paper; it merely illustrates that gaps at the model level can serve as upstream sources of risks at the Agent level.\n\nTherefore, in the future competition among voice Agents, delay and naturalness alone cannot be the deciding factors. The real criterion lies in whether a system can incorporate the original audio, the dialogue context, and the current task into the same decision-making process, and maintain consistency when it’s time to take action. A model that struggles even to determine whether something should be said is unlikely to make reliable decisions about what actions to take.\n\n---\n\n## Industrial value will lie in three types of capabilities\n\n### Speech-native alignment in end-to-end models\n\nLeading model companies have the best chance of directly reaping these benefits. They can control the model architecture, training data, alignment processes, and generation strategies, allowing them to optimize both perception and behavior. Barriers arise from multilingual, multi-speaker, and complex environmental data, as well as from the model’s ability to strike a balance among safety, fairness, and the quality of ordinary conversations.\n\nSuch capabilities may eventually become standard components of foundational models, just like instruction following in text models. If standalone middleware can only add a few labels to audio, it is likely to be integrated into model platforms. Only by enabling customers to experience lower error rates and broader usability in high-risk scenarios can speech safety training be turned into a product advantage. If leading results exist only on internally developed synthetic evaluation sets, its value will find it difficult to sustain in the long term.\n\n### Evaluation, verification, and acceptance infrastructure for speech safety\n\nPublic benchmarks have already demonstrated that the problem exists, and there is still a long way to go before it can be used in enterprises. The market needs evaluations, verifications, and acceptance frameworks that more closely reflect real-world scenarios such as multi-person conversations, overlapping voices, background noise, privacy concerns across conversation rounds, and fairness considerations. It is also necessary to evaluate perception results separately from the final behavior. *Appropriate responses* vary depending on language and cultural contexts, making it difficult for a single English-language dataset to cover all cases.\n\nWhat is sold at this level is not a set of training data, but rather a set of cross-functional verification capabilities. Scenario generation, adversarial testing, process probing, cross-version regression, and acceptance reporting can help model companies identify issues, and also enable enterprises to determine whether a model meets the safety requirements of their specific use cases before integrating it. The long-term value depends on its ability to be integrated into the continuous processes of training iteration, model deployment, and customer acceptance; one-time rankings can easily be replaced by platforms or internal teams of customers.\n\n### Vertical applications with scenario rules and handling capabilities\n\nHome companionship, children’s education, medical inquiries, customer service, and in-vehicle systems all have different definitions of *appropriate responses*. It is difficult for basic models to independently understand the scope of responsibilities in each industry. The advantage of vertical applications lies in their understanding of specific user relationships, task workflows, human intervention, and responsibility allocation, which enables them to transform general speech capabilities into services that can be delivered in a particular context.\n\nAmong them, the more valuable companies will not simply provide a voice interface. They need to determine in which situations human intervention is necessary, which responses can be provided directly, who should step in in case of errors, and how to resolve them. Business records can certainly help improve the product, but the core assets remain the rules, integration capabilities, and service functions embedded in daily processes, rather than a set of training data sold externally.\n\nFrom a market perspective, companies can purchase general-purpose speech models and cross-functional evaluation tools, while retaining control over scenario rules, manual upgrade mechanisms, and acceptance standards internally. From an investment perspective, it is more appropriate to focus on two types of companies: those that integrate evaluation and validation capabilities into the infrastructure for model training, deployment, and procurement acceptance; and those that offer vertical applications with stable distribution, defined responsibility processes, and quantifiable business outcomes in high-value workflows.\n\nThis approach also comes with clear risks. If leading model manufacturers quickly complete the necessary training, independent evaluation methods and safety tools will likely be integrated by the platforms. Improvements achieved on synthetic benchmarks may not transfer well to noisy, multi-person, or cross-cultural environments. The most important signals to watch going forward are whether model companies start disclosing behavioral metrics based on acoustic cues, whether multiple rounds of real-person testing replace single synthesized audio clips, and whether enterprises include such capabilities in their model acceptance criteria.\n\nThe next phase of the large speech model will not merely focus on who can listen more accurately or speak more humanly. It will also need to learn to determine who is present, what information the voice reveals, which differences should influence the response, and which ones must be ignored.\n\nWithout this capability, the more tools a voice agent has at its disposal, the worse the problems will become. Only once this capability is in place can voice models evolve from mere talking interfaces into systems that truly understand the boundaries of communication. Safety, privacy, and fairness are not merely post-deployment constraints in this context; they become an integral part of end-to-end voice intelligence itself.\n\n---\n\n## Key Sources\n\n- [Wang et al., VoxPrivacy v1](https://arxiv.org/pdf/2601.19956v1)\n- [Wang et al., VoxSafeBench v2](https://arxiv.org/pdf/2604.14548v2)\n- [Qwen Team, Official release notes for Qwen3.5-Omni](https://qwen.ai/blog?id=qwen3.5-omni)\n- [Qwen3.5-Omni Technical Report](https://arxiv.org/pdf/2604.15804)\n",
+  "body": "\n**My judgment is that whether voice personal assistants can take on more important tasks depends on their ability to convert the speaker’s words and acoustic cues into accurate responses that ensure safety, privacy, and fairness.** The two papers I contributed to, VoxPrivacy and VoxSafeBench, reveal the gap between these two capabilities, and model developers need to conduct more targeted training. In light of this issue, I am more interested in two types of business opportunities: one is independent evaluations that incorporate real-world usage scenarios and continuously increase the difficulty of testing, and the other is companies that can seize opportunities in applications such as Personal Agents and in-vehicle assistants, and use feedback from failures and corrections to improve their products. Static rankings and simply integrating voice models are not sufficient to create a sustainable advantage.\n\n## After identifying the voice, one also needs to know how to respond\n\nWhen an adult asks how to use a kitchen knife, the assistant can provide appropriate instructions; if a child asks the same question, more careful safety reminders are needed, and it is advisable to have an adult assist when necessary. This example shows that the same text may require different responses depending on the speaker’s voice.\n\nPrivacy scenarios introduce an additional layer of complexity. If I tell a personal assistant a secret and ask them to keep it confidential, and another person asks about it later, the assistant should adhere to the original boundaries set for sharing that information. Even if the voice of the person asking is similar to mine, they still shouldn’t be given access to the secret. The model must understand who owns the information, who is asking at the moment, and whom the original user has authorized to receive that information.\n\nFairness, that is, equity, requires the model to make a different choice. When two candidates have identical qualifications, accent or vocal gender differences that are unrelated to the position should not affect their evaluation. Clues in the voice sometimes need to influence the response, while at other times they should be excluded from the judgment.\n\nThe two papers focus precisely on this connection. Some models are already capable of identifying certain acoustic cues, but they cannot consistently use them to generate appropriate responses. It is still necessary to distinguish between sound perception, speaker identification, and true identity verification. Each of these methods has its limitations; just because something sounds like a particular person does not replace the authentication and authorization required for sensitive operations.\n\n## How to Measure the Gap in Two Papers\n\nVoxPrivacy divides the confidentiality issues in shared voice devices into three levels. The first level involves following the explicit instruction to “tell no one”; the second level requires deciding whether to disclose information based on the speaker; ==blue|the third level further demands that the model proactively identify sensitive information and protect it in the absence of an explicit confidentiality command.\\[1\\]==\n\nThe latter two layers rely simultaneously on speaker relationships and disclosure rules. Taking the second-layer English task as an example, the accuracy of the original Kimi-Audio was around 50%, while the paper’s authors achieved 83.93% after making task-specific fine-tuning. ==blue|This indicates that relevant capabilities can be trained, but general speech capabilities do not automatically translate into reliable confidentiality behaviors.\\[1\\]==\n\nImprovements still have limits. The overall accuracy of the fine-tuned model on third-layer Chinese tasks is 82.88%, while the success rate in protecting instances that should remain confidential is only 62.10%. The model’s performance further declines when another speaker with a similar voice is used to request the secret information. ==blue|A single composite score cannot fully reflect the risk of leakage; identity confusion and failed confidentiality protection need to be examined separately.\\[1\\]==\n\nVoxSafeBench compares perception and response more directly. In the child voice task, researchers used direct recognition questions for similar audio clips, and Qwen3-Omni achieved an accuracy rate of 90% in determining whether the voice was that of a child or an adult; ==blue|Returning to the original task, the proportion of cases where safety awareness was demonstrated through warnings or rejections was only 0.5%. This metric is called the Safety Awareness Rate, and it is not equivalent to the accuracy rate of all safety-related actions.\\[2\\]==\n\nAsking directly “Is it a child’s voice?” is simpler than deciding how to respond in an open dialogue, so this set of results does not prove that the model correctly identified a child’s voice every time a response failed. It still reveals significant gaps: the model can recognize a clue when asked directly, but rarely uses it appropriately in actual responses. ==blue|Other models also suffer from weak perception capabilities, and subsequent training needs to take both types of failures into account.\\[2\\]==\n\n## Personal Agents and in-vehicle assistants require targeted post-training\n\nOnce a personal assistant starts remembering users’ preferences and historical information, confidentiality becomes a continuous and important requirement. For example, in a personal car, the driver, passengers, and children may take turns asking questions, and background noises can also affect whether the responses are suitable to be spoken aloud. A single instance of accidental disclosure or inappropriate instructions for dangerous actions can influence whether users are willing to entrust it with more important tasks.\n\nI believe that safety, privacy, and fairness need to be incorporated into the post-training phase of voice models as well as product validation. While ordinary voice data can improve recognition and dialogue capabilities, specialized test scenarios are still required to establish connections between sound conditions, user relationships, and desired behaviors. For example, different strategies should be trained for dangerous operation requests made in adult or child voices; in evaluation tasks involving individuals with similar qualifications but different accents, any unreasonable disparities must be checked.\n\n^[Currently, large speech models still lack large-scale scaling data compared to text.]\n\nModel manufacturers also need to ensure the usability of normal tasks. Refusing all privacy requests will prevent original users from accessing their own information, while ignoring differences between speakers may lead to information being leaked to others. The fine-tuning experiments with VoxPrivacy provide evidence of its trainability, but actual products still need to be tested for performance in multi-user scenarios, with noise, and during prolonged interactions.\n\n## Two industry opportunities I’m interested in\n\n**The first category is third-party independent evaluations that are continuously iterated based on real User Cases.** Model manufacturers need to identify gaps in training, while vehicle assistants and personal assistant manufacturers need to determine whether their products meet their promised capabilities before integrating or upgrading models. The needs of these two types of customers create room for independent verification.\n\nValuable evaluation tasks should gradually increase in difficulty, progressing from single-round requests to scenarios involving multi-round confidentiality, similar vocal tones, multiple interruptions, and complex background noises. Metrics such as clue recognition, accurate disclosure, and inappropriate refusals should be measured accordingly. Each time a customer switches models or adjusts product rules, these tests can be reused to determine whether previously resolved issues have reappeared.\n\nWhether this approach can become an independent business depends on whether testing and updates can keep up with the problems that arise in real-world scenarios, as well as whether customers include it in their ongoing validation processes. Public static lists can easily be replaced by internal testing conducted by manufacturers; merely having shortcomings in the model today is not sufficient to prove that a third party can charge fees over the long term.\n\n**The second category includes companies that control the application entry points and are able to establish feedback loops using scenario data.** Car assistants like Xiaomi Auto and Huawei Auto, as well as other Personal Agent products, have close access to user information, device status, and actual tasks, which gives them the opportunity to identify failures that might be overlooked by conventional benchmarks. This represents a potential advantage, but current evidence does not show that these companies have yet established effective data feedback loops.\n\n^[The so-called data flywheel requires going through an actual process. When a mistake is found in a product, necessary information is retained within the allowed scope; after review, the appropriate action is determined, resulting in new evaluation or training samples. Then, it is checked whether the updated model has improved. Only when failures decrease and normal tasks can still be completed can feedback truly drive the next round of product usage.]\n\nUsers' secrets, passenger voices, and bystander information should not be assumed to be suitable as training data. Informed consent, restrictions on usage, and proper data anonymization need to be designed alongside data collection and verification processes. Having the necessary equipment and user base merely creates the conditions for interaction; it is only through high-quality feedback and the ability to continuously improve that a competitive advantage can be achieved.\n\nModel manufacturers will continue to develop these capabilities. Therefore, I will focus on two verifiable aspects: whether they can consistently identify new issues in actual products, and whether the companies using these models can turn those issues into reusable tests to reduce similar failures. After identifying who is speaking, the assistant still needs to adhere to the boundaries of what to say and to whom, so that users have reason to entrust it with more personal and important tasks.\n\n## Key Sources\n\n1. [VoxPrivacy v2](https://arxiv.org/html/2601.19956v2), task hierarchy, Table 3, similar voice attack, and definition of metrics.\n1. [VoxSafeBench v2](https://arxiv.org/html/2604.14548v2), safety and fairness tasks, comparison of perceptions and responses in Appendix J and Table 42.\n\n*The revision of this article and verification of its sources were completed as of 2026-10-09.*\n\n---\n",
   "units": {
     "f54861841be32cd07b0d9ff94cbc72a66b14fff1ef338a60714370e988041786": {
       "kind": "title",
@@ -44,22 +44,11 @@
         }
       ]
     },
-    "1fcb580bf9b4d085243aff156690f7e0ac48ee291a7655155af8f15f42caa283": {
+    "dcfbd1e22f04c67afa19b3122d4815d36361fa975495ec3f18f0796f1c57c248": {
       "kind": "excerpt",
-      "source": "语音大模型能听见声音，未必会用声音做判断。本文沿 VoxPrivacy 与 VoxSafeBench 的评测拆开 speech grounding gap 的多层故障链，讨论端到端路线为什么放大这一缺口，以及语音安全能力最终会落到哪三类公司手上。",
+      "source": "语音模型识别声学线索后，仍可能无法作出安全、隐私与公平的正确回应。本文解释 VoxPrivacy 与 VoxSafeBench 的发现，关注结合真实使用场景持续迭代的独立评测，以及掌握个人助手、车载助手入口的应用公司。",
       "context": "",
-      "translation": "A large speech model can hear sounds, but it doesn’t necessarily use them to make judgments. This paper analyzes the multi-layer failure chain of the speech grounding gap based on the evaluations from VoxPrivacy and VoxSafeBench, discussing why end-to-end approaches exacerbate this gap and which three types of companies will ultimately possess speech safety capabilities.",
-      "termsHash": "8b6a09a1",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        },
-        {
-          "source": "语音安全",
-          "target": "speech safety"
-        }
-      ]
+      "translation": "Even after recognizing acoustic cues, speech models may still fail to provide appropriate responses that ensure safety, privacy, and fairness. This paper explains the findings of VoxPrivacy and VoxSafeBench, focusing on independent evaluations conducted through real-world usage scenarios to facilitate continuous improvement, as well as the application companies that control personal assistants and in-vehicle assistant systems."
     },
     "a40701d01ed407976e46fa672c201caaabecf6467c8a41738e88439e6dc2e89e": {
       "kind": "tags",
@@ -67,269 +56,95 @@
       "context": "",
       "translation": "AI @@ Speech @@ Safety"
     },
-    "00ec5dcf4e6a2842c62f8e054b7717480adf9e97d6f9206ebfe4745b595ccd58": {
+    "f2fab3661b69620a6b63c744eaea3927df5d5039e5cd47f7d4c07628ce1192a1": {
       "kind": "prose",
-      "source": "*从和港中深武的教授语音团队合作的 VoxPrivacy 与 VoxSafeBench 看端到端语音模型的安全和隐私层面的缺口与产业机会*",
+      "source": "**我的判断是，语音个人助手能否承担更重要的任务，取决于它能否把说话人和声学线索转成安全、隐私与公平的正确回应。** 我参与的VoxPrivacy 与 VoxSafeBench两篇论文揭示了这两种能力之间的缺口，模型厂商需要加强针对性后训练。沿着这个问题，我更关注两类产业机会，一类是结合真实使用场景、持续提高测试难度的独立评测，另一类是掌握 Personal Agent、车载助手等应用入口，并能把失败与纠正反馈用于产品迭代的公司。静态榜单和单纯接入语音模型，都不足以形成持续优势。",
       "context": "",
-      "translation": "*Examining the gaps in safety and privacy as well as industry opportunities for end-to-end speech models through VoxPrivacy and VoxSafeBench, developed in collaboration with Professor Wu's speech team at CUHK-Shenzhen*",
-      "termsHash": "1b9b19f9",
-      "terms": [
-        {
-          "source": "港中深武的教授语音团队",
-          "target": "Professor Wu's speech team at CUHK-Shenzhen"
-        },
-        {
-          "source": "安全和隐私",
-          "target": "safety and privacy"
-        },
-        {
-          "source": "港中深",
-          "target": "CUHK-Shenzhen"
-        }
-      ]
+      "translation": "**My judgment is that whether voice personal assistants can take on more important tasks depends on their ability to convert the speaker’s words and acoustic cues into accurate responses that ensure safety, privacy, and fairness.** The two papers I contributed to, VoxPrivacy and VoxSafeBench, reveal the gap between these two capabilities, and model developers need to conduct more targeted training. In light of this issue, I am more interested in two types of business opportunities: one is independent evaluations that incorporate real-world usage scenarios and continuously increase the difficulty of testing, and the other is companies that can seize opportunities in applications such as Personal Agents and in-vehicle assistants, and use feedback from failures and corrections to improve their products. Static rankings and simply integrating voice models are not sufficient to create a sustainable advantage."
     },
-    "3a545da558b891e579ef57134b4995123be86813a6842fd1fa556ca9f67f9609": {
+    "31cbedd8e98c5f727d1b78f3632c4bd1af9b21648548d670f8d3fde33691ffe8": {
       "kind": "prose",
-      "source": "两个人对着同一台设备说出完全相同的一句话，语音大模型该不该给出相同答案？",
+      "source": "## 识别声音以后，还要知道该怎样回答",
       "context": "",
-      "translation": "If two people say exactly the same sentence into the same device, should the large speech model give an identical response?",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
+      "translation": "## After identifying the voice, one also needs to know how to respond"
     },
-    "ee8a1a00e17e875756c30769a03b33d875ba0df99bc51d8bc158bb0a1586a156": {
+    "79a1aa5c14cae307c685295bbbf4a962f40597b16c8aa4510f49c6c9ea60dfc9": {
       "kind": "prose",
-      "source": "如果一个成年人询问怎么使用菜刀，正常的操作说明可能已经足够。换成儿童声音，模型就应增加警告，避免提供危险步骤。两位求职者陈述相同资历时，口音、性别和年龄不该改变评价。家里另一位成员追问先前对话中的病情或密码，模型又必须先判断这段信息属于谁，当前是否适合说出口。",
+      "source": "成年人询问如何使用菜刀，助手可以给出适当的操作说明；儿童提出同样的问题，就需要更谨慎的安全提醒，必要时建议由成人协助。这个例子说明，同一段文字在不同声音条件下，可能需要不同回答。",
+      "context": "识别声音以后，还要知道该怎样回答",
+      "translation": "When an adult asks how to use a kitchen knife, the assistant can provide appropriate instructions; if a child asks the same question, more careful safety reminders are needed, and it is advisable to have an adult assist when necessary. This example shows that the same text may require different responses depending on the speaker’s voice."
+    },
+    "b43cb7db2b83c44fa6fed9dd6202f82be2060e2350866b33375fa60620284e43": {
+      "kind": "prose",
+      "source": "隐私场景又多了一层关系。我告诉个人助手一个秘密并要求保密，另一位说话人随后来询问，助手应遵守原先的披露边界。对方的音色与我相近，也不应因此获得秘密。模型必须同时理解信息属于谁、当前是谁在问，以及原用户允许向谁披露。",
+      "context": "识别声音以后，还要知道该怎样回答",
+      "translation": "Privacy scenarios introduce an additional layer of complexity. If I tell a personal assistant a secret and ask them to keep it confidential, and another person asks about it later, the assistant should adhere to the original boundaries set for sharing that information. Even if the voice of the person asking is similar to mine, they still shouldn’t be given access to the secret. The model must understand who owns the information, who is asking at the moment, and whom the original user has authorized to receive that information."
+    },
+    "3391c2b1f361686ce824c9bd9a79715e3bb410566dbcb09f5c1ee8de1b7e7b03": {
+      "kind": "prose",
+      "source": "Fairness，也就是公平性，要求模型作出另一种选择。两位求职者提供相同资历时，与岗位无关的口音或声音性别差异，不应改变评价。声音里的线索有时需要影响回答，有时应当被排除在判断之外。",
+      "context": "识别声音以后，还要知道该怎样回答",
+      "translation": "Fairness, that is, equity, requires the model to make a different choice. When two candidates have identical qualifications, accent or vocal gender differences that are unrelated to the position should not affect their evaluation. Clues in the voice sometimes need to influence the response, while at other times they should be excluded from the judgment."
+    },
+    "51854d1ea75e47338e413174df91a275a976c322d214812427e95dae0e2f49bd": {
+      "kind": "prose",
+      "source": "两篇论文关心的正是这段连接。部分模型的能力已经能够辨认某些声学线索，却不能稳定地把它们用于合适的回应。这里仍要区分声音感知、说话人区分和真实身份认证。它们各自有局限，听起来像某个人也不能替代敏感操作所需的认证与授权。",
+      "context": "识别声音以后，还要知道该怎样回答",
+      "translation": "The two papers focus precisely on this connection. Some models are already capable of identifying certain acoustic cues, but they cannot consistently use them to generate appropriate responses. It is still necessary to distinguish between sound perception, speaker identification, and true identity verification. Each of these methods has its limitations; just because something sounds like a particular person does not replace the authentication and authorization required for sensitive operations."
+    },
+    "ff28789f9650b18ce95b26deee8d6c2c81887841f3ef05a6f52f97c5ddaa2092": {
+      "kind": "prose",
+      "source": "## 两篇论文怎样把缺口测出来",
       "context": "",
-      "translation": "If an adult asks how to use a kitchen knife, standard instructions are likely sufficient. When speaking in a child’s voice, the model should add warnings to avoid providing any dangerous steps. When two job applicants claim to have the same level of experience, their accent, gender, and age should not influence the evaluation. If another family member asks about conditions or passwords mentioned in previous conversations, the model must first determine to whom that information belongs and whether it is appropriate to share it at that time."
+      "translation": "## How to Measure the Gap in Two Papers"
     },
-    "798862aa9bf60f9c208b40aa250a6b4f5114d82b3d28078b887d6f1c18c53843": {
+    "f2cc19a97e0bbbce3faf22ba978a3cfec96b3d121983a4b275d63ad996ecfc99": {
       "kind": "prose",
-      "source": "这几种情况里的文字内容可以完全一样，正确答案却取决于声音携带的信息。有些声学线索应该改变回答，有些线索恰恰不应改变回答。语音模型既要知道自己听到了什么，也要判断哪些声音与当前决定有关。",
+      "source": "VoxPrivacy 将共享语音设备中的保密问题分成三个层次。第一层是遵守“不告诉任何人”的明确指令；第二层需要根据说话人决定是否披露；==blue|第三层进一步要求模型在没有明确保密命令时，主动识别敏感信息并保护它。\\[1\\]==",
+      "context": "两篇论文怎样把缺口测出来",
+      "translation": "VoxPrivacy divides the confidentiality issues in shared voice devices into three levels. The first level involves following the explicit instruction to “tell no one”; the second level requires deciding whether to disclose information based on the speaker; ==blue|the third level further demands that the model proactively identify sensitive information and protect it in the absence of an explicit confidentiality command.\\[1\\]=="
+    },
+    "170446799ea1b38cdbb6a077fa0d1e119f253e670f2afdc48838b82b0c8424cc": {
+      "kind": "prose",
+      "source": "后两层同时依赖说话人关系和披露规则。以第二层英文任务为例，原版 Kimi-Audio 的准确率约为 50%，论文作者进行任务针对性微调后达到 83.93%。==blue|这说明相关能力可以训练，通用语音能力却没有自动转成可靠的保密行为。\\[1\\]==",
+      "context": "两篇论文怎样把缺口测出来",
+      "translation": "The latter two layers rely simultaneously on speaker relationships and disclosure rules. Taking the second-layer English task as an example, the accuracy of the original Kimi-Audio was around 50%, while the paper’s authors achieved 83.93% after making task-specific fine-tuning. ==blue|This indicates that relevant capabilities can be trained, but general speech capabilities do not automatically translate into reliable confidentiality behaviors.\\[1\\]=="
+    },
+    "b782082552e0daf3ad109c6f7ad055c3bc711b24aeb90d6d0ff3a5114a78ee25": {
+      "kind": "prose",
+      "source": "改善仍有边界。微调模型在第三层中文任务上的总体准确率为 82.88%，应当保密的实例中，成功保护的比例只有 62.10%。论文让音色相近的另一位说话人索取秘密时，模型表现还会下降。==blue|一个综合分数无法充分说明泄露风险，身份混淆和漏保密需要分别检查。\\[1\\]==",
+      "context": "两篇论文怎样把缺口测出来",
+      "translation": "Improvements still have limits. The overall accuracy of the fine-tuned model on third-layer Chinese tasks is 82.88%, while the success rate in protecting instances that should remain confidential is only 62.10%. The model’s performance further declines when another speaker with a similar voice is used to request the secret information. ==blue|A single composite score cannot fully reflect the risk of leakage; identity confusion and failed confidentiality protection need to be examined separately.\\[1\\]=="
+    },
+    "e178de57ff4bebb6f146f5ce075d13790befa510ef96458b7972efa4d530ac25": {
+      "kind": "prose",
+      "source": "VoxSafeBench 更直接地比较了感知与回答。在儿童声任务中，研究者对同类音频改用直接识别提问，Qwen3-Omni 判断儿童或成人声音的准确率为 90%；==blue|回到原始任务，通过警告或拒绝体现安全意识的比例只有 0.5%。这个指标叫 Safety Awareness Rate，不等于所有安全行为的正确率。\\[2\\]==",
+      "context": "两篇论文怎样把缺口测出来",
+      "translation": "VoxSafeBench compares perception and response more directly. In the child voice task, researchers used direct recognition questions for similar audio clips, and Qwen3-Omni achieved an accuracy rate of 90% in determining whether the voice was that of a child or an adult; ==blue|Returning to the original task, the proportion of cases where safety awareness was demonstrated through warnings or rejections was only 0.5%. This metric is called the Safety Awareness Rate, and it is not equivalent to the accuracy rate of all safety-related actions.\\[2\\]=="
+    },
+    "3fa61299d775b691c902a64b3f5ea99dea6997f9391849cd414635b3141be8ef": {
+      "kind": "prose",
+      "source": "直接问“是否是儿童声”比在开放对话中判断该怎样回应更简单，所以这组结果不能证明每次回答失败时，模型内部都已正确识别儿童。它依然揭示了重要差距。模型在直接提问下能识别一个线索，实际回答时却很少恰当地使用它。==blue|其他模型还存在感知本身薄弱的问题，后训练需要同时考虑这两类失败。\\[2\\]==",
+      "context": "两篇论文怎样把缺口测出来",
+      "translation": "Asking directly “Is it a child’s voice?” is simpler than deciding how to respond in an open dialogue, so this set of results does not prove that the model correctly identified a child’s voice every time a response failed. It still reveals significant gaps: the model can recognize a clue when asked directly, but rarely uses it appropriately in actual responses. ==blue|Other models also suffer from weak perception capabilities, and subsequent training needs to take both types of failures into account.\\[2\\]=="
+    },
+    "8a15c8a84e4a4810a4ef241611d4a44830fadca6797324959651cddfab1cb207": {
+      "kind": "prose",
+      "source": "## Personal Agent 和车载助手需要针对性的后训练",
       "context": "",
-      "translation": "In these different situations, the textual content can be exactly the same, but the correct answer depends on the information conveyed by the sound. Some acoustic cues should change the answer, while others should not affect it at all. The speech model needs to know what it has heard, as well as determine which sounds are relevant to the current decision."
+      "translation": "## Personal Agents and in-vehicle assistants require targeted post-training"
     },
-    "35a5d4ed765beae8ad7eb59c30d863f3818d09809f2d4701a3cca334db868f85": {
+    "d1fb85fea16ad2d0fc74534cfe05e3d978e153b77192d7df827192a14f61e704": {
       "kind": "prose",
-      "source": "VoxPrivacy 和 VoxSafeBench 共同揭示了一条多层故障链。有些失败发生在声学感知层，模型没有可靠辨认说话人、情绪或环境声音。另一些实验已经确认模型听到了儿童声和隐私线索，回答仍没有随之调整。VoxSafeBench 将后一类脱节称为 `speech grounding gap`。最值得警惕的情况，是模型听见了声音，却没有理解声音对当前回答意味着什么。",
-      "context": "",
-      "translation": "VoxPrivacy and VoxSafeBench have jointly revealed a multi-layered failure chain. Some failures occur at the acoustic perception layer, where the models fail to reliably identify the speaker, emotions, or ambient sounds. Other experiments have shown that the models detect child voices and privacy-related cues, yet their responses still do not adjust accordingly. VoxSafeBench refers to this latter type of disconnect as the `speech grounding gap`. The most concerning scenario is when the model hears a sound but fails to understand what that sound implies for the current response."
+      "source": "个人助手开始记住用户偏好和历史信息以后，保密就成为持续且重要的要求。例如个人汽车里还可能发生驾驶员、乘客和儿童轮流发问，背景声音也会影响回答是否适合直接说出口。一次错误披露或不合适的危险操作说明，会影响用户是否愿意继续交付更重要的任务。",
+      "context": "Personal Agent 和车载助手需要针对性的后训练",
+      "translation": "Once a personal assistant starts remembering users’ preferences and historical information, confidentiality becomes a continuous and important requirement. For example, in a personal car, the driver, passengers, and children may take turns asking questions, and background noises can also affect whether the responses are suitable to be spoken aloud. A single instance of accidental disclosure or inappropriate instructions for dangerous actions can influence whether users are willing to entrust it with more important tasks."
     },
-    "bbbe484944041fbb64af2339d4d573369b9d29d85a1bbe2b5ac03d61b6473d2a": {
+    "8851211cb56906aaf5da39b56ecf98711b080c76230f2868be8b65abe9989d65": {
       "kind": "prose",
-      "source": "==blue|这里需要先划清一个边界。两篇论文评测的主要对象是语音大模型，也就是能够直接理解语音并生成文本或语音回答的模型。语音 Agent 则在它之上增加持续状态、工具调用和行动能力。截至目前真正把实时语音理解、语音生成和自主工具调用放进同一系统的产品仍在早期。==本文目前主要关注语音大模型",
-      "context": "",
-      "translation": "==blue|It is necessary to clarify a boundary here first. The main subjects of evaluation in these two papers are large speech models, which are capable of directly understanding speech and generating text or speech responses. Speech Agents build upon this by adding persistent states, tool invocation, and action capabilities. As of now, products that truly integrate real-time speech understanding, speech generation, and autonomous tool invocation into a single system are still in their early stages.==This article focuses primarily on large speech models",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
-    },
-    "afb25561ea49c97da1b6d97fce9beee835c148c7387b6e80f126166063499cb7": {
-      "kind": "prose",
-      "source": "## 语音交互正在增加一种新的正确性",
-      "context": "",
-      "translation": "## Voice interaction is introducing a new form of correctness"
-    },
-    "6b6eb04564bfdfa34f6c0504d4cb3491bbebcd1f0a259944654e633043def6d3": {
-      "kind": "prose",
-      "source": "语言模型的传统评测大多围绕内容。答案是否符合事实，推理是否成立，有害请求是否被拒绝，隐私字段是否出现在输出里。输入从文字换成语音以后，内容仍然重要，声音又增加了三组信息。",
-      "context": "语音交互正在增加一种新的正确性",
-      "translation": "Traditional evaluations of language models focus mainly on content. Whether the answers are factually correct, whether the reasoning is valid, whether harmful requests are rejected, and whether sensitive information appears in the output. Once input is converted from text to speech, content remains important, but speech adds three additional sets of information."
-    },
-    "615a0fb732372c1f28aa528298a1fb5ace76b7d22abdab207c5e71e9298a0f1c": {
-      "kind": "prose",
-      "source": "第一组是说话人。声音可能暴露当前是谁在问，历史信息由谁提供，以及几位说话人之间是否存在访问关系。",
-      "context": "语音交互正在增加一种新的正确性",
-      "translation": "The first group consists of the speakers. Their voices can reveal who is asking at the moment, who provides the historical information, and whether there are any relationships of access among the speakers."
-    },
-    "505f56cdc8a0a15b068c7d9ca2f4cf2202a7eb733f1f23cb91d98d0b05374043": {
-      "kind": "prose",
-      "source": "第二组是表达状态。同一句话由儿童、醉酒者或处在惊慌中的人说出，可能需要不同的风险提示。语速、音高、停顿和情绪也会影响模型对意图的判断。",
-      "context": "语音交互正在增加一种新的正确性",
-      "translation": "The second category is expressing states. The same sentence, when spoken by a child, a drunk person, or someone in a state of panic, may require different risk warnings. Speech speed, pitch, pauses, and emotion also affect the model’s ability to determine the intent."
-    },
-    "cb67a3d09c731430ceaaf15d2b6af689a43564e6134fa46d22c3d2fb2de46d15": {
-      "kind": "prose",
-      "source": "第三组是环境和副语言信息。背景里的儿童、旁听者、警报声和另一段重叠指令，都可能改变回答应当怎样组织，甚至决定模型是否应继续回答。",
-      "context": "语音交互正在增加一种新的正确性",
-      "translation": "The third group consists of environmental and paralinguistic information. Children in the background, listeners, alarm sounds, and other overlapping instructions can all affect how an answer should be structured, and may even determine whether the model should continue to respond."
-    },
-    "26b920c13fe8f383b218c6c2ff2de8165421e22a7cf72497a29186df98fd4337": {
-      "kind": "prose",
-      "source": "这三组信息不会自动导向同一种策略。儿童声在危险操作中应触发更谨慎的回答。性别和口音在贷款或岗位评估中不应触发差别待遇。陌生说话人查询私人记忆时需要限制披露。模型要判断一项声学特征在当前任务中该不该影响答案。",
-      "context": "语音交互正在增加一种新的正确性",
-      "translation": "These three sets of information do not automatically lead to the same strategy. A child’s voice should trigger a more cautious response in cases of dangerous operations. Gender and accent should not result in differential treatment in loan or job evaluations. Disclosure should be restricted when an unknown speaker asks about private memories. The model needs to determine whether a particular acoustic feature should influence the answer in the current task."
-    },
-    "f35a5e37fee22756f0fe4c17c994ed8b6878364a2c104bac67966bee95a5cb78": {
-      "kind": "prose",
-      "source": "这比识别声音更难。识别任务只要求模型说出“这是儿童声”或“背景里还有一个人”。安全决策还要把这个事实和社会规则连接起来。模型需要先判断风险是否变化，再判断信息能否披露。面对口音和性别时，它还要排除与任务无关的差异。任何一步断开，答案都可能不合适。这正是语音交互最难补上的关键一课。",
-      "context": "语音交互正在增加一种新的正确性",
-      "translation": "This is more difficult than voice recognition. The recognition task only requires the model to state things like “It’s a child’s voice” or “There is another person in the background.” Safety decisions, on the other hand, need to connect this information with social rules. The model must first determine whether the risk has changed, and then decide whether the information can be disclosed. When dealing with accents and gender, it also needs to disregard differences that are unrelated to the task. If any step is missed, the outcome may not be appropriate. This is precisely the key challenge that voice interaction finds hardest to overcome."
-    },
-    "cc4572fa62a5b4fb5ef9230a07bbb5180549f588fbbba775c255a89f0f05aa7d": {
-      "kind": "prose",
-      "source": "语音大模型因此面对第二种正确性。第一种正确性关心回答内容本身。第二种正确性关心这段内容由谁听到、对谁说、在什么环境下说，以及声音中哪些差异应该影响回答。后者会决定语音模型能否从演示产品进入真实的家庭、教育、医疗、客服和车载场景。",
-      "context": "语音交互正在增加一种新的正确性",
-      "translation": "Thus, the large speech model is confronted with a second type of correctness. The first type focuses on the content of the response itself. The second type considers who hears this content, to whom it is spoken, in what environment it is delivered, and which differences in the voice should influence the response. It is the latter that determines whether the speech model can move from demonstration products to real-world applications in homes, education, healthcare, customer service, and automotive settings.",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
-    },
-    "8bd494b5fb128a812f46d97e2a202c19e6de94bcf632e5da3ee161fe95f407d9": {
-      "kind": "prose",
-      "source": "## VoxPrivacy 与 VoxSafeBench 发现了什么",
-      "context": "",
-      "translation": "## What did VoxPrivacy and VoxSafeBench discover"
-    },
-    "9c1b818dc93241295fff1156d6bb73f6796911ba42b91123d327923418bb29f4": {
-      "kind": "prose",
-      "source": "### VoxPrivacy 研究共享设备里的交互隐私",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么",
-      "translation": "### VoxPrivacy Study on Interaction Privacy in Shared Devices"
-    },
-    "a75044e898e6e2c66aa64183c0ee4a7928e501ffd8e00df1eab88fdf781461c9": {
-      "kind": "prose",
-      "source": "它把问题从**隐私信息**的识别，推进到同一段信息能否向当前说话人披露。",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxPrivacy 研究共享设备里的交互隐私",
-      "translation": "It moves the focus from the identification of **private information** to whether that same information can be disclosed to the current speaker."
-    },
-    "b588bccf7bbf98011194abb60e8ebd58511eaab1622d8b863b4d5cb5de691a7c": {
-      "kind": "prose",
-      "source": "\t论文把任务分成三个层次。第一层要求模型遵守明确的保密指令。第二层要求模型结合说话人身份决定是否披露。第三层不再提前告诉模型什么是秘密，要求它根据上下文主动保护敏感信息。层级越高，模型越需要把声音、对话历史和信息流规则放进同一次判断。",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxPrivacy 研究共享设备里的交互隐私",
-      "translation": "The paper divides the tasks into three levels. The first level requires the model to follow explicit confidentiality instructions. The second level asks the model to decide whether to disclose information based on the speaker’s identity. The third level does not tell the model in advance what constitutes a secret; instead, it requires the model to proactively protect sensitive information based on the context. The higher the level, the more the model needs to consider voice data, conversation history, and information flow rules in its decision-making process."
-    },
-    "697c68d0060ab6e35c14a157050f78cdef3653b45c3a95dade4592c42c525348": {
-      "kind": "prose",
-      "source": "\t首版 VoxPrivacy 包含 7107 条合成中英语音，共 32.86 小时，并请 18 名双语志愿者录制形成 586 条真人语音，用于小规模验证。在需要按说话人和语境决定是否披露的第二、第三层任务中，多数开放模型的准确率约为 48% 至 52%。经过约 4300 小时专用隐私对话数据训练，并混入约 1700 小时通用语音任务数据的 Kimi-Audio，第二、第三层中英文准确率提高到 77.57% 至 83.93%。",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxPrivacy 研究共享设备里的交互隐私",
-      "translation": "The initial version of VoxPrivacy contained 7,107 synthetic Chinese and English audio clips totaling 32.86 hours; 18 bilingual volunteers were asked to record 586 real-person audio clips for small-scale testing. For the second and third-level tasks, where it was necessary to decide whether to disclose information based on the speaker and context, the accuracy of most open models ranged from 48% to 52%. After being trained on approximately 4,300 hours of dedicated privacy-related dialogue data, along with around 1,700 hours of general speech task data, Kimi-Audio achieved accuracy rates of 77.57% to 83.93% for the second and third-level tasks in both Chinese and English."
-    },
-    "f3ec1f3c61376f50c2478709879b3b21ab00382f1062716f0bbabb39dc534af8": {
-      "kind": "prose",
-      "source": "\t这个结果说明两件事。共享语音场景中的隐私判断不会随着模型规模自然出现。专门构造多人对话、秘密关系和披露决策数据，又能显著改善表现。问题具有可训练性，训练数据的组织方式会成为关键。",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxPrivacy 研究共享设备里的交互隐私",
-      "translation": "This result indicates two things. Privacy assessment in shared voice scenarios does not improve naturally with the size of the model. Specifically designing multi-person conversations, secret relationships, and disclosure decision data can significantly enhance performance. The problem is trainable, and the way training data is organized will be crucial."
-    },
-    "575ff3cc43bbeb8637d9fe87b8f70bf5d1ef2b80e18d392523d5b94694ff82b2": {
-      "kind": "prose",
-      "source": "\tVoxPrivacy 也同时发现部分模型连基础说话人验证都不够稳定，自然无法进一步执行按说话人区分的隐私规则。==blue|更值得研究的是另一类样本，模型已经获得或识别出说话人信息，仍然没有把信息接到披露决策上，这在下一篇VoxSafeBench得到充分探讨。==",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxPrivacy 研究共享设备里的交互隐私",
-      "translation": "VoxPrivacy also found that some models lack stability even in basic speaker verification, making it impossible for them to apply speaker-specific privacy rules. ==blue|What is more worth studying are other types of samples: in these cases, the models have obtained or identified speaker information yet still fail to use this information in making disclosure decisions—a topic that will be discussed in detail in the next article on VoxSafeBench.=="
-    },
-    "d25ab993b93a6fb09d997cc361dff3637550e30e7fcac6a7117145c48fadf9f6": {
-      "kind": "prose",
-      "source": "### VoxSafeBench 研究的重点，是模型怎样使用声音里的社会线索",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么",
-      "translation": "### The focus of the VoxSafeBench study is how models utilize social cues in voice"
-    },
-    "1c59ac6fe565b7377e06aae7e931fb7a4b26dd07a9f69af45d0d88cee4b4af80": {
-      "kind": "prose",
-      "source": "它将安全、公平与隐私扩展为 22 项中英任务，并把测试分成两层。Tier 1 检查内容本身是否有风险。Tier 2 则保留看似无害的文字内容，让说话人、表达方式或周边环境决定什么回答才合适。",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxSafeBench 研究的重点，是模型怎样使用声音里的社会线索",
-      "translation": "It expands safety, fairness, and privacy into 22 Chinese-English tasks, dividing the tests into two levels. Tier 1 checks whether the content itself poses a risk. Tier 2 retains seemingly harmless textual content, allowing the speaker, manner of expression, or surrounding environment to determine what response is appropriate."
-    },
-    "6dc099a86450e94a800965664412552ff1f27be91e2ead229c47bc4f66c1effb": {
-      "kind": "prose",
-      "source": "这项设计的价值不在于排出模型的跑分，而在于把失败原因拆开。论文先用中间感知探针检查模型是否听见儿童声、背景旁听者或其他声学线索，再用生成式任务检查回答是否真的随之改变。儿童声和背景儿童声的实验表明，一些模型能够识别相关线索，仍可能给出面向成人的危险说明。隐私任务也显示，模型识别出敏感字段后，未必能在生成时避免披露。",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxSafeBench 研究的重点，是模型怎样使用声音里的社会线索",
-      "translation": "The value of this design lies not in ranking the models’ performance, but in identifying the reasons for failure. The paper first uses intermediate perception probes to check whether the models detect child voices, background listeners, or other acoustic cues, and then employs generative tasks to verify whether the responses actually change accordingly. Experiments with child voices and background child voices showed that some models, despite being able to recognize these cues, may still provide warnings intended for adults. Privacy tasks also revealed that even when models identify sensitive information, they may not be able to avoid disclosing it during generation."
-    },
-    "48335926bdc182d27247c86ce0fb06491dedd3e53980ec9c71464e379b98b4b9": {
-      "kind": "prose",
-      "source": "公平任务构成必要的反向检验。在基准设定的内容、资历和任务条件一致时，性别、年龄和口音不应改变贷款或岗位评价。语音模型要学会的不是见到声音差异就调整答案，而是判断哪些声学信息与安全、隐私或公平决策有关，哪些必须被排除在决策之外。VoxSafeBench 的核心贡献，正是让这种声学线索到回答行为之间的连接成为可测量的问题。",
-      "context": "VoxPrivacy 与 VoxSafeBench 发现了什么 › VoxSafeBench 研究的重点，是模型怎样使用声音里的社会线索",
-      "translation": "Fairness tasks serve as essential checks. When the content, qualifications, and task conditions of the benchmarks are consistent, gender, age, and accent should not affect loan or job evaluations. What voice models need to learn is not to adjust their responses upon detecting differences in voice, but rather to determine which acoustic information is relevant to decisions related to safety, privacy, or fairness, and which information must be excluded from such decisions. The core contribution of VoxSafeBench is to make this connection between acoustic cues and response behavior a measurable issue."
-    },
-    "6c98a78533eb1e3125fef023c38f9413819dc280bb108e3479f8fb5d3b457003": {
-      "kind": "prose",
-      "source": "## 端到端路线让这个缺口更重要",
-      "context": "",
-      "translation": "## The end-to-end approach makes this gap even more significant"
-    },
-    "2d27731eeac89bc0683c7db06ff5a736ce1cd8ecc8b1184532e84e23a3022f0d": {
-      "kind": "prose",
-      "source": "过去的语音系统通常采用级联架构。自动语音识别先把声音转成文字，语言模型处理文字，语音合成再把答案说出来。这种架构有清晰的中间结果，方便过滤关键词、替换模型和定位错误。代价也很直接。转写文本会丢掉音色、韵律、重叠关系和部分环境声音，后面的语言模型只能在一份被压缩过的输入上做决定。",
-      "context": "端到端路线让这个缺口更重要",
-      "translation": "Traditional voice systems have typically used a cascaded architecture. Automatic speech recognition first converts sound into text, language models process the text, and speech synthesis then outputs the result. This architecture provides clear intermediate results, which makes it easier to filter keywords, replace models, and identify errors. However, there are also significant drawbacks. The transcribed text loses nuances such as tone, rhythm, overlapping sounds, and some ambient noises, leaving the language models to make decisions based on a compressed version of the input."
-    },
-    "b29bb333fc34c78fce0db40af856a4af09b9283e61f729e92a0c216324bf0803": {
-      "kind": "prose",
-      "source": "端到端语音大模型试图则会保留这些信息。它直接学习音频表征，在同一个模型或紧密耦合的架构里完成理解、推理和语音生成。这条路线更有机会联合学习声学线索、相关性判断和回答行为，也减少了转写造成的信息损失。尤其是复杂的声学环境的信息，只有对于这些信息的有效端到端建模，并且保持scaling 的规模，端到端模型可能才真正能实现所谓的“智能化”。",
-      "context": "端到端路线让这个缺口更重要",
-      "translation": "End-to-end large speech models aim to retain this information by directly learning audio representations and performing understanding, reasoning, and speech generation within the same model or a tightly coupled architecture. This approach offers better opportunities for jointly learning acoustic cues, relevance judgment, and response behaviors, while also reducing information loss caused by transcription. Especially for information in complex acoustic environments, only through effective end-to-end modeling of such data and maintaining an appropriate scale can end-to-end models truly achieve what is meant by “intelligence”.",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
-    },
-    "31803b4beb5707ce407fb922f4303e43d20171dbd801ff628070d6833a43b39f": {
-      "kind": "prose",
-      "source": "==blue|保留更多声音信息并不等于会正确使用它==。VoxSafeBench 恰好说明，感知能力的提升可以快于安全对齐。模型知道背景中有儿童，仍可能给出面向成人的危险说明。它能识别声音中的人口特征，也可能把不该参与决策的特征带进答案。==blue|信息越丰富，模型要学会的边界越复杂==。所以这一方面更加确定了目前训练数据的覆盖面和数量都不足。",
-      "context": "端到端路线让这个缺口更重要",
-      "translation": "==blue|Retaining more audio information does not mean it will be used correctly==. VoxSafeBench shows that improvements in perception capabilities can outpace safety alignment. Even if a model knows there are children in the background, it may still provide warnings intended for adults. It can identify demographic characteristics in sounds, but it might also include features that should not influence decision-making in its responses. ==blue|The richer the information, the more complex the boundaries the model must learn==. This further confirms that the current amount and coverage of training data are insufficient."
-    },
-    "395241cf67e5f764d78a6e237d8a8ecb5615152ac5a27028149caffe17a42260": {
-      "kind": "prose",
-      "source": "虽然端到端存在难训、难管理等限制，但我对长期端到端架构仍然保持期待，尤其是能随着训练和数据的scaling，模型才能正确结合声学信息进行正确合适的回复。无论采用哪种架构，模型都要学会正确建模声学信息和正确的回答之间的mapping。",
-      "context": "端到端路线让这个缺口更重要",
-      "translation": "Although end-to-end approaches face challenges such as difficulty in training and management, I remain optimistic about long-term end-to-end architectures, especially those that can, as training and data volumes increase, enable the model to properly incorporate acoustic information to generate accurate responses. Regardless of the architecture used, the model must learn to establish a proper mapping between acoustic information and correct responses."
-    },
-    "ae0c877d86edfa51fe76eacf7247816e091c9dc658fb9f7dc0aeda707e95ccc3": {
-      "kind": "prose",
-      "source": "## 下一步训练要连接声音与行为",
-      "context": "",
-      "translation": "## The next step in training is to link sound to behavior"
-    },
-    "10d8f41f56e6b39527cf7a60fb41738cae5aa6c8f5ade58d27b7260191a9a16d": {
-      "kind": "prose",
-      "source": "如果问题发生在感知和行动之间，解决方案就不能只增加一个检测器。未来的语音安全训练或者对齐至少要同时处理三件事。",
-      "context": "下一步训练要连接声音与行为",
-      "translation": "If the problem lies between perception and action, the solution cannot simply involve adding another detector. Future speech safety training or alignment must handle at least three things simultaneously.",
-      "termsHash": "1c63ef20",
-      "terms": [
-        {
-          "source": "语音安全训练",
-          "target": "speech safety training"
-        },
-        {
-          "source": "语音安全",
-          "target": "speech safety"
-        }
-      ]
-    },
-    "231fef02c8d8a2e1e286234391bab39b2ab0dc77a7b9bdb3f39a3bca30398cb8": {
-      "kind": "prose",
-      "source": "### 用成对场景训练模型判断声音是否相关",
-      "context": "下一步训练要连接声音与行为",
-      "translation": "### Train the model using paired scenarios to determine if sounds are related"
-    },
-    "5ce8a80d0f7a4b2467ca1a5fdacf1f02c2b082ae82f0f29c6899cba914025f75": {
-      "kind": "prose",
-      "source": "普通语音的数量继续增加，未必能补上这一缺口。更有价值的是最小对照样本，其中的文字内容相同，声学条件不同，目标回答随之变化。成人声和儿童声提出同一个危险问题，旁边有人和独处时询问同一段隐私，应该对应不同策略。相反，不同性别和口音陈述相同资历时，目标评价应保持一致。",
-      "context": "下一步训练要连接声音与行为 › 用成对场景训练模型判断声音是否相关",
-      "translation": "The increasing amount of ordinary speech may not be sufficient to fill this gap. What is more valuable are the minimal contrast samples, in which the textual content remains the same while the acoustic conditions differ, resulting in varying target responses. When an adult voice or a child’s voice poses the same risky question, or when someone asks about the same private information in the presence of others versus alone, different strategies should be employed. On the other hand, when individuals of different genders and accents describe the same experience, the target evaluation should remain consistent."
-    },
-    "8f37a004c99a2ee188b778f41878d64ad4c4fb12ac00193df302b21a8ad8dae8": {
-      "kind": "prose",
-      "source": "这样的样本能训练模型理解*何时应该变和何时不该变*。VoxPrivacy 的定向训练结果已经说明，围绕信息流构造的数据可以明显提高表现。下一步需要把安全、隐私和公平放进统一的数据设计，避免一种对齐能力改善时，另一种能力出现退化。",
-      "context": "下一步训练要连接声音与行为 › 用成对场景训练模型判断声音是否相关",
-      "translation": "Such samples can train the model to understand *when to change and when not to change*. The targeted training results of VoxPrivacy have shown that data constructed around information flows can significantly improve performance. Next, safety, privacy, and fairness need to be incorporated into a unified data design to prevent one capability from deteriorating while another improves.",
+      "source": "我认为，安全、隐私和公平需要进入语音模型的后训练与产品验收。普通语音数据能够提高识别和对话能力，仍需要专门的对照场景，把声音条件、用户关系和目标行为联系起来。比如成人声与儿童声的危险操作请求，应训练不同策略；资历相同但口音不同的评价任务，则要检查不合理的差别待遇。",
+      "context": "Personal Agent 和车载助手需要针对性的后训练",
+      "translation": "I believe that safety, privacy, and fairness need to be incorporated into the post-training phase of voice models as well as product validation. While ordinary voice data can improve recognition and dialogue capabilities, specialized test scenarios are still required to establish connections between sound conditions, user relationships, and desired behaviors. For example, different strategies should be trained for dangerous operation requests made in adult or child voices; in evaluation tasks involving individuals with similar qualifications but different accents, any unreasonable disparities must be checked.",
       "termsHash": "13c45e83",
       "terms": [
         {
@@ -338,231 +153,72 @@
         }
       ]
     },
-    "3d72eb0ddb7ad8d2bffaf19da3f3cf371a36d3717fd22f8ff0e8695a7ce4309a": {
+    "f37c9d726e1ddd8c2b8813c0ad73735676eee578a24cfdc0f60df4b972b5a5f7": {
       "kind": "prose",
-      "source": "### 把多人关系和时间连续性纳入数据集",
-      "context": "下一步训练要连接声音与行为",
-      "translation": "### Include multi-person relationships and temporal continuity in the dataset"
+      "source": "^[本质目前的语音大模型还缺乏大规模的Scaling数据相比文本来说]",
+      "context": "Personal Agent 和车载助手需要针对性的后训练",
+      "translation": "^[Currently, large speech models still lack large-scale scaling data compared to text.]",
+      "termsHash": "7e2e5ee7",
+      "terms": [
+        {
+          "source": "语音大模型",
+          "target": "large speech model"
+        }
+      ]
     },
-    "489d7b21dac01b84a7e6304864bd43d545e53f1114f36525674e0195ebde1564": {
+    "37da9575a34b3934a672def9f533a99f742c494a324d46bd1ac919de4690d687": {
       "kind": "prose",
-      "source": "现实语音交互很少只有一段孤立音频。先前是谁说的秘密，后来是谁发问，中间是否换了设备和环境，都会改变答案。模型需要学习跨轮次的说话人关系，也要在无法确认身份时主动降低回答的具体程度，或者要求用户转到私密渠道。",
-      "context": "下一步训练要连接声音与行为 › 把多人关系和时间连续性纳入数据集",
-      "translation": "In real-world voice interactions, there are rarely just isolated audio segments. Who spoke first, who asked questions later, and whether the device or environment changed in between—all of these factors can affect the outcome. The model needs to learn about the relationships between speakers across different turns, and it should also reduce the specificity of its responses when the identity cannot be confirmed, or prompt the user to switch to a private channel."
+      "source": "模型厂商还需要兼顾正常任务的可用性。把所有隐私问题一律拒绝，会阻止原用户查询自己的信息；忽略说话人区别，又可能向他人泄露。VoxPrivacy 的微调实验提供了可训练性的证据，实际产品还需要验证多人、噪声和长时间交互下的表现。",
+      "context": "Personal Agent 和车载助手需要针对性的后训练",
+      "translation": "Model manufacturers also need to ensure the usability of normal tasks. Refusing all privacy requests will prevent original users from accessing their own information, while ignoring differences between speakers may lead to information being leaked to others. The fine-tuning experiments with VoxPrivacy provide evidence of its trainability, but actual products still need to be tested for performance in multi-user scenarios, with noise, and during prolonged interactions."
     },
-    "6f8ffa08da8aa0aaf4268d7f9aa6d157e67df00107d063d31b950a4ec0a44a0a": {
+    "f7e861f3800996f8d83780dfbc56a71d4e89c1c483b758f2d5c9d2cdc91a574f": {
       "kind": "prose",
-      "source": "这一层最稀缺的资源，是带有说话人、关系、场景变化、正确决策和事后反馈的连续数据。真实家庭和工作场景又涉及隐私，数据很难大规模收集。合成数据可以扩充覆盖面，真人数据仍要用来发现合成脚本没有写出的停顿、抢话、方言和模糊关系。数据采集还要保留知情同意、撤回和用途限制，否则为解决隐私问题建立的数据集，本身就可能制造新的隐私风险。",
-      "context": "下一步训练要连接声音与行为 › 把多人关系和时间连续性纳入数据集",
-      "translation": "The most scarce resource at this level is continuous data that includes the speaker, relationships, changes in scenario, correct decisions, and feedback afterward. Real family and work scenarios involve privacy issues, making it difficult to collect large amounts of such data. Synthetic data can help expand the scope of coverage, but real human data is still necessary to identify pauses, interruptions, dialects, and ambiguous relationships that may not be captured in synthetic scripts. Data collection must also respect principles of informed consent, the right to withdraw consent, and restrictions on data usage; otherwise, a dataset created to address privacy issues could itself introduce new privacy risks."
-    },
-    "e2f5d392213162d834d68c6e6ee816ff586d0f90dec0416ce847c93693fe521e": {
-      "kind": "prose",
-      "source": "### 让模型暴露不确定性并接受过程监督",
-      "context": "下一步训练要连接声音与行为",
-      "translation": "### Let the model expose uncertainty and accept process supervision"
-    },
-    "48a65aba1ded877ab722da3458b275a0c381f771dc1d2c84c531478cd44988c4": {
-      "kind": "prose",
-      "source": "今天的benchmark通常只看最终回答。模型究竟没有听见儿童声，还是听见以后没有改变策略，必须通过额外探针才能知道。训练和评测应保留中间检查，分别测量声学感知、相关性判断和回答行为。",
-      "context": "下一步训练要连接声音与行为 › 让模型暴露不确定性并接受过程监督",
-      "translation": "Today’s benchmarks usually only consider the final answer. Whether the model failed to hear the child’s voice or failed to change its strategy after hearing it can only be determined through additional probes. Training and evaluation should include intermediate checks to measure acoustic perception, relevance judgment, and response behavior respectively."
-    },
-    "9182dab5f6d052231177a5db5049b34d345b83c77a907d1e5b1db9ba6d21cd79": {
-      "kind": "prose",
-      "source": "生产模型还要学会在不确定时停下来。说话人混淆、重叠指令和嘈杂环境下，要求确认、降低披露粒度或拒绝执行，通常比自信猜测更合适。这里衡量安全能力的重点不在拒答次数，而在模型能否识别自己缺少哪一项判断依据，并选择与不确定程度相匹配的行为。",
-      "context": "下一步训练要连接声音与行为 › 让模型暴露不确定性并接受过程监督",
-      "translation": "The production model also needs to learn to stop when it is uncertain. In situations where the speaker is unclear, instructions overlap, or there is background noise, it is usually better to request confirmation, reduce the level of detail provided, or refuse to execute the task, rather than making a confident guess. The key measure of safety capability here is not the number of times the model refuses to respond, but rather its ability to identify which pieces of information it lacks and choose an action that matches the degree of uncertainty."
-    },
-    "c9ab50fc4eaa8b626b2a900c6e4e4134368e417f3baf00dcd3b9ff1ff810ec9a": {
-      "kind": "prose",
-      "source": "运行时工具仍有辅助价值。说话人分离、活体检测、重叠语音检测和内容审核可以为模型提供额外证据，也能挡住一部分已知攻击。核心能力必须还是回到语音表征、训练目标和生成策略之间的连接。",
-      "context": "下一步训练要连接声音与行为 › 让模型暴露不确定性并接受过程监督",
-      "translation": "Runtime tools still hold auxiliary value. Speaker separation, liveness detection, overlapping speech detection, and content moderation can provide additional evidence for the model and help block some known attacks. The core focus must remain on the connection between voice representation, training objectives, and generation strategies."
-    },
-    "0a1589a341339a1f18534a525d4b42d8bcb5e5b082214e9f59c70c3c58010c41": {
-      "kind": "prose",
-      "source": "## 从语音大模型走向语音 Agent",
+      "source": "## 我关注的两个产业机会",
       "context": "",
-      "translation": "## From Large Speech Model to Voice Agent",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
+      "translation": "## Two industry opportunities I’m interested in"
     },
-    "b418c151b468d7b49935f8d8442bc4efe2a2c3f7744dfc97bdfd105410b1b2a2": {
+    "bcb90b4500840b629566e8473107ddde5779fbb77a1126fd68f2f0b1d37ce87c": {
       "kind": "prose",
-      "source": "语音大模型和语音 Agent 的边界正在变薄。Qwen3.5-Omni 已能在实时对话中自行决定是否调用 WebSearch 或 Function Call，也能根据语义判断用户是否真的想打断。它已经具备语音理解、实时生成和部分行动能力，可以视为语音大模型向原生语音 Agent 过渡的代表。",
-      "context": "从语音大模型走向语音 Agent",
-      "translation": "The boundary between large speech models and voice Agents is becoming increasingly blurred. Qwen3.5-Omni can now decide on its own whether to use WebSearch or Function Call during real-time conversations, and it can also determine based on semantics whether a user truly intends to interrupt. Equipped with voice understanding, real-time generation, and certain action capabilities, it can be regarded as a representative example of the transition from large speech models to native voice Agents.",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
+      "source": "**第一类是不断结合真实 User Case 迭代的第三方独立评测。** 模型厂商需要定位训练缺口，车载助手和个人助手厂商需要在接入或升级模型前判断产品是否符合自己的承诺。这两类客户的需求，为独立验证留下了空间。",
+      "context": "我关注的两个产业机会",
+      "translation": "**The first category is third-party independent evaluations that are continuously iterated based on real User Cases.** Model manufacturers need to identify gaps in training, while vehicle assistants and personal assistant manufacturers need to determine whether their products meet their promised capabilities before integrating or upgrading models. The needs of these two types of customers create room for independent verification."
     },
-    "0dd4547c93591a20c6b5ccfe5acc2055f46cc494a19929dd0467dbeae20d2ed6": {
+    "b11fc5861463abd2d3fa2d1f07fa3deaedd952278e49d296f337782702aef0e6": {
       "kind": "prose",
-      "source": "这类产品截至信息截点仍处于初步阶段。自然打断、低延迟和工具调用已经可以演示，模型是否能在多人、噪声和长期交互中稳定地作出合适决定，公开证据仍然不足。现有音频榜单更多评估识别、理解、推理和对话质量，对声学条件下的安全、公平与隐私覆盖有限。",
-      "context": "从语音大模型走向语音 Agent",
-      "translation": "As of the time of this information, such products are still in their initial stages. Natural interruption handling, low latency, and tool invocation have already been demonstrated, but there is still insufficient public evidence to show whether the models can make appropriate decisions consistently in multi-person, noisy environments, and over long-term interactions. Existing audio evaluation frameworks focus more on recognition, comprehension, reasoning, and dialogue quality, with limited coverage of safety, fairness, and privacy in acoustic contexts."
+      "source": "有价值的评测应持续增加难度，从单轮请求推进到跨轮次保密、相似音色、多人打断和复杂背景声，并分别测量线索识别、正确披露与不合理拒答。客户每次更换模型或调整产品规则，都应能复用这些测试，发现原本已经解决的问题是否再次出现。",
+      "context": "我关注的两个产业机会",
+      "translation": "Valuable evaluation tasks should gradually increase in difficulty, progressing from single-round requests to scenarios involving multi-round confidentiality, similar vocal tones, multiple interruptions, and complex background noises. Metrics such as clue recognition, accurate disclosure, and inappropriate refusals should be measured accordingly. Each time a customer switches models or adjusts product rules, these tests can be reused to determine whether previously resolved issues have reappeared."
     },
-    "ed6c0725bc04134ea5d35cb7ab74bdf971c5e2d953a074890d02af52b57b57de": {
+    "2a818310f3e68201ff5bee402b5b666c29bab8d21c2c36274ec8594437665152": {
       "kind": "prose",
-      "source": "当工具和记忆加入以后，`speech grounding gap` 的后果会被放大。语音大模型回答得不合适，可能造成一次错误披露或有偏建议。语音 Agent 若基于同一判断调用工具、记录长期记忆或改变设备状态，错误会继续传播。这并不改变论文的研究对象，只说明模型层缺口会成为 Agent 层风险的上游来源。",
-      "context": "从语音大模型走向语音 Agent",
-      "translation": "When tools and memory are added, the consequences of the `speech grounding gap` are amplified. Inappropriate responses from a large speech model can lead to erroneous disclosures or biased recommendations. If a voice Agent uses these same judgments to invoke tools, store long-term memories, or alter device settings, the errors will continue to propagate. This does not change the research focus of the paper; it merely illustrates that gaps at the model level can serve as upstream sources of risks at the Agent level.",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
+      "source": "这一层能否成为独立生意，取决于测试更新迭代能否跟上真实场景暴露的问题，以及客户是否把它纳入持续验收。公开静态榜单容易被厂商内部测试替代；单凭模型今天有缺口，也不足以证明第三方能长期收费。",
+      "context": "我关注的两个产业机会",
+      "translation": "Whether this approach can become an independent business depends on whether testing and updates can keep up with the problems that arise in real-world scenarios, as well as whether customers include it in their ongoing validation processes. Public static lists can easily be replaced by internal testing conducted by manufacturers; merely having shortcomings in the model today is not sufficient to prove that a third party can charge fees over the long term."
     },
-    "ae085df7e1303dc56f599b651cb317b1ff06b06569ebbd2c3a4b2fe536458484": {
+    "0e6b19176d3562e5320397305dfee06df3c0024aefd4ca0c4bd3336c9d7282e6": {
       "kind": "prose",
-      "source": "因此，未来语音 Agent 的竞争不能只看延迟和自然度。真正的分界线在于，系统能否把原始声音、对话关系和当前任务放进同一次决策，并在需要行动时保持一致。一个连该不该说都判断不稳的模型，很难可靠决定该不该做。",
-      "context": "从语音大模型走向语音 Agent",
-      "translation": "Therefore, in the future competition among voice Agents, delay and naturalness alone cannot be the deciding factors. The real criterion lies in whether a system can incorporate the original audio, the dialogue context, and the current task into the same decision-making process, and maintain consistency when it’s time to take action. A model that struggles even to determine whether something should be said is unlikely to make reliable decisions about what actions to take."
+      "source": "**第二类是掌握应用入口、能够建立场景数据反馈的公司。** 小米汽车、华为汽车这类车载助手入口，以及其他 Personal Agent 产品方，接近用户关系、设备状态和实际任务，有机会发现通用基准遗漏的失败。这是潜在优势，但是现有材料尚不能证明这些公司已经建成有效的数据飞轮。",
+      "context": "我关注的两个产业机会",
+      "translation": "**The second category includes companies that control the application entry points and are able to establish feedback loops using scenario data.** Car assistants like Xiaomi Auto and Huawei Auto, as well as other Personal Agent products, have close access to user information, device status, and actual tasks, which gives them the opportunity to identify failures that might be overlooked by conventional benchmarks. This represents a potential advantage, but current evidence does not show that these companies have yet established effective data feedback loops."
     },
-    "bccea9b9a4b1d134931881a8b26a094283c7b7ae1fab32ad802c07fe542a3fc8": {
+    "10abc3f75ed8cc81a4d691b26f0a7f6dcfb7e85ee6ce79863a1db76b4e0e0e56": {
       "kind": "prose",
-      "source": "## 产业价值会落到三类能力上",
-      "context": "",
-      "translation": "## Industrial value will lie in three types of capabilities"
+      "source": "^[所谓数据飞轮，需要走完实际过程。产品发现一次错误，在授权范围内保留必要信息，经复核确定合适行为，形成新的评测或训练样本，再检查更新后的模型有没有改善。失败减少、正常任务也能完成，反馈才真正推动下一轮产品使用。]",
+      "context": "我关注的两个产业机会",
+      "translation": "^[The so-called data flywheel requires going through an actual process. When a mistake is found in a product, necessary information is retained within the allowed scope; after review, the appropriate action is determined, resulting in new evaluation or training samples. Then, it is checked whether the updated model has improved. Only when failures decrease and normal tasks can still be completed can feedback truly drive the next round of product usage.]"
     },
-    "4897fda314e751f1d1d9ff08e6bf04ec7f282c92e56581aafd577491689a0be4": {
+    "52a35fce19aeea558a43a88974049b2f68322456c36ab0161df31244ba47ecb7": {
       "kind": "prose",
-      "source": "### 端到端模型中的 speech-native alignment",
-      "context": "产业价值会落到三类能力上",
-      "translation": "### Speech-native alignment in end-to-end models"
+      "source": "用户的秘密、乘客声音和旁观者信息不能默认成为训练资源。知情同意、用途限制与必要的脱敏，需要与采集和验证一起设计。拥有设备和用户量，只提供了接触场景的条件，正确的反馈质量与持续迭代能力才可能形成差异。",
+      "context": "我关注的两个产业机会",
+      "translation": "Users' secrets, passenger voices, and bystander information should not be assumed to be suitable as training data. Informed consent, restrictions on usage, and proper data anonymization need to be designed alongside data collection and verification processes. Having the necessary equipment and user base merely creates the conditions for interaction; it is only through high-quality feedback and the ability to continuously improve that a competitive advantage can be achieved."
     },
-    "64ce5db621494d20fd1bffc83375622e77c2c6e0cba594606db64b0398cf9731": {
+    "ad50443240ea4e0d1409dc9a09c71ce7444a7962835747f091a3ca8ec2b0791e": {
       "kind": "prose",
-      "source": "头部模型公司最有机会直接吸收这部分价值。它们可以掌握模型架构、训练数据、对齐流程和生成策略，可以把感知与行为一起优化。壁垒来自多语言、多说话人和复杂环境数据，也来自模型在安全、公平与普通对话质量之间做平衡的能力。",
-      "context": "产业价值会落到三类能力上 › 端到端模型中的 speech-native alignment",
-      "translation": "Leading model companies have the best chance of directly reaping these benefits. They can control the model architecture, training data, alignment processes, and generation strategies, allowing them to optimize both perception and behavior. Barriers arise from multilingual, multi-speaker, and complex environmental data, as well as from the model’s ability to strike a balance among safety, fairness, and the quality of ordinary conversations.",
-      "termsHash": "dc5b13c1",
-      "terms": [
-        {
-          "source": "安全、公平与普通对话质量",
-          "target": "safety, fairness, and the quality of ordinary conversations"
-        }
-      ]
-    },
-    "98e2193283dc9a8c91dd6c5581cbb254f65a4851babc47fff755665d0f371f89": {
-      "kind": "prose",
-      "source": "这类能力最终可能像文本模型的指令遵循一样，成为基础模型的标准组成。独立中间件若只能给音频增加几个标签，容易被模型平台内置。模型公司只有让客户在高风险场景中感知到更低的错误率和更大的可用范围，才能把安全训练转成产品差异。若领先结果只存在于自建合成评测集上，价值很难长期保持。",
-      "context": "产业价值会落到三类能力上 › 端到端模型中的 speech-native alignment",
-      "translation": "Such capabilities may eventually become standard components of foundational models, just like instruction following in text models. If standalone middleware can only add a few labels to audio, it is likely to be integrated into model platforms. Only by enabling customers to experience lower error rates and broader usability in high-risk scenarios can speech safety training be turned into a product advantage. If leading results exist only on internally developed synthetic evaluation sets, its value will find it difficult to sustain in the long term.",
-      "termsHash": "e652c566",
-      "terms": [
-        {
-          "source": "安全训练",
-          "target": "speech safety training"
-        }
-      ]
-    },
-    "f674d2fc2d338eac93938405854128ea5df324afef4de985e4ab184f54352dbf": {
-      "kind": "prose",
-      "source": "### 面向语音安全的评测、验证与验收基础设施",
-      "context": "产业价值会落到三类能力上",
-      "translation": "### Evaluation, verification, and acceptance infrastructure for speech safety",
-      "termsHash": "f0b8c94c",
-      "terms": [
-        {
-          "source": "语音安全",
-          "target": "speech safety"
-        }
-      ]
-    },
-    "6bdba3590d20bde1db917045f32845601cc52fae4b3b3c608fd9f36a3b4a22d1": {
-      "kind": "prose",
-      "source": "公开benchmark已经证明问题存在，离企业可用还有很长距离。市场需要更接近真实世界的多人对话、重叠语音、背景声、跨轮次隐私和公平测试，也需要把感知结果与最终行为分开评分。不同语言和文化环境中的*合适回答*还会变化，单一英文合成集很难覆盖。",
-      "context": "产业价值会落到三类能力上 › 面向语音安全的评测、验证与验收基础设施",
-      "translation": "Public benchmarks have already demonstrated that the problem exists, and there is still a long way to go before it can be used in enterprises. The market needs evaluations, verifications, and acceptance frameworks that more closely reflect real-world scenarios such as multi-person conversations, overlapping voices, background noise, privacy concerns across conversation rounds, and fairness considerations. It is also necessary to evaluate perception results separately from the final behavior. *Appropriate responses* vary depending on language and cultural contexts, making it difficult for a single English-language dataset to cover all cases."
-    },
-    "01ba40979805d6548ca60ed0a77acfef94b850734400b733aae9dd65d833e00f": {
-      "kind": "prose",
-      "source": "这一层出售的核心不是一批训练数据，而是一套横向验证能力。场景生成、对抗测试、过程探针、跨版本回归和验收报告，可以帮助模型公司定位问题，也能让企业在接入模型前判断它是否满足本场景的安全要求。长期价值取决于它能否嵌入训练迭代、模型发布和客户验收的持续流程；一次性榜单很容易被平台或客户内部团队替代。",
-      "context": "产业价值会落到三类能力上 › 面向语音安全的评测、验证与验收基础设施",
-      "translation": "What is sold at this level is not a set of training data, but rather a set of cross-functional verification capabilities. Scenario generation, adversarial testing, process probing, cross-version regression, and acceptance reporting can help model companies identify issues, and also enable enterprises to determine whether a model meets the safety requirements of their specific use cases before integrating it. The long-term value depends on its ability to be integrated into the continuous processes of training iteration, model deployment, and customer acceptance; one-time rankings can easily be replaced by platforms or internal teams of customers.",
-      "termsHash": "00ade468",
-      "terms": [
-        {
-          "source": "安全要求",
-          "target": "safety requirements"
-        }
-      ]
-    },
-    "932f1d87540a55abcff5c409653976694374a75d21e18feb3825fb849d829141": {
-      "kind": "prose",
-      "source": "### 拥有场景规则与处置能力的垂直应用",
-      "context": "产业价值会落到三类能力上",
-      "translation": "### Vertical applications with scenario rules and handling capabilities"
-    },
-    "b9b076628ee1bea7bbfecb9994872e3675e03c408ee1b027dd57dee12f646a76": {
-      "kind": "prose",
-      "source": "家庭陪伴、儿童教育、医疗问询、客服和车载系统对*合适回答*的定义并不相同。基础模型很难独自学完每个行业的责任边界。垂直应用的优势来自对具体用户关系、任务流程、人工介入和责任归属的掌握，能够把通用语音能力转成某一场景下可交付的服务。",
-      "context": "产业价值会落到三类能力上 › 拥有场景规则与处置能力的垂直应用",
-      "translation": "Home companionship, children’s education, medical inquiries, customer service, and in-vehicle systems all have different definitions of *appropriate responses*. It is difficult for basic models to independently understand the scope of responsibilities in each industry. The advantage of vertical applications lies in their understanding of specific user relationships, task workflows, human intervention, and responsibility allocation, which enables them to transform general speech capabilities into services that can be delivered in a particular context."
-    },
-    "c0ba8644812bda0e25695c432bef6c4e4513a19c698016aef33965ec73f4c165": {
-      "kind": "prose",
-      "source": "其中更有价值的公司不会只包装一个语音接口。它们需要定义哪些情形必须转人工，哪些回答可以直接交付，出了错误由谁介入和如何修复。业务记录当然可以帮助改进产品，核心资产仍是嵌入日常流程的规则、集成和服务能力，而非向外出售一套训练数据。",
-      "context": "产业价值会落到三类能力上 › 拥有场景规则与处置能力的垂直应用",
-      "translation": "Among them, the more valuable companies will not simply provide a voice interface. They need to determine in which situations human intervention is necessary, which responses can be provided directly, who should step in in case of errors, and how to resolve them. Business records can certainly help improve the product, but the core assets remain the rules, integration capabilities, and service functions embedded in daily processes, rather than a set of training data sold externally."
-    },
-    "694cad2b2cb4274d4fd79b46265edabdef12923e4ed0a5f4b40ea92affb4a8da": {
-      "kind": "prose",
-      "source": "从市场的角度看，企业可以采购通用语音模型与横向评测工具，内部掌握场景规则、人工升级机制和验收标准。从投资角度看则更适合关注两类公司。一类将评测与验证能力嵌入模型训练、发布和采购验收的基础设施提供者。另一类在高价值工作流中拥有稳定分发、责任流程和可量化业务结果的垂直应用。",
-      "context": "产业价值会落到三类能力上 › 拥有场景规则与处置能力的垂直应用",
-      "translation": "From a market perspective, companies can purchase general-purpose speech models and cross-functional evaluation tools, while retaining control over scenario rules, manual upgrade mechanisms, and acceptance standards internally. From an investment perspective, it is more appropriate to focus on two types of companies: those that integrate evaluation and validation capabilities into the infrastructure for model training, deployment, and procurement acceptance; and those that offer vertical applications with stable distribution, defined responsibility processes, and quantifiable business outcomes in high-value workflows."
-    },
-    "ce59c91709a041919d00c215b5525bbaeee2697cc3df16e6a589109015a4d6a3": {
-      "kind": "prose",
-      "source": "这条逻辑也有清楚的风险。头部模型厂商若迅速补齐相关训练，独立评测和安全工具会被平台吸收。合成基准上的提升也可能无法迁移到嘈杂、多人和跨文化环境。后续最值得观察的信号，是模型公司是否开始单独披露声学线索下的行为指标，真人多轮测试是否取代单段合成音频，以及企业是否把这类能力写进模型验收。",
-      "context": "产业价值会落到三类能力上 › 拥有场景规则与处置能力的垂直应用",
-      "translation": "This approach also comes with clear risks. If leading model manufacturers quickly complete the necessary training, independent evaluation methods and safety tools will likely be integrated by the platforms. Improvements achieved on synthetic benchmarks may not transfer well to noisy, multi-person, or cross-cultural environments. The most important signals to watch going forward are whether model companies start disclosing behavioral metrics based on acoustic cues, whether multiple rounds of real-person testing replace single synthesized audio clips, and whether enterprises include such capabilities in their model acceptance criteria.",
-      "termsHash": "66e9957f",
-      "terms": [
-        {
-          "source": "安全工具",
-          "target": "safety tools"
-        }
-      ]
-    },
-    "c09906f4aeb927b8e471f52372b587c55bf7afda1b80ae08eb11d23f2d864a72": {
-      "kind": "prose",
-      "source": "语音大模型的下一阶段不会只比谁听得更准、说得更像人。它还要学会判断，眼前是谁，声音透露了什么，哪些差异应当影响回答，哪些差异必须被忽略。",
-      "context": "产业价值会落到三类能力上 › 拥有场景规则与处置能力的垂直应用",
-      "translation": "The next phase of the large speech model will not merely focus on who can listen more accurately or speak more humanly. It will also need to learn to determine who is present, what information the voice reveals, which differences should influence the response, and which ones must be ignored.",
-      "termsHash": "7e2e5ee7",
-      "terms": [
-        {
-          "source": "语音大模型",
-          "target": "large speech model"
-        }
-      ]
-    },
-    "57258f54677353fc73a6a18c947ee6cdb7728753b3ecd81999c5488b683f21a6": {
-      "kind": "prose",
-      "source": "这项能力补不上，语音 Agent 获得的工具越多，问题只会被放大。它补上以后，语音模型才可能从会说话的界面，变成真正理解交流边界的系统。安全、隐私和公平在这里不只是部署后的约束，它们会成为端到端语音智能本身的一部分。",
-      "context": "产业价值会落到三类能力上 › 拥有场景规则与处置能力的垂直应用",
-      "translation": "Without this capability, the more tools a voice agent has at its disposal, the worse the problems will become. Only once this capability is in place can voice models evolve from mere talking interfaces into systems that truly understand the boundaries of communication. Safety, privacy, and fairness are not merely post-deployment constraints in this context; they become an integral part of end-to-end voice intelligence itself.",
-      "termsHash": "13c45e83",
-      "terms": [
-        {
-          "source": "安全、隐私和公平",
-          "target": "safety, privacy, and fairness"
-        }
-      ]
+      "source": "模型厂商会继续补齐这些能力。因此，我会把关注点放在两件可验证的事情上，独立评测能否持续发现实际产品中的新问题，应用公司能否把这些问题转成可复用的测试并减少同类失败。助手辨认出是谁在说话以后，仍需守住该说什么、对谁说的边界，用户才有理由把更私人、更重要的任务交给它。",
+      "context": "我关注的两个产业机会",
+      "translation": "Model manufacturers will continue to develop these capabilities. Therefore, I will focus on two verifiable aspects: whether they can consistently identify new issues in actual products, and whether the companies using these models can turn those issues into reusable tests to reduce similar failures. After identifying who is speaking, the assistant still needs to adhere to the boundaries of what to say and to whom, so that users have reason to entrust it with more personal and important tasks."
     },
     "d81855cae641e8774cd8055590bb0aa3843960270bd43699071b8eac742bc5b6": {
       "kind": "prose",
@@ -570,11 +226,17 @@
       "context": "",
       "translation": "## Key Sources"
     },
-    "604dd5efe4d67850930ddf462a5207c664b925d266e18fe7bfbb3e8962c1ac38": {
+    "c5849177f055a756221afddce9f867042323311bf10b25380dfc52f65f3d82a5": {
       "kind": "prose",
-      "source": "- [Wang 等，VoxPrivacy v1](https://arxiv.org/pdf/2601.19956v1)\n- [Wang 等，VoxSafeBench v2](https://arxiv.org/pdf/2604.14548v2)\n- [Qwen Team，Qwen3.5-Omni 官方发布说明](https://qwen.ai/blog?id=qwen3.5-omni)\n- [Qwen3.5-Omni Technical Report](https://arxiv.org/pdf/2604.15804)",
+      "source": "1. [VoxPrivacy v2](https://arxiv.org/html/2601.19956v2)，任务分层、Table 3、相似音色攻击及指标定义。\n1. [VoxSafeBench v2](https://arxiv.org/html/2604.14548v2)，安全与公平任务、Appendix J 及 Table 42 的感知和回答比较。",
       "context": "关键来源",
-      "translation": "- [Wang et al., VoxPrivacy v1](https://arxiv.org/pdf/2601.19956v1)\n- [Wang et al., VoxSafeBench v2](https://arxiv.org/pdf/2604.14548v2)\n- [Qwen Team, Official release notes for Qwen3.5-Omni](https://qwen.ai/blog?id=qwen3.5-omni)\n- [Qwen3.5-Omni Technical Report](https://arxiv.org/pdf/2604.15804)"
+      "translation": "1. [VoxPrivacy v2](https://arxiv.org/html/2601.19956v2), task hierarchy, Table 3, similar voice attack, and definition of metrics.\n1. [VoxSafeBench v2](https://arxiv.org/html/2604.14548v2), safety and fairness tasks, comparison of perceptions and responses in Appendix J and Table 42."
+    },
+    "f77df24c443979e5a5e9056d22293ed24daa6f529c2a3d8ff00c8a23b95e8307": {
+      "kind": "prose",
+      "source": "*本文修订与资料核验截至 2026-10-09。*",
+      "context": "关键来源",
+      "translation": "*The revision of this article and verification of its sources were completed as of 2026-10-09.*"
     }
   }
 }
