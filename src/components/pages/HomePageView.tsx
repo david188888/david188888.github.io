@@ -1,6 +1,7 @@
 import Link from "next/link";
 import "@/components/home/editorial.css";
 import { EditorialMasthead } from "@/components/home/EditorialMasthead";
+import { EditorialPaletteNote } from "@/components/home/EditorialPaletteNote";
 import { LatestInsightCarousel } from "@/components/home/LatestInsightCarousel";
 import { editorialThemeScript } from "@/components/home/editorialTheme";
 import { authorConfig } from "@/config/author";
@@ -245,9 +246,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                         {links.googleScholar} <span aria-hidden="true">↗</span>
                       </a>
                     )}
-                    <a href={`mailto:${authorConfig.email}`}>
-                      {links.email} <span aria-hidden="true">↗</span>
-                    </a>
                   </nav>
                   <p className="profile-foot">
                     <span className="dot" aria-hidden="true" />
@@ -482,17 +480,15 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
               </h2>
             </div>
             <div className="closing-links">
-              <a href={`mailto:${authorConfig.email}`}>{authorConfig.email} ↗</a>
-              <a href={resumePdfHref} target="_blank" rel="noopener">
-                {links.cv} ↗
-              </a>
-              <a href={`https://github.com/${authorConfig.github}`} target="_blank" rel="noopener">
-                GitHub ↗
+              <span className="closing-label">{links.email}</span>
+              <a href={`mailto:${authorConfig.email}`}>
+                {authorConfig.email} <span aria-hidden="true">↗</span>
               </a>
             </div>
           </section>
         </main>
         <footer className="foot">
+          <EditorialPaletteNote locale={locale} />
           <p className="foot-note">{copy.footerNote}</p>
         </footer>
       </div>
