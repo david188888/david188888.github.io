@@ -39,3 +39,4 @@ use an MDX compiler. The filename becomes the article URL under `/insights/`.
 
 - [Navigation performance](docs/navigation-performance.md)
 - [Insights markup](docs/insights-markup.md)
+- [Homepage contact layout and palette note](docs/superpowers/specs/2026-10-10-homepage-contact-palette-design.md)
