@@ -16,8 +16,8 @@ interface AlignedPageShellProps {
 }
 
 const footerNote: Record<Locale, string> = {
-  en: "Research and personal notes · © 2026",
-  zh: "研究与个人笔记 · © 2026",
+  en: "Industry analysis, insights and personal website · © 2026",
+  zh: "行业分析和洞察与个人网站 · © 2026",
 };
 
 export function AlignedPageShell({

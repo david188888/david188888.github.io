@@ -2,7 +2,28 @@ import { existsSync, readdirSync } from "node:fs";
 import { basename } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { LocalizedPost } from "../posts";
-import { getPostSlugs, renderMarkdownToHtml, selectPublishedPosts } from "../posts";
+import { getOpeningParagraphHtml, getPostSlugs, renderMarkdownToHtml, selectPublishedPosts } from "../posts";
+
+describe("getOpeningParagraphHtml", () => {
+  it("uses the complete opening prose, preserving emphasis rather than a later highlight", () => {
+    const opening = `**My judgment.** ${"Supporting reasoning. ".repeat(30)}`.trim();
+    expect(getOpeningParagraphHtml(`${opening}\n\n==blue|Later highlighted evidence.==`))
+      .toBe(`<strong>My judgment.</strong> ${"Supporting reasoning. ".repeat(30).trim()}`);
+  });
+
+  it("skips headings, notes, code, diagrams and lists before the first body paragraph", () => {
+    const body = "## Heading\n\n^[Margin note]\n\n```text\nExample\n```\n\n<figure>Diagram</figure>\n\n- List item\n\nOpening **argument**.\n\nNext paragraph.";
+    expect(getOpeningParagraphHtml(body)).toBe("Opening <strong>argument</strong>.");
+  });
+
+  it("keeps card content safe and links unfocusable on inactive slides", () => {
+    const html = getOpeningParagraphHtml('Opening [source](https://example.com) and <script>alert(1)</script>.');
+    expect(html).toContain("Opening source");
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).not.toContain("<a");
+    expect(html).not.toContain("<script>");
+  });
+});
 
 function post(slug: string, date?: string): LocalizedPost {
   return {

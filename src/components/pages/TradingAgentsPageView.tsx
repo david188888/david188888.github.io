@@ -72,7 +72,7 @@ const copy = {
     attributionSuffix: ".",
     note: "Research only; not investment advice.",
     backToProjects: "← Back to projects",
-    footerNote: "Research and personal notes · © 2026",
+    footerNote: "Industry analysis, insights and personal website · © 2026",
   },
   zh: {
     kicker: "项目实践 / 开源框架扩展",
@@ -130,7 +130,7 @@ const copy = {
     attributionSuffix: "。",
     note: "项目仅用于研究，不构成投资建议。",
     backToProjects: "← 返回项目与开源",
-    footerNote: "研究与个人笔记 · © 2026",
+    footerNote: "行业分析和洞察与个人网站 · © 2026",
   },
 } satisfies Record<Locale, {
   kicker: string;

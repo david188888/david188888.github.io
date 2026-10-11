@@ -131,6 +131,26 @@ export function getPublishedPosts(
   return selectPublishedPosts(getLocalizedPosts(locale), today);
 }
 
+/** First body paragraph, with author emphasis; headings, diagrams and notes
+ * are not the thesis. Cards keep links inert so hidden slides cannot receive
+ * focus. Inline HTML stays escaped by the shared Markdown renderer. */
+export function getOpeningParagraphHtml(body: string): string {
+  for (const segment of splitMarkdownSegments(body)) {
+    if (segment.type !== "markdown") continue;
+    const tokens = inlineMarkdown.parse(segment.content, {});
+    for (let index = 0; index < tokens.length - 1; index += 1) {
+      if (tokens[index].type !== "paragraph_open" || tokens[index].level !== 0) continue;
+      const paragraph = tokens[index + 1];
+      if (paragraph.type !== "inline" || /^\^\[[\s\S]*\]$/.test(paragraph.content.trim())) continue;
+      const html = renderInlineMarkdown(paragraph.content)
+        .replace(/<\/?a\b[^>]*>/gi, "")
+        .replace(/<img\b[^>]*>/gi, "");
+      if (html.trim()) return html;
+    }
+  }
+  return "";
+}
+
 export function getLocalizedPost(slug: string, locale: Locale = defaultLocale): LocalizedPost {
   const postPath = join(POSTS_DIR, `${slug}.mdx`);
   const source = readFileSync(postPath, "utf8");

@@ -14,6 +14,7 @@ export interface OpenSourceProject {
   name: string;
   projectUrl: string;
   lead: LocalizedText;
+  stars?: { count: number; asOf: string };
   contributions: readonly OpenSourceContribution[];
 }
 
@@ -23,6 +24,7 @@ export interface CompetitionRecord {
   award: LocalizedText;
   awardTopPercent: LocalizedText;
   topic?: LocalizedText;
+  reportUrl: string;
   repositoryUrl?: string;
 }
 
@@ -48,9 +50,10 @@ export const openSourceProjects: readonly OpenSourceProject[] = [
     name: "Proma",
     projectUrl: "https://github.com/proma-ai/Proma",
     lead: {
-      en: "Fixes for Skill scanning and Markdown link detection in an open-source desktop agent.",
-      zh: "为开源桌面 Agent 软件修复 Skill 扫描与 Markdown 链接识别问题。",
+      en: "An open-source desktop AI Agent workspace for research, coding, and knowledge management, with an integrated browser, terminal, and support for Skills and MCP tools.",
+      zh: "开源桌面 AI Agent 工作台，集成浏览器、终端与 Skills / MCP 工具，支持研究、编程和知识管理。",
     },
+    stars: { count: 2220, asOf: "2026-10-11" },
     contributions: [
       {
         id: "proma-1147",
@@ -88,6 +91,7 @@ export const competitionRecords: readonly CompetitionRecord[] = [
       zh: "奥运奖牌表模型：结合统计建模、机器学习与不确定性分析，研究奖牌预测及其影响因素。",
     },
     repositoryUrl: "https://github.com/david188888/2025-MCM-ICM",
+    reportUrl: "/files/reports/2025-mcm-c-report.pdf",
   },
   {
     id: "mathorcup-2023",
@@ -102,6 +106,7 @@ export const competitionRecords: readonly CompetitionRecord[] = [
       zh: "基于 NSGA-II 遗传算法的物流网络调度运输和结构优化问题。",
     },
     repositoryUrl: "https://github.com/david188888/2023-mathorcup-C",
+    reportUrl: "/files/reports/2023-mathorcup-c-report.pdf",
   },
   {
     id: "gd-cumcm-2023",
@@ -111,6 +116,11 @@ export const competitionRecords: readonly CompetitionRecord[] = [
     },
     award: { en: "Second Prize (Undergraduate Group)", zh: "二等奖（本科组）" },
     awardTopPercent: { en: "Top 25%", zh: "获奖比例前约 25%" },
+    topic: {
+      en: "Vegetable pricing and replenishment: used three years of sales and wholesale-price data with kernel density estimation, XGBoost forecasting, nonparametric regression, and an improved genetic algorithm to jointly optimize pricing and stock quantities under operating constraints.",
+      zh: "蔬菜类商品的自动定价与补货决策：基于三年的销售与批发价格数据，结合核密度估计、XGBoost 预测、非参数回归与改进遗传算法，在经营约束下联合优化定价与补货量。",
+    },
+    reportUrl: "/files/reports/2023-cumcm-c-report.pdf",
   },
 ];
 
@@ -120,6 +130,7 @@ export function getOpenSourceProjects(locale: Locale) {
     name: project.name,
     projectUrl: project.projectUrl,
     lead: project.lead[locale],
+    stars: project.stars,
     contributions: project.contributions.map((contribution) => ({
       id: contribution.id,
       pullRequestUrl: contribution.pullRequestUrl,
@@ -137,5 +148,6 @@ export function getCompetitionRecords(locale: Locale) {
     awardTopPercent: record.awardTopPercent[locale],
     topic: record.topic ? record.topic[locale] : null,
     repositoryUrl: record.repositoryUrl,
+    reportUrl: record.reportUrl,
   }));
 }

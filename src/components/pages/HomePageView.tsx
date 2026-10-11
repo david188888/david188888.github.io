@@ -18,7 +18,7 @@ import {
 } from "@/config/profile";
 import { localizedHref } from "@/i18n/links";
 import { defaultLocale, type Locale } from "@/i18n/locales";
-import { getPublishedPosts } from "@/lib/content/posts";
+import { getOpeningParagraphHtml, getPublishedPosts } from "@/lib/content/posts";
 
 interface HomePageViewProps {
   locale?: Locale;
@@ -63,6 +63,7 @@ interface HomeCopy {
   competitionsKicker: string;
   competitionsTitle: string;
   repositoryLabel: string;
+  reportLabel: string;
   footerNote: string;
 }
 
@@ -72,7 +73,7 @@ const homeCopy: Record<Locale, HomeCopy> = {
     profileSummary:
       "Background in software engineering and data science. I focus on how technology moves toward products and commercialization, and how those shifts redistribute value across the industry chain.",
     links: { cv: "View CV", github: "GitHub", googleScholar: "Google Scholar", email: "Contact me" },
-    profileFoot: "Open to strategy research / investment analysis roles",
+    profileFoot: "Open to strategy research / technology VC internships",
     featureLabel: "Industry Memos · Latest memo",
     fallbackCta: "Browse all Industry Memos",
     lensSteps: [
@@ -111,14 +112,15 @@ const homeCopy: Record<Locale, HomeCopy> = {
     competitionsKicker: "Competitions & Modeling",
     competitionsTitle: "Mathematical modeling",
     repositoryLabel: "View repository ↗",
-    footerNote: "Research and personal notes · © 2026",
+    reportLabel: "Read report (PDF) ↗",
+    footerNote: "Industry analysis, insights and personal website · © 2026",
   },
   zh: {
     profileLabel: "Profile",
     profileSummary:
       "软件工程与数据科学教育背景。关注技术如何走向产品与商业化，以及变化如何沿产业链重新分配价值。",
     links: { cv: "查看简历", github: "GitHub", googleScholar: "Google Scholar", email: "联系我" },
-    profileFoot: "开放战略研究 / 投资分析类机会",
+    profileFoot: "开放战略研究 / 科技VC实习机会",
     featureLabel: "行业思考 · 最新文章",
     fallbackCta: "查看全部行业思考",
     lensSteps: [
@@ -144,7 +146,8 @@ const homeCopy: Record<Locale, HomeCopy> = {
     competitionsKicker: "竞赛与建模",
     competitionsTitle: "数学建模实践",
     repositoryLabel: "查看参赛仓库 ↗",
-    footerNote: "研究与个人笔记 · © 2026",
+    reportLabel: "阅读报告（PDF）↗",
+    footerNote: "行业分析和洞察与个人网站 · © 2026",
   },
 };
 
@@ -163,36 +166,6 @@ const sharedCopy = {
   },
 } as const;
 
-const MAX_PULL_QUOTE_LENGTH = 160;
-
-/**
- * Uses the longest author-authored highlight in the article as the pull quote, so
- * the block stays in step with the post instead of being maintained by hand.
- * Highlights longer than a pull quote are cut at the last sentence break that
- * still fits, and only truncated mid-sentence when no break is available.
- */
-function extractPullQuote(body: string): string | null {
-  const highlights = Array.from(body.matchAll(/==[\w-]+\|([\s\S]*?)==/g))
-    .map((match) => match[1].replaceAll("**", "").replaceAll(/\s+/g, " ").trim())
-    .filter((text) => text.length >= 20);
-  if (highlights.length === 0) return null;
-
-  const longest = highlights.reduce((current, text) => (text.length > current.length ? text : current));
-  if (longest.length <= MAX_PULL_QUOTE_LENGTH) return longest;
-
-  const head = longest.slice(0, MAX_PULL_QUOTE_LENGTH);
-  const lastBreak = Math.max(
-    head.lastIndexOf("。"),
-    head.lastIndexOf("！"),
-    head.lastIndexOf("？"),
-    head.lastIndexOf(". "),
-    head.lastIndexOf("! "),
-    head.lastIndexOf("? ")
-  );
-  if (lastBreak >= 40) return head.slice(0, lastBreak + 1);
-  return `${head.trimEnd()}…`;
-}
-
 export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
   const copy = homeCopy[locale];
   const resumePdfHref = locale === "zh" ? "/files/Resume_zh.pdf" : "/files/Resume_en.pdf";
@@ -208,11 +181,10 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
   const latestCards = latestPosts.map((post) => ({
     slug: post.slug,
     title: post.title,
-    excerpt: post.excerpt,
+    openingParagraphHtml: getOpeningParagraphHtml(post.body),
     date: post.date,
     tags: post.tags,
     href: localizedHref(`/insights/${post.slug}/`, locale),
-    pullQuote: extractPullQuote(post.body),
   }));
   const insightsHref = localizedHref("/insights/", locale);
 
@@ -260,7 +232,6 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                     locale={locale}
                     cards={latestCards}
                     featureLabel={copy.featureLabel}
-                    pullQuoteLabel={locale === "zh" ? "摘自本文" : "From this article"}
                   />
                 ) : (
                   <article className="feature" aria-labelledby="feature-title">
@@ -375,14 +346,21 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                     </a>
                   </h3>
                   <p className="record-description">{paper.description}</p>
-                  <a
-                    className="paper-link"
-                    href={paper.paperUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {copy.paperLabel}
-                  </a>
+                  <div className="paper-actions">
+                    <a
+                      className="paper-link"
+                      href={paper.paperUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {copy.paperLabel}
+                    </a>
+                    {paper.demo ? (
+                      <a className="paper-link" href={paper.demo.url} target="_blank" rel="noopener noreferrer">
+                        {paper.demo.label} ↗
+                      </a>
+                    ) : null}
+                  </div>
                 </article>
               ))}
             </div>
@@ -434,7 +412,15 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
               {openSource.map((project) => (
                 <article className="project-group" key={project.id}>
                   <p className="project-kicker">{copy.openSourceKicker}</p>
-                  <h3>{project.name}</h3>
+                  <div className="project-group-heading">
+                    <h3><a href={project.projectUrl} target="_blank" rel="noopener noreferrer">{project.name} ↗</a></h3>
+                    {project.stars ? (
+                      <a className="project-stars" href={`${project.projectUrl}/stargazers`} target="_blank" rel="noopener noreferrer">
+                        <span>★ {project.stars.count.toLocaleString("en-US")} stars</span>
+                        <span className="stars-date">{locale === "zh" ? "截至" : "as of"} {project.stars.asOf}</span>
+                      </a>
+                    ) : null}
+                  </div>
                   <p className="project-group-lead">{project.lead}</p>
                   <ul className="contribution-list">
                     {project.contributions.map((contribution) => (
@@ -461,11 +447,16 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                     {competition.topic ? (
                       <p className="contest-description">{competition.topic}</p>
                     ) : null}
-                    {competition.repositoryUrl ? (
-                      <a href={competition.repositoryUrl} target="_blank" rel="noopener noreferrer">
-                        {copy.repositoryLabel}
+                    <div className="contest-actions">
+                      <a href={competition.reportUrl} target="_blank" rel="noopener noreferrer">
+                        {copy.reportLabel}
                       </a>
-                    ) : null}
+                      {competition.repositoryUrl ? (
+                        <a href={competition.repositoryUrl} target="_blank" rel="noopener noreferrer">
+                          {copy.repositoryLabel}
+                        </a>
+                      ) : null}
+                    </div>
                   </article>
                 ))}
               </div>
