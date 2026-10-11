@@ -252,6 +252,18 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .feature h2 .subject,
 .ed-root .latest-insight-slide h2 .subject { color: var(--ed-accent-text); }
 .ed-root .excerpt { font-size: 14px; line-height: 1.9; color: var(--ed-muted); margin: 0 0 24px; max-width: 46em; }
+.ed-root .insight-thesis {
+  margin: 0;
+  padding: 18px 20px;
+  border-left: 2px solid var(--ed-accent);
+  background: color-mix(in srgb, var(--ed-accent) 5%, transparent);
+  color: var(--ed-muted);
+  font-size: 14px;
+  line-height: 1.95;
+  overflow-wrap: anywhere;
+}
+.ed-root .insight-thesis strong { color: var(--ed-ink); font-weight: 600; }
+.ed-root .paper-actions { display: flex; flex-wrap: wrap; gap: 10px 24px; }
 .ed-root .quotation {
   margin: 0;
   padding: 16px 20px;
@@ -341,6 +353,10 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .project-image figcaption { font-size: 10px; line-height: 1.8; color: var(--ed-muted); margin-top: 9px; }
 .ed-root .project-group { margin-top: 40px; padding-top: 27px; border-top: 1px solid var(--ed-line); }
 .ed-root .project-group h3 { font: 500 23px / 1.5 var(--ed-serif); }
+.ed-root .project-group-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 24px; }
+.ed-root .project-group-heading h3 a:hover { color: var(--ed-accent-text); }
+.ed-root .project-stars { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; font-size: 12px; color: var(--ed-accent-text); }
+.ed-root .stars-date { color: var(--ed-muted); font-size: 10px; }
 .ed-root .project-group-lead { font-size: 12px; line-height: 1.9; color: var(--ed-muted); margin-top: 10px; }
 .ed-root .contribution-list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 16px; }
 .ed-root .contribution-list li { display: grid; grid-template-columns: 65px minmax(0, 1fr) auto; align-items: baseline; gap: 12px; font-size: 12px; line-height: 1.8; }
@@ -352,6 +368,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .contest-award { color: var(--ed-accent-text); font-size: 12px; }
 .ed-root .contest-rate { display: flex; flex-wrap: wrap; gap: 5px 18px; color: var(--ed-muted); font-size: 11px; line-height: 1.7; }
 .ed-root .contest-description { font-size: 12px; line-height: 1.85; color: var(--ed-muted); }
+.ed-root .contest-actions { display: flex; flex-wrap: wrap; gap: 10px 24px; }
 .ed-root .contest a { font-size: 11px; color: var(--ed-accent-text); width: fit-content; border-bottom: 1px solid var(--ed-line); padding-bottom: 3px; }
 
 /* ── Closing and footer ───────────────────────────────────────────────── */
@@ -486,6 +503,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   .ed-root .feature-meta { flex-direction: column; align-items: flex-start; gap: 8px; font-size: 11px; }
   .ed-root .feature h2,
   .ed-root .latest-insight-slide h2 { font-size: 28px; }
+  .ed-root .insight-thesis { padding: 14px 16px; }
   .ed-root .quotation { margin-bottom: 22px; }
   .ed-root .quotation p { font-size: 16px; }
   .ed-root .lens-bridge { padding-block: 25px 28px; }

@@ -1,4 +1,5 @@
 import React from "react";
+import { existsSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -95,6 +96,24 @@ describe("HomePageView", () => {
     const html = renderToStaticMarkup(<HomePageView locale="en" />);
 
     expect(html).not.toContain("future-post");
+  });
+
+  it("shows opening judgments once and offers the research demos and original competition reports", () => {
+    const html = renderToStaticMarkup(<HomePageView locale="zh" />);
+    expect(html).toContain("调用增长不会自动让所有扩产方获利。</strong>");
+    expect(html).not.toContain("摘自本文");
+    expect(html).not.toContain("推理中的 Prefill 处理输入");
+    expect(html).toContain("项目与演示 ↗");
+    expect(html).toContain("演示页面 ↗");
+    publicationRecords.filter((record) => record.demo).forEach((record) => {
+      expect(html).toContain(`href="${record.demo!.url}"`);
+    });
+    competitionRecords.forEach((record) => {
+      expect(html).toContain(`href="${record.reportUrl}"`);
+      expect(existsSync(`public${record.reportUrl}`)).toBe(true);
+    });
+    expect(html).toContain("开放战略研究 / 科技VC实习机会");
+    expect(html).toContain("行业分析和洞察与个人网站 · © 2026");
   });
 
   it("represents the newest published insights in an accessible auto-advancing carousel", () => {

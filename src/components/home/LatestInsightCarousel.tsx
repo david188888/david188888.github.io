@@ -7,18 +7,16 @@ import type { Locale } from "@/i18n/locales";
 export interface LatestInsightCard {
   slug: string;
   title: string;
-  excerpt: string;
+  openingParagraphHtml: string;
   date?: string;
   tags: string[];
   href: string;
-  pullQuote?: string | null;
 }
 
 interface LatestInsightCarouselProps {
   locale: Locale;
   cards: readonly LatestInsightCard[];
   featureLabel: string;
-  pullQuoteLabel: string;
 }
 
 function splitTitle(title: string): [string, string | null] {
@@ -40,7 +38,7 @@ const carouselCopy = {
   },
 } as const;
 
-const AUTO_ADVANCE_MS = 2000;
+const AUTO_ADVANCE_MS = 12000;
 
 /**
  * Auto-advances so the latest writing stays in view, pauses while the reader
@@ -52,7 +50,6 @@ export function LatestInsightCarousel({
   locale,
   cards,
   featureLabel,
-  pullQuoteLabel,
 }: LatestInsightCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [pointerPaused, setPointerPaused] = useState(false);
@@ -139,13 +136,10 @@ export function LatestInsightCarousel({
                     {titleSubject ? <span className="subject">{titleSubject}</span> : null}
                   </Link>
                 </h2>
-                <p className="excerpt">{card.excerpt}</p>
-                {card.pullQuote ? (
-                  <blockquote className="quotation">
-                    <p>{card.pullQuote}</p>
-                    <cite>{pullQuoteLabel}</cite>
-                  </blockquote>
-                ) : null}
+                <p
+                  className="insight-thesis"
+                  dangerouslySetInnerHTML={{ __html: card.openingParagraphHtml }}
+                />
               </article>
             );
           })}

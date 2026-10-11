@@ -35,6 +35,18 @@ Blog posts are plain Markdown with YAML frontmatter. They use the `.mdx`
 extension for naming only; the site parses them with `markdown-it` and does not
 use an MDX compiler. The filename becomes the article URL under `/insights/`.
 
+## Homepage content
+
+Latest-article cards display each localized article’s complete opening body
+paragraph, preserving Markdown emphasis instead of combining the frontmatter
+excerpt with an unrelated highlight. They rotate every 12 seconds, pause on
+hover or focus, and respect reduced motion.
+
+Publication demos are configured in `src/config/profile.ts`. Project descriptions,
+dated GitHub star snapshots, and competition report URLs live in
+`src/config/projects.ts`. The three original competition reports are served from
+`public/files/reports/`; report links work in both locales.
+
 ## Related Docs
 
 - [Navigation performance](docs/navigation-performance.md)

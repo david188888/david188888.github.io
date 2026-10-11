@@ -36,6 +36,7 @@ export interface PublicationRecord {
   id: string;
   date: string;
   paperUrl: string;
+  demo?: { url: string; label: LocalizedText };
   category: PublicationCategory;
   venue: LocalizedText;
   authorship: LocalizedText;
@@ -120,6 +121,10 @@ export const publicationRecords: readonly PublicationRecord[] = [
     id: "voxprivacy",
     date: "2026-01-01",
     paperUrl: "https://arxiv.org/abs/2601.19956",
+    demo: {
+      url: "https://jensenyx.github.io/VoxPrivacy.github.io/",
+      label: { en: "Project & demos", zh: "项目与演示" },
+    },
     category: "conferences",
     venue: { en: "ICLR 2026 · Poster", zh: "ICLR 2026 · 海报" },
     authorship: { en: "Second author", zh: "第二作者" },
@@ -136,6 +141,10 @@ export const publicationRecords: readonly PublicationRecord[] = [
     id: "voxsafebench",
     date: "2026-04-01",
     paperUrl: "https://arxiv.org/abs/2604.14548",
+    demo: {
+      url: "https://amphionteam.github.io/VoxSafeBench_demopage/",
+      label: { en: "Demo page", zh: "演示页面" },
+    },
     category: "conferences",
     venue: { en: "NeurIPS 2026 · Under Review", zh: "NeurIPS 2026 · 审稿中" },
     authorship: { en: "Second author", zh: "第二作者" },
@@ -252,6 +261,7 @@ export function getHomePublications(locale: Locale) {
     title: localized(record.title, locale),
     description: localized(record.description, locale),
     paperUrl: record.paperUrl,
+    ...(record.demo ? { demo: { url: record.demo.url, label: localized(record.demo.label, locale) } } : {}),
   }));
 }
 

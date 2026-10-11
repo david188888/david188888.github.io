@@ -104,6 +104,7 @@ const selectorFixtures = {
         description:
           "Introduced a multi-user benchmark for measuring interactional privacy risks in speech-language models.",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+        demo: { url: "https://jensenyx.github.io/VoxPrivacy.github.io/", label: "Project & demos" },
       },
       {
         id: "voxsafebench",
@@ -113,6 +114,7 @@ const selectorFixtures = {
         description:
           "Introduced a benchmark for evaluating social alignment in speech language models across safety, fairness, and privacy dimensions.",
         paperUrl: "https://arxiv.org/abs/2604.14548",
+        demo: { url: "https://amphionteam.github.io/VoxSafeBench_demopage/", label: "Demo page" },
       },
       {
         id: "dialoggraph-llm",
@@ -300,6 +302,7 @@ const selectorFixtures = {
         title: "VoxPrivacy：评估语音语言模型交互隐私的基准",
         description: "提出面向多用户场景的基准，用于衡量语音语言模型的交互隐私风险。",
         paperUrl: "https://arxiv.org/abs/2601.19956",
+        demo: { url: "https://jensenyx.github.io/VoxPrivacy.github.io/", label: "项目与演示" },
       },
       {
         id: "voxsafebench",
@@ -308,6 +311,7 @@ const selectorFixtures = {
         title: "VoxSafeBench：不仅评估说了什么，也评估谁、如何以及在何处表达",
         description: "提出用于评估语音语言模型社会对齐能力的基准，覆盖安全、公平与隐私维度。",
         paperUrl: "https://arxiv.org/abs/2604.14548",
+        demo: { url: "https://amphionteam.github.io/VoxSafeBench_demopage/", label: "演示页面" },
       },
       {
         id: "dialoggraph-llm",
