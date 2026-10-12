@@ -196,7 +196,7 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
   white-space: nowrap;
   animation: ed-name-roll 0.78s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.ed-root .profile-salutation { color: var(--ed-accent-text); }
+.ed-root .profile-salutation { color: var(--ed-body-ink); }
 .ed-root .profile-name { color: var(--ed-ink); }
 .ed-root .profile-wave {
   display: inline-block;

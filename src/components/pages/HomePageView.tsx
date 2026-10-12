@@ -121,7 +121,7 @@ const homeCopy: Record<Locale, HomeCopy> = {
     profileGreeting: "你好",
     profileIntroduction: "，我叫",
     profileSummary:
-      "我有软件工程与数据科学的教育背景。我关注技术如何走向产品与商业化，以及这些变化如何沿产业链重新分配价值。",
+      "我具备软件工程与数据科学的教育背景，并同时关注技术如何走向产品与商业化，以及这些变化如何沿产业链重新分配价值。",
     links: { cv: "查看简历", github: "GitHub", googleScholar: "Google Scholar", email: "联系我" },
     profileFoot: "开放战略研究 / 科技VC实习机会",
     featureLabel: "行业思考 · 最新文章",
