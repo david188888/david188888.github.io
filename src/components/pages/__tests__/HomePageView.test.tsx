@@ -148,8 +148,8 @@ describe("HomePageView", () => {
 
     const summary =
       locale === "zh"
-        ? "软件工程与数据科学教育背景。关注技术如何走向产品与商业化，以及变化如何沿产业链重新分配价值。"
-        : "Background in software engineering and data science. I focus on how technology moves toward products and commercialization, and how those shifts redistribute value across the industry chain.";
+        ? "我有软件工程与数据科学的教育背景。我关注技术如何走向产品与商业化，以及这些变化如何沿产业链重新分配价值。"
+        : "I have a background in software engineering and data science. I focus on how technology translates into products and commercialization, as well as how these changes redistribute value across the industry chain.";
     expect(html).toContain(summary);
     expect(html).not.toContain("语音语言模型 · 安全与隐私");
     expect(html).not.toContain("AI 产业链研究");

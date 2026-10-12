@@ -38,7 +38,8 @@ interface LensStepCopy {
 }
 
 interface HomeCopy {
-  profileLabel: string;
+  profileGreeting: string;
+  profileIntroduction: string;
   profileSummary: string;
   links: HomeLinkCopy;
   profileFoot: string;
@@ -69,9 +70,10 @@ interface HomeCopy {
 
 const homeCopy: Record<Locale, HomeCopy> = {
   en: {
-    profileLabel: "Profile",
+    profileGreeting: "Hi",
+    profileIntroduction: ", I'm ",
     profileSummary:
-      "Background in software engineering and data science. I focus on how technology moves toward products and commercialization, and how those shifts redistribute value across the industry chain.",
+      "I have a background in software engineering and data science. I focus on how technology translates into products and commercialization, as well as how these changes redistribute value across the industry chain.",
     links: { cv: "View CV", github: "GitHub", googleScholar: "Google Scholar", email: "Contact me" },
     profileFoot: "Open to strategy research / technology VC internships",
     featureLabel: "Industry Memos · Latest memo",
@@ -116,9 +118,10 @@ const homeCopy: Record<Locale, HomeCopy> = {
     footerNote: "Industry analysis, insights and personal website · © 2026",
   },
   zh: {
-    profileLabel: "Profile",
+    profileGreeting: "你好",
+    profileIntroduction: "，我叫",
     profileSummary:
-      "软件工程与数据科学教育背景。关注技术如何走向产品与商业化，以及变化如何沿产业链重新分配价值。",
+      "我有软件工程与数据科学的教育背景。我关注技术如何走向产品与商业化，以及这些变化如何沿产业链重新分配价值。",
     links: { cv: "查看简历", github: "GitHub", googleScholar: "Google Scholar", email: "联系我" },
     profileFoot: "开放战略研究 / 科技VC实习机会",
     featureLabel: "行业思考 · 最新文章",
@@ -200,10 +203,16 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
               aria-label={locale === "zh" ? "个人简介与最新文章" : "Profile and latest writing"}
             >
               <aside className="profile" aria-labelledby="profile-name">
-                <p className="section-label">{copy.profileLabel}</p>
-                <h1 className="name" id="profile-name">
-                  {authorConfig.nameLocalized[locale]}
-                </h1>
+                <div className="profile-name-window">
+                  <h1 className="profile-greeting" id="profile-name">
+                    <span className="profile-salutation">
+                      {copy.profileGreeting}
+                      <span className="profile-wave" aria-hidden="true">👋</span>
+                      {copy.profileIntroduction}
+                    </span>
+                    <span className="profile-name">{authorConfig.nameLocalized[locale]}</span>
+                  </h1>
+                </div>
                 <p className="profile-copy">{copy.profileSummary}</p>
                 <div className="profile-footer">
                   <nav className="contact" aria-label={locale === "zh" ? "个人链接" : "Profile links"}>
