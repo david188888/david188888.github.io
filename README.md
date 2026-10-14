@@ -37,6 +37,10 @@ use an MDX compiler. The filename becomes the article URL under `/insights/`.
 
 ## Homepage content
 
+The shared homepage, Insights, and project masthead wraps navigation links and
+places them on a full second row at window widths of 1100px or less, keeping
+the home link and language/theme controls clear in both locales.
+
 Latest-article cards display each localized article’s complete opening body
 paragraph, preserving Markdown emphasis instead of combining the frontmatter
 excerpt with an unrelated highlight. They rotate every 12 seconds, pause on
