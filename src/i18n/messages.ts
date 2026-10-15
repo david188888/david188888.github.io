@@ -104,7 +104,22 @@ export interface Messages {
       invalidCredentials: string;
       analyticsFor: string;
       trackingId: string;
-      fullDashboard: string;
+      openDashboard: string;
+      googleSignInNote: string;
+      coverageTitle: string;
+      coverageDescription: string;
+      viewsTitle: string;
+      viewsDescription: string;
+      usersTitle: string;
+      usersDescription: string;
+      sessionsTitle: string;
+      sessionsDescription: string;
+      readingTitle: string;
+      readingSteps: string[];
+      dataNote: string;
+      authorToolsTitle: string;
+      authorToolsDescription: string;
+      authorToolsUnlocked: string;
     };
     talks: {
       title: string;
@@ -257,9 +272,28 @@ export const messages: Record<Locale, Messages> = {
         signIn: "Sign In",
         signOut: "Sign Out",
         invalidCredentials: "Invalid credentials. Please try again.",
-        analyticsFor: "Google Analytics data for david188888.github.io",
-        trackingId: "Tracking ID",
-        fullDashboard: "Full analytics dashboard available at",
+        analyticsFor: "Website traffic for david188888.github.io",
+        trackingId: "Measurement ID",
+        openDashboard: "Open Google Analytics ↗",
+        googleSignInNote: "View your private reports with the Google account that has access to David Homepage. No website login is needed.",
+        coverageTitle: "One view of the whole website",
+        coverageDescription: "The homepage, blog articles, projects, CV and all other pages in both languages share one GA4 property. Visitors can arrive on any page; they do not need to visit the homepage first.",
+        viewsTitle: "Views",
+        viewsDescription: "Each page view counts. Visiting the homepage and then an article adds two views to the website total.",
+        usersTitle: "Active users",
+        usersDescription: "Use this to understand your audience. GA4 identifies users across pages; adding up each page’s users does not give the website total.",
+        sessionsTitle: "Sessions",
+        sessionsDescription: "A visit can include several page views. One person can return for multiple sessions.",
+        readingTitle: "What to look at",
+        readingSteps: [
+          "Open the dashboard, choose a date range and select Views for the website’s total page views and trend.",
+          "Open Pages and screens to see which articles and other pages people read.",
+          "Open Realtime to check recent visits, or Traffic acquisition to see where visitors came from.",
+        ],
+        dataNote: "Collection starts after the tag goes live; earlier unrecorded visits cannot be recovered. Standard reports take time to process, so use Realtime to check new activity.",
+        authorToolsTitle: "Article author tools · optional",
+        authorToolsDescription: "This login unlocks annotation tools in this browser. It is separate from your Google account and is not needed to view analytics.",
+        authorToolsUnlocked: "Author tools are unlocked in this browser.",
       },
       talks: {
         title: "Talks and Presentations",
@@ -274,9 +308,9 @@ export const messages: Record<Locale, Messages> = {
         analyticsTitle: "Analytics",
         externalLinksTitle: "External Links",
         intro:
-          "This is a personal academic homepage. No personal data is collected beyond standard server access logs.",
+          "This is a personal academic homepage. This page describes its traffic analytics and external links.",
         analytics:
-          "This site uses Google Analytics 4 to collect anonymous usage data. You may opt out by using browser privacy settings or ad blockers.",
+          "This site uses Google Analytics 4 to measure page views, traffic sources and site usage. Google’s tag may use cookies and similar identifiers to distinguish visits and sessions. You can limit collection through your browser privacy settings or ad-blocking tools.",
         externalLinks:
           "This site contains links to external sites (arXiv, GitHub, Google Scholar). We are not responsible for their privacy practices.",
       },
@@ -412,9 +446,28 @@ export const messages: Record<Locale, Messages> = {
         signIn: "登录",
         signOut: "退出登录",
         invalidCredentials: "用户名或密码无效，请重试。",
-        analyticsFor: "david188888.github.io 的 Google Analytics 数据",
-        trackingId: "跟踪 ID",
-        fullDashboard: "完整分析仪表盘可在此查看：",
+        analyticsFor: "david188888.github.io 的全站访问统计",
+        trackingId: "衡量 ID",
+        openDashboard: "打开 Google 看板 ↗",
+        googleSignInNote: "使用有权访问 David Homepage 的 Google 账号查看私人报表，无需登录本网站。",
+        coverageTitle: "所有页面，汇总到一起",
+        coverageDescription: "首页、博客文章、项目、简历及其他中英文页面都使用同一个 GA4 媒体资源。访客直接进入任意文章也会记录，无需先经过首页。",
+        viewsTitle: "浏览次数 · Views",
+        viewsDescription: "每浏览一个页面记一次。从首页进入一篇文章，全站浏览次数增加两次。",
+        usersTitle: "活跃用户 · Active users",
+        usersDescription: "用于了解访问用户规模。GA4 跨页面识别用户，不能把各页面的用户数相加当成全站人数。",
+        sessionsTitle: "访问次数 · Sessions",
+        sessionsDescription: "一次访问可以浏览多个页面；同一个人再次回来，也可能产生新的会话。",
+        readingTitle: "打开后怎么看",
+        readingSteps: [
+          "选择日期范围，将指标切换为“浏览次数（Views）”，查看全站总浏览量和变化趋势。",
+          "打开“网页和屏幕（Pages and screens）”，查看各篇文章及其他页面的阅读情况。",
+          "在“实时（Realtime）”中看近期访问，在“流量获取（Traffic acquisition）”中看访客来源。",
+        ],
+        dataNote: "统计从标签上线后开始，之前未记录的访问无法补回。常规报表有处理延迟，检查新访问时请先看“实时”。",
+        authorToolsTitle: "文章作者工具 · 可选",
+        authorToolsDescription: "此登录仅用于在当前浏览器开启文章批注工具，与 Google 账号无关。查看统计无需在这里登录。",
+        authorToolsUnlocked: "当前浏览器已开启作者工具。",
       },
       talks: {
         title: "演讲与报告",
@@ -428,9 +481,9 @@ export const messages: Record<Locale, Messages> = {
         title: "条款与隐私政策",
         analyticsTitle: "分析统计",
         externalLinksTitle: "外部链接",
-        intro: "这是一个个人学术主页。除标准服务器访问日志外，本站不收集个人数据。",
+        intro: "这是一个个人学术主页。本页说明网站访问统计与外部链接的使用。",
         analytics:
-          "本站使用 Google Analytics 4 收集匿名访问数据。你可以通过浏览器隐私设置或广告拦截工具选择退出。",
+          "本站使用 Google Analytics 4 统计页面浏览、访问来源和站点使用情况。Google 标签可能使用 Cookie 等标识符区分访问及会话。你可以通过浏览器隐私设置或广告拦截工具限制采集。",
         externalLinks:
           "本站包含指向外部网站的链接，如 arXiv、GitHub 和 Google Scholar。我们不对这些网站的隐私实践负责。",
       },

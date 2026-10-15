@@ -51,6 +51,21 @@ dated GitHub star snapshots, and competition report URLs live in
 `src/config/projects.ts`. The three original competition reports are served from
 `public/files/reports/`; report links work in both locales.
 
+## Website analytics
+
+GA4 is initialized once in the root layout for every HTML page, including direct
+article visits and both languages. All pages use the same property. Google’s
+enhanced measurement records page loads and history changes; do not add manual
+`page_view` events alongside it. Only `david188888.github.io` loads the tag, so
+local development and previews stay out of the real statistics.
+
+Open `/stats/` and click **打开 Google 看板 / Open Google Analytics** to go directly
+to the configured private dashboard. Google sign-in controls access to the data;
+the optional website author login is only for article annotation tools.
+
+See [analytics setup and verification](docs/analytics.md) for metrics and the
+post-deployment acceptance steps.
+
 ## Related Docs
 
 - [Navigation performance](docs/navigation-performance.md)

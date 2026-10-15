@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { ThemeProvider } from "next-themes";
 import { defaultLocale } from "@/i18n/locales";
+import { googleAnalyticsBootstrap } from "@/lib/analytics/google-tag";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,6 +37,9 @@ export default function RootLayout({
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
           {children}
         </ThemeProvider>
+        <Script id="ga4-init" strategy="afterInteractive">
+          {googleAnalyticsBootstrap}
+        </Script>
       </body>
     </html>
   );
