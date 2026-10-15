@@ -1,13 +1,12 @@
 /**
- * Author unlock shared by the private stats page and the article annotation
+ * Author unlock shared by the stats page's optional tools and article annotation
  * tools.
  *
  * This is a visibility gate, not authentication. The credentials ship inside
  * the client bundle, so anyone determined enough can read them; what the gate
- * actually buys is that the public never sees author-only interfaces by
- * accident. Nothing behind it is secret: /stats/ shows analytics the author
- * could equally open elsewhere, and the annotation tools only ever change the
- * viewer's own browser.
+ * actually buys is that the public never sees author-only article interfaces by
+ * accident. The annotation tools only ever change the viewer's own browser.
+ * /stats/ links are public; private analytics reports require Google sign-in.
  *
  * Because it is a convenience gate, unlocking is remembered in localStorage:
  * signing in once on one device keeps the author interfaces available on every
@@ -84,7 +83,7 @@ export function lockAuthor(): void {
   }
 }
 
-/** Whether the private stats page is signed in for the current tab. */
+/** Whether the optional stats author tools are signed in for this tab. */
 export function isStatsAuthenticated(): boolean {
   try {
     return safeStorage("session")?.getItem(STATS_SESSION_KEY) === "true";
@@ -94,7 +93,7 @@ export function isStatsAuthenticated(): boolean {
 }
 
 /**
- * Signs in to the stats page for this tab and unlocks the author interfaces
+ * Signs in to the stats author tools for this tab and unlocks author interfaces
  * everywhere for this browser.
  */
 export function signInAsAuthor(): void {

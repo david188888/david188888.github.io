@@ -166,7 +166,7 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
 
   /* ── author-only interface ───────────────────────────────────────────────
      The tools stay out of the static HTML entirely, so readers never receive
-     the markup. Signing in on the private stats page unlocks them here, and
+     the markup. Signing in through the stats page's author tools unlocks them here, and
      the unlock is remembered, so the author never has to do anything extra.
      Published marks are article content and stay visible either way. */
 
@@ -192,7 +192,7 @@ export function AnnotationControls({ slug, locale, labels }: AnnotationControlsP
     setOpen(false);
   }, []);
 
-  /** Signs in with the same credentials the private stats page uses. */
+  /** Signs in with the same credentials the stats author tools use. */
   const handleUnlock = useCallback(
     (event: React.FormEvent) => {
       event.preventDefault();

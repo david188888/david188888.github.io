@@ -13,7 +13,7 @@ export const STORAGE_VERSION = 1;
  *
  * The unlock is the author sign-in (`src/lib/auth/author.ts`), remembered in
  * localStorage, so signing in once — which the author already does on the
- * private stats page — makes the tools available on every article.
+ * stats page's optional author section — makes the tools available on every article.
  *
  * Published underlines and margin notes are part of the article HTML and stay
  * visible regardless; this flag only controls who gets the editing and hiding

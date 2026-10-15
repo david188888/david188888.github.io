@@ -6,7 +6,7 @@ import { getMessages } from "@/i18n/messages";
 
 const { stats } = getMessages(defaultLocale).pages;
 
-// Private, sign-in-only analytics dashboard: keep it out of search results.
+// Dashboard entry and optional author tools: keep it out of search results.
 export const metadata: Metadata = {
   title: `${stats.title} | ${authorConfig.nameLocalized.zh}`,
   robots: { index: false, follow: false },
