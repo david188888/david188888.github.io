@@ -2,16 +2,24 @@ import { runInNewContext } from "node:vm";
 import { describe, expect, it } from "vitest";
 import { analyticsConfig } from "@/config/analytics";
 import { googleAnalyticsBootstrap } from "../google-tag";
+import { ANALYTICS_DISABLE_KEY, ANALYTICS_EXCLUSION_KEY } from "../browser-exclusion";
 
 function browserContext(hostname: string) {
   const tags: { id?: string; src?: string; async?: boolean }[] = [];
-  const window = { location: { hostname }, dataLayer: [] as ArrayLike<unknown>[] };
+  const stored = new Map<string, string>();
+  const listeners: ((event: { key: string | null }) => void)[] = [];
+  let reloads = 0;
+  const window = {
+    location: { hostname, reload: () => { reloads++; } }, dataLayer: [] as ArrayLike<unknown>[],
+    localStorage: { getItem: (key: string) => stored.get(key) ?? null },
+    addEventListener: (_name: string, listener: (event: { key: string | null }) => void) => listeners.push(listener),
+  };
   const document = {
     getElementById: (id: string) => tags.find((tag) => tag.id === id),
     createElement: () => ({}),
     head: { appendChild: (tag: (typeof tags)[number]) => tags.push(tag) },
   };
-  return { window, document, tags };
+  return { window, document, tags, stored, listeners, reloads: () => reloads };
 }
 
 describe("global Google Analytics bootstrap", () => {
@@ -66,5 +74,45 @@ describe("global Google Analytics bootstrap", () => {
     runInNewContext(googleAnalyticsBootstrap, context);
     expect(context.window.dataLayer[0]).toBe(existing);
     expect(context.window.dataLayer).toHaveLength(3);
+  });
+
+  it("excludes a saved browser before queuing configuration or loading Google", () => {
+    const context = browserContext(analyticsConfig.hostname);
+    context.stored.set(ANALYTICS_EXCLUSION_KEY, "true");
+    runInNewContext(googleAnalyticsBootstrap, context);
+    expect(context.window).toHaveProperty(ANALYTICS_DISABLE_KEY, true);
+    expect(context.tags).toEqual([]); expect(context.window.dataLayer).toEqual([]);
+    expect(context.listeners).toHaveLength(1);
+  });
+
+  it("preserves an existing opt-out flag set by another privacy tool", () => {
+    const context = browserContext(analyticsConfig.hostname);
+    Object.assign(context.window, { [ANALYTICS_DISABLE_KEY]: true });
+    runInNewContext(googleAnalyticsBootstrap, context);
+    expect(context.window).toHaveProperty(ANALYTICS_DISABLE_KEY, true);
+  });
+
+  it.each([false, true])("reloads other open tabs when exclusion changes from %s", (excluded) => {
+    const context = browserContext(analyticsConfig.hostname);
+    context.stored.set(ANALYTICS_EXCLUSION_KEY, String(excluded));
+    runInNewContext(googleAnalyticsBootstrap, context);
+    context.listeners[0]({ key: "unrelated" });
+    expect(context.reloads()).toBe(0);
+    context.stored.set(ANALYTICS_EXCLUSION_KEY, String(!excluded));
+    context.listeners[0]({ key: ANALYTICS_EXCLUSION_KEY });
+    expect(context.window).toHaveProperty(ANALYTICS_DISABLE_KEY, true);
+    expect(context.reloads()).toBe(1);
+  });
+
+  it("resumes other tabs when site storage is cleared and tolerates blocked storage", () => {
+    const context = browserContext(analyticsConfig.hostname);
+    context.stored.set(ANALYTICS_EXCLUSION_KEY, "true");
+    runInNewContext(googleAnalyticsBootstrap, context);
+    context.stored.clear(); context.listeners[0]({ key: null });
+    expect(context.reloads()).toBe(1);
+    const blocked = browserContext(analyticsConfig.hostname);
+    blocked.window.localStorage.getItem = () => { throw new Error("blocked"); };
+    expect(() => runInNewContext(googleAnalyticsBootstrap, blocked)).not.toThrow();
+    expect(blocked.tags).toHaveLength(1);
   });
 });

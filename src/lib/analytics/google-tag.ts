@@ -1,9 +1,27 @@
 import { analyticsConfig } from "@/config/analytics";
+import { ANALYTICS_DISABLE_KEY, ANALYTICS_EXCLUSION_KEY } from "./browser-exclusion";
 
 // Runs once in the root layout. Loading the tag only on the live hostname
 // keeps local development and static previews out of the real property.
 export const googleAnalyticsBootstrap = `(function () {
-  if (window.location.hostname !== ${JSON.stringify(analyticsConfig.hostname)} || document.getElementById("ga4-tag")) return;
+  var preferenceKey = ${JSON.stringify(ANALYTICS_EXCLUSION_KEY)};
+  var disableKey = ${JSON.stringify(ANALYTICS_DISABLE_KEY)};
+  function excluded() {
+    try { return window.localStorage.getItem(preferenceKey) === "true"; }
+    catch (_) { return false; }
+  }
+  var initialExclusion = excluded();
+  if (initialExclusion) window[disableKey] = true;
+  if (!window.__homepageAnalyticsPreferenceListener) {
+    window.__homepageAnalyticsPreferenceListener = true;
+    window.addEventListener("storage", function (event) {
+      if ((event.key === preferenceKey || event.key === null) && excluded() !== initialExclusion) {
+        window[disableKey] = true;
+        window.location.reload();
+      }
+    });
+  }
+  if (initialExclusion || window.location.hostname !== ${JSON.stringify(analyticsConfig.hostname)} || document.getElementById("ga4-tag")) return;
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };

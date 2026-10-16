@@ -19,6 +19,9 @@ const copy = {
     views: "浏览次数", users: "活跃用户", sessions: "会话", live: "实时活跃用户", liveRange: "最近 30 分钟", viewsHelp: "所有页面浏览次数之和", usersHelp: "GA4 识别的活跃用户", sessionsHelp: "GA4 统计的访问会话",
     trend: "每日浏览趋势", table: "查看每日数据", date: "日期", pages: "热门页面", sources: "来源渠道", top10: "前 10 项", sourceUnit: "会话", zone: "报表时区", fetched: "获取时间", unknownZone: "未返回", limited: "Google 提示此报表可能受隐私阈值、抽样或数据限制影响，结果可能不完整。",
     delay: "范围包含今天，按 GA4 媒体资源时区计算。常规报表存在处理延迟；图表只展示 API 返回的日期，未返回的日期不补为零。", unavailable: "暂无可展示的数据",
+    audience: "访客来源与设备", countries: "国家／地区", cities: "城市与地区", devices: "设备类型", browsers: "浏览器", referrals: "具体来源／媒介", unknown: "未知／未提供",
+    audienceHelp: "各项按所选范围的前 10 项展示，不能相加作为全站人数。同一用户可能出现在多个地区或设备分类中；GA4 用户数也不等于可确认的真实人数。来源／媒介按会话计数。",
+    locationHelp: "位置由网络地址推断，可能对应代理或运营商出口，只能作为大致来源参考。这里是汇总数据，无法据此判断某条访问是否属于你自己；排除自己的访问请使用上方开关。未提供的位置保留为未知，数据限制会单独提示。",
     errors: { expired: "授权已过期，请重新连接。", permission: "当前账号没有此 GA4 媒体资源的读取权限，或未允许读取统计数据。请换用有权限的账号连接。", apiDisabled: "Google 项目尚未启用 Analytics Data API。", quota: "Google API 请求额度暂时受限，请稍后刷新。", network: "读取失败或请求超时，请检查网络后刷新。", invalidResponse: "Google 返回的数据不完整，暂时无法展示，请稍后重试。", authorization: "未完成只读授权，请重新连接并允许读取统计数据。", popup: "Google 授权窗口未能完成，请允许弹窗后重试。" },
   },
   en: {
@@ -30,6 +33,9 @@ const copy = {
     views: "Views", users: "Active users", sessions: "Sessions", live: "Realtime active users", liveRange: "Last 30 minutes", viewsHelp: "Views across all pages", usersHelp: "Active users identified by GA4", sessionsHelp: "Visits measured as GA4 sessions",
     trend: "Daily page views", table: "View daily data", date: "Date", pages: "Top pages", sources: "Traffic channels", top10: "Top 10", sourceUnit: "Sessions", zone: "Report time zone", fetched: "Fetched", unknownZone: "Not provided", limited: "Google indicates privacy thresholds, sampling or data restrictions may affect this report. Results may be incomplete.",
     delay: "Includes today, in the GA4 property’s time zone. Standard reports have processing delays. Only dates returned by the API are plotted; missing dates are not filled with zeros.", unavailable: "No data to display",
+    audience: "Audience locations and devices", countries: "Countries / territories", cities: "Cities and regions", devices: "Device categories", browsers: "Browsers", referrals: "Source / medium", unknown: "Unknown / not provided",
+    audienceHelp: "Each ranking shows up to 10 results for the selected period. Do not sum these into a sitewide user count: one user may appear in multiple locations or device categories. GA4 users are not verified individual people. Source / medium counts sessions.",
+    locationHelp: "Locations are inferred from network addresses and may reflect proxy or carrier exits. These are approximate aggregates and cannot identify your own visits; use the switch above to exclude this browser. Missing locations stay unknown, and data restrictions are shown separately.",
     errors: { expired: "Authorization expired. Please reconnect.", permission: "This account lacks access to this GA4 property, or Analytics access was not granted. Connect an authorized account.", apiDisabled: "Analytics Data API is not enabled for the Google project.", quota: "Google API quota is temporarily limited. Try refreshing later.", network: "The request failed or timed out. Check your connection and refresh.", invalidResponse: "Google returned an incomplete response. Please try again later.", authorization: "Read-only authorization was not completed. Reconnect and allow Analytics access.", popup: "The Google authorization window could not complete. Allow popups and try again." },
   },
 };
@@ -77,6 +83,11 @@ export function StatsDashboard({ locale }: { locale: Locale }) {
   }, [session]);
   const connected = state.connection === "connected";
   const history = state.history.data;
+  const audience = state.audience.data;
+  const displayRows = (rows: RankedValue[], device = false) => rows.map((row) => ({ ...row,
+    label: row.label.split(" · ").map((part) => part === "(not set)" || part === "" ? text.unknown :
+      device && locale !== "en" ? ({ desktop: "电脑", mobile: "手机", tablet: "平板", "smart TV": "智能电视" } as Record<string, string>)[part] ?? part : part).join(" · "),
+  }));
   const number = (value: number | undefined | null) => value == null ? "—" : value.toLocaleString(locale === "en" ? "en-US" : "zh-CN");
   return <section className={styles.dashboard} aria-labelledby="inline-stats-title">
     {configured && <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={() => setScript(window.google?.accounts.oauth2 ? "ready" : "error")} onError={() => setScript("error")} />}
@@ -102,6 +113,26 @@ export function StatsDashboard({ locale }: { locale: Locale }) {
         <div className={styles.rankings}><section className={styles.panel}><h3>{text.pages} <small>{text.top10}</small></h3><Ranking rows={history.pages} unit={text.views} text={text} /></section><section className={styles.panel}><h3>{text.sources} <small>{text.top10}</small></h3><Ranking rows={history.sources} unit={text.sourceUnit} text={text} /></section></div>
         <p className={styles.meta}>{text.zone}: {history.timeZone ?? text.unknownZone} · {text.fetched}: {state.history.fetchedAt && new Date(state.history.fetchedAt).toLocaleString()}</p>
       </>}
+      <section aria-labelledby="audience-title" className={styles.dashboard}>
+        <h2 id="audience-title" className={styles.controlTitle}>{text.audience}</h2>
+        <p className={styles.meta}>{text.audienceHelp}</p>
+        <p className={styles.meta}>{text.locationHelp}</p>
+        {state.audience.status === "loading" && <p role="status">{text.loading}</p>}
+        <Problem error={state.audience.error} text={text} />
+        {audience && <>
+          {audience.limited && <p className={styles.notice}>{text.limited}</p>}
+          <div className={styles.rankings}>
+            {([ [text.countries, audience.countries, text.users], [text.cities, audience.cities, text.users],
+              [text.devices, audience.devices, text.users], [text.browsers, audience.browsers, text.users],
+              [text.referrals, audience.referrals, text.sourceUnit],
+            ] as [string, RankedValue[], string][]).map(([title, rows, unit]) => <section key={title} className={styles.panel}>
+              <h3>{title} <small>{text.top10}</small></h3>
+              <Ranking rows={displayRows(rows, title === text.devices)} unit={unit} text={text} />
+            </section>)}
+          </div>
+          <p className={styles.meta}>{text.fetched}: {state.audience.fetchedAt && new Date(state.audience.fetchedAt).toLocaleString()}</p>
+        </>}
+      </section>
       <p className={styles.meta}>{text.delay}</p>
     </>}
     <p className={styles.meta}>{text.privacy}</p>

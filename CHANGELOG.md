@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add browser-local analytics exclusion, checked before tag loading and synced
+  across open site tabs; explain reload, separate-device and historical limits.
+- Add independent aggregate GA4 audience reports for countries, regions/cities,
+  devices, browsers and session source/medium, with explicit unknown values,
+  top-ten scope, privacy limitations and isolated loading/error states.
 - Add a private inline GA4 dashboard to both statistics pages, with Google
   read-only authorization, 7/30-day sitewide totals, daily trends, top pages,
   traffic channels and independent realtime users.

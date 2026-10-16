@@ -10,6 +10,7 @@ import {
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { getMessages } from "@/i18n/messages";
 import { StatsDashboard } from "@/components/analytics/StatsDashboard";
+import { BrowserExclusionControl } from "@/components/analytics/BrowserExclusionControl";
 
 interface StatsPageViewProps {
   locale?: Locale;
@@ -56,6 +57,7 @@ export function StatsPageView({ locale = defaultLocale }: StatsPageViewProps) {
           </p>
         </header>
 
+        <BrowserExclusionControl locale={locale} />
         <StatsDashboard locale={locale} />
 
         <details className="border-t border-[var(--global-border-color)] pt-5">

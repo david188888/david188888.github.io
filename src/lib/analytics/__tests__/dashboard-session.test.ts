@@ -1,14 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DashboardSession } from "../dashboard-session";
-import { AnalyticsError, type HistoricalAnalytics } from "../dashboard-data";
+import { AnalyticsError, type AudienceAnalytics, type HistoricalAnalytics } from "../dashboard-data";
 import type { GoogleAccessToken, GoogleOAuth2 } from "../google-auth";
 const data: HistoricalAnalytics = { summary: { views: 8, users: 2, sessions: 3 }, trend: [], pages: [], sources: [], timeZone: "UTC", limited: false };
+const audienceData: AudienceAnalytics = { countries: [{ label: "China", value: 2 }], cities: [], devices: [], browsers: [], referrals: [], limited: false };
 function setup() {
   let callback: (token: GoogleAccessToken) => void = () => {};
-  const history = vi.fn().mockResolvedValue(data), realtime = vi.fn().mockResolvedValue(1);
-  const session = new DashboardSession({ history, realtime, now: Date.now, authorize: (_api, _id, success) => { callback = success; } });
+  const history = vi.fn().mockResolvedValue(data), realtime = vi.fn().mockResolvedValue(1), audience = vi.fn().mockResolvedValue(audienceData);
+  const session = new DashboardSession({ history, realtime, audience, now: Date.now, authorize: (_api, _id, success) => { callback = success; } });
   const connect = () => { session.connect({} as GoogleOAuth2); callback({ value: "test-only", expiresAt: Date.now() + 3600000 }); };
-  return { session, history, realtime, connect, callback: () => callback };
+  return { session, history, realtime, audience, connect, callback: () => callback };
 }
 const settle = async () => { await Promise.resolve(); await Promise.resolve(); };
 afterEach(() => vi.useRealTimers());
@@ -30,6 +31,26 @@ describe("in-memory dashboard lifecycle", () => {
     const test = setup(); test.realtime.mockRejectedValue(new AnalyticsError("quota")); test.connect(); await settle();
     expect(test.session.getSnapshot().history.data).toEqual(data);
     expect(test.session.getSnapshot().realtime.error?.code).toBe("quota"); test.session.dispose();
+  });
+  it("keeps overview and realtime data when audience detail fails", async () => {
+    const test = setup(); test.audience.mockRejectedValue(new AnalyticsError("quota")); test.connect(); await settle();
+    expect(test.session.getSnapshot().history.data).toEqual(data);
+    expect(test.session.getSnapshot().realtime.data).toBe(1);
+    expect(test.session.getSnapshot().audience.error?.code).toBe("quota"); test.session.dispose();
+  });
+  it("discards audience responses from an old range or disconnected session", async () => {
+    const test = setup(); let resolveOld: (data: AudienceAnalytics) => void = () => {};
+    test.audience.mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+    test.connect(); test.session.setDays(7); await settle();
+    resolveOld({ ...audienceData, countries: [{ label: "stale", value: 999 }] }); await settle();
+    expect(test.session.getSnapshot().audience.data).toEqual(audienceData);
+    test.session.disconnect(); expect(test.session.getSnapshot().audience).toEqual({ status: "idle" });
+  });
+  it("expires and clears all report groups when audience authorization fails", async () => {
+    const test = setup(); test.audience.mockRejectedValue(new AnalyticsError("expired")); test.connect(); await settle();
+    expect(test.session.getSnapshot().connection).toBe("expired");
+    expect(test.session.getSnapshot().history.data).toBeUndefined();
+    expect(test.session.getSnapshot().audience.data).toBeUndefined(); test.session.dispose();
   });
   it("aborts old ranges and ignores their later responses", async () => {
     const test = setup(); let resolveOld: (data: HistoricalAnalytics) => void = () => {};
