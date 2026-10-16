@@ -310,7 +310,7 @@ export const messages: Record<Locale, Messages> = {
         intro:
           "This is a personal academic homepage. This page describes its traffic analytics and external links.",
         analytics:
-          "This site uses Google Analytics 4 to measure page views, traffic sources and site usage. Google’s tag may use cookies and similar identifiers to distinguish visits and sessions. You can limit collection through your browser privacy settings or ad-blocking tools.",
+          "This site uses Google Analytics 4 to measure page views, traffic sources and site usage. Google’s tag may use cookies and similar identifiers to distinguish visits and sessions. You can limit collection through your browser privacy settings or ad-blocking tools. The optional statistics dashboard requests Google Analytics read-only access to display reports in your browser. Access tokens and reports stay in page memory and are cleared on disconnect, expiration or page closure; the site does not persist them or send them to its own server. Disconnecting does not revoke your Google grant; you can revoke it in your Google account settings.",
         externalLinks:
           "This site contains links to external sites (arXiv, GitHub, Google Scholar). We are not responsible for their privacy practices.",
       },
@@ -483,7 +483,7 @@ export const messages: Record<Locale, Messages> = {
         externalLinksTitle: "外部链接",
         intro: "这是一个个人学术主页。本页说明网站访问统计与外部链接的使用。",
         analytics:
-          "本站使用 Google Analytics 4 统计页面浏览、访问来源和站点使用情况。Google 标签可能使用 Cookie 等标识符区分访问及会话。你可以通过浏览器隐私设置或广告拦截工具限制采集。",
+          "本站使用 Google Analytics 4 统计页面浏览、访问来源和站点使用情况。Google 标签可能使用 Cookie 等标识符区分访问及会话。你可以通过浏览器隐私设置或广告拦截工具限制采集。可选的统计看板会申请 Google Analytics 只读权限，在浏览器中展示报表。访问令牌和报表仅保留在页面内存，断开、过期或关闭页面后清除，不由本站持久保存或上传到本站服务器。断开连接不会撤销 Google 授权，可在 Google 账号设置中撤销。",
         externalLinks:
           "本站包含指向外部网站的链接，如 arXiv、GitHub 和 Google Scholar。我们不对这些网站的隐私实践负责。",
       },
