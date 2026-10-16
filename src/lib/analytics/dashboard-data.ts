@@ -16,6 +16,22 @@ export interface HistoricalAnalytics {
   timeZone: string | null;
   limited: boolean;
 }
+export interface AudienceAnalytics {
+  countries: RankedValue[];
+  cities: RankedValue[];
+  devices: RankedValue[];
+  browsers: RankedValue[];
+  referrals: RankedValue[];
+  limited: boolean;
+}
+
+const audienceReports = [
+  { key: "countries", dimensions: ["country"], metric: "activeUsers" },
+  { key: "cities", dimensions: ["country", "region", "city"], metric: "activeUsers" },
+  { key: "devices", dimensions: ["deviceCategory"], metric: "activeUsers" },
+  { key: "browsers", dimensions: ["browser"], metric: "activeUsers" },
+  { key: "referrals", dimensions: ["sessionSourceMedium"], metric: "sessions" },
+] as const;
 
 type JsonObject = Record<string, unknown>;
 function object(value: unknown): JsonObject {
@@ -57,6 +73,35 @@ function report(value: unknown, dimensions: string[], metrics: string[]) {
   return { rows, metadata };
 }
 
+function isLimited(metadata: JsonObject) {
+  return metadata.subjectToThresholding === true || metadata.dataLossFromOtherRow === true ||
+    (Array.isArray(metadata.samplingMetadatas) && metadata.samplingMetadatas.length > 0) ||
+    (Array.isArray(metadata.dataTruncationReasons) && metadata.dataTruncationReasons.length > 0) ||
+    !!metadata.emptyReason || !!metadata.schemaRestrictionResponse;
+}
+
+export function parseAudienceAnalytics(value: unknown): AudienceAnalytics {
+  const reports = array(object(value).reports);
+  if (reports.length !== audienceReports.length) throw new AnalyticsError("invalidResponse");
+  const result: AudienceAnalytics = { countries: [], cities: [], devices: [], browsers: [], referrals: [], limited: false };
+  audienceReports.forEach(({ key, dimensions, metric }, index) => {
+    const parsed = report(reports[index], [...dimensions], [metric]);
+    result[key] = parsed.rows.map(({ labels, values: [value] }) => ({
+      label: labels.map((label) => label.trim() || "(not set)").join(" · "), value,
+    }));
+    result.limited ||= isLimited(parsed.metadata);
+  });
+  return result;
+}
+
+export function audienceRequest(days: ReportDays) {
+  return { requests: audienceReports.map(({ dimensions, metric }) => ({
+    dateRanges: [{ startDate: `${days - 1}daysAgo`, endDate: "today" }],
+    dimensions: dimensions.map((name) => ({ name })), metrics: [{ name: metric }],
+    orderBys: [{ metric: { metricName: metric }, desc: true }], limit: "10",
+  })) };
+}
+
 export function parseHistoricalAnalytics(value: unknown): HistoricalAnalytics {
   const reports = array(object(value).reports);
   if (reports.length !== 4) throw new AnalyticsError("invalidResponse");
@@ -80,10 +125,7 @@ export function parseHistoricalAnalytics(value: unknown): HistoricalAnalytics {
     summary: first ? { views: first[0], users: first[1], sessions: first[2] } : null,
     trend, pages: ranked(pages.rows), sources: ranked(sources.rows),
     timeZone: typeof total.metadata.timeZone === "string" ? total.metadata.timeZone : null,
-    limited: metadata.some((item) => item.subjectToThresholding === true || item.dataLossFromOtherRow === true ||
-      (Array.isArray(item.samplingMetadatas) && item.samplingMetadatas.length > 0) ||
-      (Array.isArray(item.dataTruncationReasons) && item.dataTruncationReasons.length > 0) ||
-      !!item.emptyReason || !!item.schemaRestrictionResponse),
+    limited: metadata.some(isLimited),
   };
 }
 
@@ -144,4 +186,7 @@ export async function fetchHistoricalAnalytics(token: string, days: ReportDays, 
 }
 export async function fetchRealtimeAnalytics(token: string, signal: AbortSignal) {
   return parseRealtimeAnalytics(await postReport("runRealtimeReport", token, { metrics: [{ name: "activeUsers" }] }, signal));
+}
+export async function fetchAudienceAnalytics(token: string, days: ReportDays, signal: AbortSignal) {
+  return parseAudienceAnalytics(await postReport("batchRunReports", token, audienceRequest(days), signal));
 }

@@ -66,6 +66,18 @@ users in the last 30 minutes. The original Google dashboard link remains availab
 Google tokens and reports stay in page memory; reloading requires reconnecting.
 The optional website author login only unlocks article annotation tools.
 
+The dashboard also shows top-ten countries, country/region/city combinations,
+device categories, browsers and session source/medium. These are approximate
+aggregates, not individual visitor records; users across rows must not be added
+to infer sitewide people. Audience errors do not hide the overview or realtime.
+
+Use **Exclude this browser** above the dashboard on each of your browsers/devices
+to keep future visits out of collection. The setting is saved locally and checked
+before loading the Google tag. Saving reloads this page and other open site tabs,
+so reconnect Google afterward. Clearing site data resets it; incognito and other
+browser profiles need separate setup. Historical visits cannot be subtracted by
+this switch. Opening the statistics page does not automatically exclude anyone.
+
 Set `NEXT_PUBLIC_GOOGLE_ANALYTICS_CLIENT_ID` locally and the public GitHub Actions
 repository variable `GOOGLE_ANALYTICS_CLIENT_ID` for deployment. The static site
 uses no OAuth client secret. Without a configured client ID, the page clearly

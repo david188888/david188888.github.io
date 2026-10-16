@@ -7,6 +7,45 @@
 7／30 天浏览次数、活跃用户、会话、每日浏览趋势、热门页面、来源渠道，以及独立的
 近 30 分钟活跃用户。也可通过「打开 Google 看板」进入官方报表。
 
+统计页还展示近 7／30 天的国家／地区、城市与地区、设备、浏览器和具体来源／媒介
+前 10 项。这些是汇总数据，不能识别具体个人，也不能确认某条访问是不是作者本人。
+
+## 排除自己的访问
+
+在统计页上方点击「排除此浏览器的访问」，无需 Google 授权或作者工具登录。
+设置保存在当前 origin 的 localStorage，根布局在加载 Google 标签之前读取；已排除时
+设置官方 `ga-disable-G-6S2MZXN5QQ` 标志，并且不加载采集标签、不排队初始化。
+保存时也立即停用已加载的标签，然后刷新页面；其他已打开的本站标签页通过 storage
+事件同步刷新。刷新会清除页面内存中的 Google 授权与报表，之后需要重新连接。
+
+- 仅排除当前浏览器配置的后续采集；手机、其他浏览器、无痕窗口需要分别设置。
+- 更换网络仍然有效；清除网站数据会重置。中英文路由共用同一设置。
+- 本地和预览环境依然按主机名排除，不会因为恢复浏览器统计而向真实资源收数。
+- 开关不能撤回已经发出的事件，不能可靠地扣除历史上自己的访问。
+- 浏览器禁止存储时会明确提示失败，不会宣称排除成功；默认采集行为不变。
+- 此设置不会自动替任何访客启用，也不会改变 Google 后台过滤器。
+
+## 访客详情口径
+
+| 报表 | GA4 维度 | 指标 |
+| --- | --- | --- |
+| 国家／地区 | `country` | `activeUsers` |
+| 城市与地区 | `country` + `region` + `city` | `activeUsers` |
+| 设备类型 | `deviceCategory` | `activeUsers` |
+| 浏览器 | `browser` | `activeUsers` |
+| 具体来源／媒介 | `sessionSourceMedium` | `sessions` |
+
+城市保留国家与地区上下文。位置由 IP 等网络信息推断，可能对应代理或运营商出口，
+不代表访客的精确位置；不提供完整 IP、街道地址或逐人访问轨迹。缺失位置显示
+「未知／未提供」，不猜测补齐。每项按指标降序展示前 10 项，不代表所有来源。
+同一用户可能出现在不同地区／设备行中，不能把各行活跃用户相加作为全站人数，
+GA4 用户标识也不等于经过确认的真实个人。
+
+详情使用单独的 `batchRunReports`（恰好 5 个查询，符合每批最多 5 个的 API 限制），
+与原有 4 个历史查询及实时请求独立。详情报错不会抹掉成功的概览／实时数据；
+切换范围、断开、过期及卸载会同步使所有旧请求失效。隐私阈值、抽样或受限数据
+会在详情区域单独提示。详情与授权令牌同样只保留在页面内存中。
+
 令牌与报表仅保留在当前页面内存，刷新／关闭后需要重新连接；授权过期或断开连接会
 清除本页数据。断开不会撤销 Google 账号中已授予的权限，可在 Google 账号的第三方
 连接设置中撤销。作者工具登录仍只用于文章批注，不能授予 GA4 数据访问权限。
@@ -109,6 +148,19 @@ Google 为该衡量 ID 下发的公开标签配置于 2026-10-16 包含
 - 带真实 Client ID 的构建通过；本地 Google 授权组件加载成功，连接按钮可触发授权流程。
 - 真实账号连接及历史报表读取已通过；真实实时空响应已通过解析回放与回归测试。修复后的实时卡片、授权后窄屏布局及正式来源授权流程尚未完成浏览器复验。
 
+### 2026-10-16 访客详情与浏览器排除验证
+
+- 430 项 Vitest 通过，生产静态构建及类型检查通过。
+- 标签初始化测试覆盖保存的排除设置、加载前停用、跨标签页变更／清除同步、
+  存储失败、预览排除及保留其他隐私工具设置的停用标志。
+- 真实浏览器在本地静态预览验证点击排除后的保存、刷新、状态文案与无采集标签，
+  并验证英文路由共享设置，以及「恢复统计」的反向切换。
+- 中英文使用固定本地响应模拟授权和报表，验证 320px／1280px 无横向溢出，
+  地区层级、未知位置、设备类型和长来源网址正常显示。此步骤没有读取真实 GA4 报表，
+  固定数据不能视为真实访客记录或真实 OAuth 验收。
+- 新增详情查询与正式站点的排除效果仍需部署后通过实际 Google 授权和 Network 收数
+  检查验收；本地预览按设计不会向真实媒体资源发送采集事件。
+
 ## 官方参考
 
 - [GA4 单页应用衡量](https://developers.google.com/analytics/devguides/collection/ga4/single-page-applications)
@@ -117,3 +169,5 @@ Google 为该衡量 ID 下发的公开标签配置于 2026-10-16 包含
 - [Analytics Data API batchRunReports](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/batchRunReports)
 - [Google Identity Services token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model)
 - [GA4 Data API schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema)
+- [Google 标签停用开关](https://developers.google.com/tag-platform/security/guides/privacy)
+- [GA4 地区化数据收集](https://support.google.com/analytics/answer/11598602?hl=zh-Hans)

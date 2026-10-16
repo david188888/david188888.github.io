@@ -1,4 +1,7 @@
 .dashboard { display: grid; gap: 1.25rem; min-width: 0; }
+.controlTitle { margin: 0 0 .8rem; font-size: 1.1rem; }
+.panel > .controls { margin: .8rem 0; }
+.panel > .meta { line-height: 1.7; overflow-wrap: anywhere; }
 .dashboard p { margin: 0; line-height: 1.7; }
 .heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .75rem; }
 .heading h2 { margin: 0; font-size: 1.3rem; }
