@@ -9,7 +9,7 @@ import {
 } from "@/lib/auth/author";
 import { defaultLocale, type Locale } from "@/i18n/locales";
 import { getMessages } from "@/i18n/messages";
-import { analyticsConfig } from "@/config/analytics";
+import { StatsDashboard } from "@/components/analytics/StatsDashboard";
 
 interface StatsPageViewProps {
   locale?: Locale;
@@ -56,43 +56,7 @@ export function StatsPageView({ locale = defaultLocale }: StatsPageViewProps) {
           </p>
         </header>
 
-        <section aria-labelledby="stats-coverage" className="border border-[var(--global-border-color)] rounded-card p-5 sm:p-8">
-          <h2 id="stats-coverage" className="mt-0 text-xl">{stats.coverageTitle}</h2>
-          <p className="text-[var(--global-text-color-light)]">{stats.coverageDescription}</p>
-          <a
-            href={analyticsConfig.dashboardUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex mt-5 px-5 py-3 rounded-lg bg-[var(--global-text-color)] text-[var(--global-bg-color)] font-medium hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
-          >
-            {stats.openDashboard}
-          </a>
-          <p className="mt-3 text-sm text-[var(--global-text-color-light)]">{stats.googleSignInNote}</p>
-        </section>
-
-        <dl className="grid gap-5 sm:grid-cols-3">
-          {[
-            [stats.viewsTitle, stats.viewsDescription],
-            [stats.usersTitle, stats.usersDescription],
-            [stats.sessionsTitle, stats.sessionsDescription],
-          ].map(([title, description]) => (
-            <div key={title}>
-              <dt className="font-semibold">{title}</dt>
-              <dd className="mt-2 text-sm text-[var(--global-text-color-light)]">{description}</dd>
-            </div>
-          ))}
-        </dl>
-
-        <section aria-labelledby="stats-reading">
-          <h2 id="stats-reading" className="mt-0 text-xl">{stats.readingTitle}</h2>
-          <ol className="list-decimal pl-5 space-y-3 text-[var(--global-text-color-light)]">
-            {stats.readingSteps.map((step) => <li key={step}>{step}</li>)}
-          </ol>
-          <p className="mt-5 text-sm text-[var(--global-text-color-light)]">{stats.dataNote}</p>
-          <p className="mt-3 text-xs text-[var(--global-text-color-light)]">
-            {stats.trackingId}: {analyticsConfig.trackingId}
-          </p>
-        </section>
+        <StatsDashboard locale={locale} />
 
         <details className="border-t border-[var(--global-border-color)] pt-5">
           <summary className="cursor-pointer text-sm text-[var(--global-text-color-light)]">{stats.authorToolsTitle}</summary>

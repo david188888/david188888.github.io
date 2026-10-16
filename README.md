@@ -59,12 +59,20 @@ enhanced measurement records page loads and history changes; do not add manual
 `page_view` events alongside it. Only `david188888.github.io` loads the tag, so
 local development and previews stay out of the real statistics.
 
-Open `/stats/` and click **打开 Google 看板 / Open Google Analytics** to go directly
-to the configured private dashboard. Google sign-in controls access to the data;
-the optional website author login is only for article annotation tools.
+Open `/stats/` (or `/en/stats/`) and connect an authorized Google account for
+read-only access to the inline dashboard: 7/30-day sitewide views, active users,
+sessions, daily views, top pages and traffic channels, plus independent realtime
+users in the last 30 minutes. The original Google dashboard link remains available.
+Google tokens and reports stay in page memory; reloading requires reconnecting.
+The optional website author login only unlocks article annotation tools.
 
-See [analytics setup and verification](docs/analytics.md) for metrics and the
-post-deployment acceptance steps.
+Set `NEXT_PUBLIC_GOOGLE_ANALYTICS_CLIENT_ID` locally and the public GitHub Actions
+repository variable `GOOGLE_ANALYTICS_CLIENT_ID` for deployment. The static site
+uses no OAuth client secret. Without a configured client ID, the page clearly
+shows setup is pending and retains the external dashboard link.
+
+See [analytics setup and verification](docs/analytics.md) for Cloud/OAuth setup,
+metric definitions and the remaining live-account acceptance steps.
 
 ## Related Docs
 
