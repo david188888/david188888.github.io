@@ -89,6 +89,3 @@ export const localizedInsightContent: Record<Locale, InsightContent> = {
 export function getInsightContent(locale: Locale): InsightContent {
   return localizedInsightContent[locale];
 }
-
-export const insightEntries = localizedInsightContent.en.entries;
-export const featuredInsight = localizedInsightContent.en.featuredInsight;

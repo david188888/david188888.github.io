@@ -53,13 +53,13 @@ Next.js 15 App Router、React 19、TypeScript(strict)、Tailwind 3、Vitest。
   所以**改术语表不需要手动升版本**，但必须重跑 `translate:content`（站点会先报
   build 失败）。只有「该单元源文里命中」的术语会注入 prompt 与缓存键，改一条术语
   只重译受影响的单元。术语命中译文违规时管线会先重采样若干次，仍不过才中止。
-- `scripts/notion-to-mdx.mjs`：Notion → MDX 的确定性转换；完整同步流程见 README
-  的 “Syncing An Existing Post From Notion”。正文里的图表以**无围栏的块级 HTML** 落进
+- `scripts/notion-to-mdx.mjs`：Notion → MDX 的确定性转换；完整同步流程见
+  `content/drafts/README.md` 的「已发布文章的 Notion 回同步」。正文里的图表以**无围栏的块级 HTML** 落进
   MDX：```` ```html ```` 围栏内的标记语言会被转换脚本自动拆掉围栏，因为
   `src/lib/content/markdown-segments.mjs` 规定围栏块永远不会被提升为实时 HTML，
   留着围栏等于把图表当源码文本发到页面上。
-- `.agents/skills/`：随仓库发布的 skill（DSH 只扫这里）。`.claude/` 不被 git 跟踪，
-  其中的 skill 只是本机 Claude Code 副本。
+- `.agents/skills/`：随仓库发布的 skill（DSH 只扫这里）。`.claude/` 下只有
+  `settings.json` 被 git 跟踪，`.claude/skills/` 被忽略，其中的 skill 只是本机 Claude Code 副本。
 - `src/config/profile.ts`：教育、实习、论文等双语资料的唯一来源；首页「项目与开源」
   栏目和 `/projects/tradingagents/` 的数据在 `src/config/projects.ts`。
 - `src/components/home/editorial.css`：首页、洞察页、项目页共用的编辑版样式。规则**必须**

@@ -90,4 +90,5 @@ metric definitions and the remaining live-account acceptance steps.
 
 - [Navigation performance](docs/navigation-performance.md)
 - [Insights markup](docs/insights-markup.md)
-- [Homepage contact layout and palette note](docs/superpowers/specs/2026-10-10-homepage-contact-palette-design.md)
+- [Analytics setup and verification](docs/analytics.md)
+- [Drafting, publishing and Notion sync](content/drafts/README.md)

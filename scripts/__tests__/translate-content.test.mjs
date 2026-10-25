@@ -19,7 +19,6 @@ import {
   listFenceMarkers,
   ollamaTagsUrl,
   orderUnitsByPlan,
-  parseFrontmatter,
   parseCliOptions,
   planHtmlTextUnits,
   restoreHtmlBlocks,
@@ -39,6 +38,7 @@ import {
   validateTextHygiene,
   validateTranslatedField,
 } from "../translate-content.mjs";
+import { parseFrontmatter } from "../../src/lib/content/post-source.mjs";
 import { createSourceHash as createRuntimeSourceHash } from "../../src/lib/content/cache.ts";
 import {
   createUnitKey,

@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isThematicBreak, splitMarkdownSegments } from "../src/lib/content/markdown-segments.mjs";
+import { getSourceLanguage, getTargetLanguage, parseFrontmatter } from "../src/lib/content/post-source.mjs";
 import {
   buildTerminologyBlock,
   createTermsHash,
@@ -57,56 +58,9 @@ const LANGUAGE_NAMES = {
   en: { zh: "英语", en: "English" },
 };
 
-export function parseFrontmatter(source) {
-  if (!source.startsWith("---\n")) {
-    return { frontmatter: {}, body: source };
-  }
-
-  const closingIndex = source.indexOf("\n---", 4);
-  if (closingIndex === -1) {
-    return { frontmatter: {}, body: source };
-  }
-
-  const rawFrontmatter = source.slice(4, closingIndex);
-  const bodyStart = source.startsWith("\n", closingIndex + 4) ? closingIndex + 5 : closingIndex + 4;
-
-  return {
-    frontmatter: parseSimpleYaml(rawFrontmatter),
-    body: source.slice(bodyStart),
-  };
-}
-
 export function toCachePath(sourcePath) {
   const basename = path.posix.basename(sourcePath, path.posix.extname(sourcePath));
   return path.posix.join(TRANSLATION_DIR, `${basename}.json`);
-}
-
-export function detectLanguage(text) {
-  const chineseCount = (text.match(/[\u3400-\u9fff]/g) ?? []).length;
-  const englishCount = (text.match(/[A-Za-z]/g) ?? []).length;
-  const totalSignal = chineseCount + englishCount;
-
-  if (chineseCount >= 8 && chineseCount / Math.max(totalSignal, 1) >= 0.35) {
-    return "zh";
-  }
-
-  if (englishCount >= 20 && englishCount / Math.max(totalSignal, 1) >= 0.75) {
-    return "en";
-  }
-
-  return null;
-}
-
-export function getTargetLanguage(sourceLanguage) {
-  if (sourceLanguage === "en") {
-    return "zh";
-  }
-
-  if (sourceLanguage === "zh") {
-    return "en";
-  }
-
-  throw new Error(`Unsupported source language: ${sourceLanguage}`);
 }
 
 /**
@@ -1100,7 +1054,7 @@ async function translatePost({ sourcePath, baseUrl, model, modelDigest, force, d
   const excerpt = normalizeString(parsed.frontmatter.excerpt);
   const tags = normalizeStringArray(parsed.frontmatter.tags);
   const body = parsed.body;
-  const sourceLanguage = getSourceLanguage(parsed.frontmatter.language, `${title}\n${excerpt}\n${body}`);
+  const sourceLanguage = getSourceLanguage(parsed.frontmatter, body);
 
   if (!sourceLanguage) {
     console.warn(`Skipping ${sourcePath}: unable to detect source language.`);
@@ -1539,65 +1493,6 @@ async function translatePost({ sourcePath, baseUrl, model, modelDigest, force, d
   return { status: "translated", reused: reusedKeys.size, translated: pendingTotal, pending: 0 };
 }
 
-function parseSimpleYaml(source) {
-  const result = {};
-  const lines = source.split(/\r?\n/);
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (!line.trim() || line.trimStart().startsWith("#")) {
-      continue;
-    }
-
-    const match = line.match(/^([A-Za-z0-9_-]+):(?:\s*(.*))?$/);
-    if (!match) {
-      continue;
-    }
-
-    const key = match[1];
-    const value = match[2] ?? "";
-
-    if (value === "") {
-      const items = [];
-      while (index + 1 < lines.length) {
-        const nextLine = lines[index + 1];
-        const itemMatch = nextLine.match(/^\s+-\s+(.*)$/);
-        if (!itemMatch) {
-          break;
-        }
-        items.push(parseScalar(itemMatch[1]));
-        index += 1;
-      }
-      result[key] = items.length > 0 ? items : "";
-      continue;
-    }
-
-    result[key] = parseScalar(value);
-  }
-
-  return result;
-}
-
-function parseScalar(value) {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-    (trimmed.startsWith('"') && trimmed.endsWith('"'))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-
-  if (trimmed === "true") {
-    return true;
-  }
-
-  if (trimmed === "false") {
-    return false;
-  }
-
-  return trimmed;
-}
-
 function normalizeString(value) {
   return typeof value === "string" ? value : "";
 }
@@ -1608,14 +1503,6 @@ function normalizeStringArray(value) {
   }
 
   return value.map((item) => String(item));
-}
-
-function getSourceLanguage(frontmatterLanguage, text) {
-  if (frontmatterLanguage === "en" || frontmatterLanguage === "zh") {
-    return frontmatterLanguage;
-  }
-
-  return detectLanguage(text);
 }
 
 async function listPostPaths() {

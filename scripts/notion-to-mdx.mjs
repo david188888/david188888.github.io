@@ -15,7 +15,7 @@
  *
  * Usage:
  *   node scripts/notion-to-mdx.mjs --input <fetch.txt> [--source <post.mdx>]
- *        [--comments=publish-all|mark-only|none] [--write]
+ *        [--comments=all|mark-only|none] [--write]
  *
  * MDX goes to stdout unless `--write` is given. The conversion report always
  * goes to stderr so stdout stays pipeable.

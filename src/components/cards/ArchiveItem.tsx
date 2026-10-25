@@ -7,10 +7,7 @@ interface ArchiveItemProps {
   venue?: string;
   date?: string;
   excerpt?: string;
-  type?: string;
-  location?: string;
   paperUrl?: string;
-  citation?: string;
   locale?: Locale;
   paperLabel?: string;
 }
@@ -21,8 +18,6 @@ export function ArchiveItem({
   venue,
   date,
   excerpt,
-  type,
-  location,
   paperUrl,
   locale = "en",
   paperLabel = "Paper",
@@ -45,9 +40,9 @@ export function ArchiveItem({
           {title}
         </Link>
       </h2>
-      {(venue || type) && (
+      {venue && (
         <p className="text-[0.75em] text-[var(--global-text-color-light)] uppercase tracking-wider m-0 mb-1">
-          {[type, venue, location].filter(Boolean).join(" · ")}
+          {venue}
         </p>
       )}
       {formattedDate && (
