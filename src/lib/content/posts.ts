@@ -7,7 +7,7 @@ import { createAnnotationIdFactory } from "./annotation-ids.mjs";
 import { createSourceHash, findCacheInconsistencies, isTranslationCacheFresh } from "./cache";
 import { extractInlineMarks, restoreInlineMarks } from "./inline-marks.mjs";
 import { isThematicBreak, splitMarkdownSegments } from "./markdown-segments.mjs";
-import { detectSourceLanguage, getTargetLanguage } from "./language";
+import { getSourceLanguage, getTargetLanguage, parseFrontmatter } from "./post-source.mjs";
 import { fitEmbeddedSvgText } from "./svg-text-fit.mjs";
 
 /**
@@ -17,7 +17,7 @@ import { fitEmbeddedSvgText } from "./svg-text-fit.mjs";
  */
 let annotationIds = createAnnotationIdFactory();
 
-export function resetAnnotationIds(): void {
+function resetAnnotationIds(): void {
   annotationIds = createAnnotationIdFactory();
 }
 
@@ -67,11 +67,6 @@ export interface LocalizedPost {
   locale: Locale;
 }
 
-interface ParsedPost {
-  frontmatter: Record<string, unknown>;
-  body: string;
-}
-
 interface TranslationCache {
   version?: number;
   sourceHash?: string;
@@ -98,7 +93,7 @@ export function getPostSlugs(): string[] {
     .sort();
 }
 
-export function getLocalizedPosts(locale: Locale = defaultLocale): LocalizedPost[] {
+function getLocalizedPosts(locale: Locale = defaultLocale): LocalizedPost[] {
   return getPostSlugs()
     .map((slug) => getLocalizedPost(slug, locale))
     .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
@@ -208,69 +203,6 @@ export function getLocalizedPost(slug: string, locale: Locale = defaultLocale): 
     tags: arrayValue(cache.tags),
     body: stringValue(cache.body),
   });
-}
-
-function parseFrontmatter(source: string): ParsedPost {
-  if (!source.startsWith("---\n")) return { frontmatter: {}, body: source };
-  const closingIndex = source.indexOf("\n---", 4);
-  if (closingIndex === -1) return { frontmatter: {}, body: source };
-
-  const frontmatterSource = source.slice(4, closingIndex);
-  const bodyStart = source.startsWith("\n", closingIndex + 4) ? closingIndex + 5 : closingIndex + 4;
-  return {
-    frontmatter: parseSimpleYaml(frontmatterSource),
-    body: source.slice(bodyStart),
-  };
-}
-
-function parseSimpleYaml(source: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  const lines = source.split(/\r?\n/);
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (!line.trim() || line.trimStart().startsWith("#")) continue;
-
-    const match = line.match(/^([A-Za-z0-9_-]+):(?:\s*(.*))?$/);
-    if (!match) continue;
-
-    const key = match[1];
-    const value = match[2] ?? "";
-    if (value === "") {
-      const items: string[] = [];
-      while (index + 1 < lines.length) {
-        const itemMatch = lines[index + 1].match(/^\s+-\s+(.*)$/);
-        if (!itemMatch) break;
-        items.push(parseScalar(itemMatch[1]));
-        index += 1;
-      }
-      result[key] = items.length > 0 ? items : "";
-      continue;
-    }
-
-    result[key] = parseScalar(value);
-  }
-
-  return result;
-}
-
-function parseScalar(value: string): string {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-    (trimmed.startsWith('"') && trimmed.endsWith('"'))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
-}
-
-function getSourceLanguage(frontmatter: Record<string, unknown>, body: string): Locale | null {
-  if (frontmatter.language === "en" || frontmatter.language === "zh") {
-    return frontmatter.language;
-  }
-  return detectSourceLanguage(`${stringValue(frontmatter.title)}\n${stringValue(frontmatter.excerpt)}\n${body}`)
-    .language;
 }
 
 function readTranslationCache(slug: string): TranslationCache {

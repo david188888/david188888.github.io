@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectSourceLanguage } from "../language";
+import { detectSourceLanguage } from "../post-source.mjs";
 
 describe("detectSourceLanguage", () => {
   it("detects Chinese-majority text", () => {

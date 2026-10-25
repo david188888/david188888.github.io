@@ -13,8 +13,8 @@ export function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-// The root layout's template appends the English name, so the article title is
-// set absolutely to keep the localized one.
+// The root layout has no title template, so the article title spells out the
+// author name for its own locale.
 export async function generateMetadata({
   params,
 }: {

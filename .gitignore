@@ -7,10 +7,6 @@ node_modules/
 .next/
 out/
 
-# Build output
-_site/
-.sass-cache/
-
 # Env files
 .env
 .env*.local
@@ -23,18 +19,13 @@ _site/
 .DS_Store
 Thumbs.db
 
-# Jekyll (legacy)
-Gemfile.lock
-/vendor/
-.bundle/
-.jekyll-cache/
-
 # Misc
 photo.jpg
 local/
 .context/
 .superpowers/
 .worktrees/
+docs/superpowers/
 
 # Agent tooling: only the personal layer is ignored. Shared config
 # (CLAUDE.md, AGENTS.md, .claude/settings.json, .codex/config.toml) is tracked.

@@ -6,7 +6,7 @@
  * them this browser has hidden, plus any marks the reader added locally.
  */
 
-export const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 1;
 
 /**
  * Whether the annotation tools are available at all.

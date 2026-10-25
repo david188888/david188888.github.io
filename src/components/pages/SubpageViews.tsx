@@ -208,11 +208,7 @@ export function SitemapPageView({ locale = defaultLocale }: LocaleViewProps) {
         {sitemapPages.map((page) => (
           <li key={page.url} className="mb-3">
             <Link
-              href={
-                "hasLocaleRoute" in page && page.hasLocaleRoute === false
-                  ? page.url
-                  : localizedHref(page.url, locale)
-              }
+              href={localizedHref(page.url, locale)}
               className="text-[var(--global-link-color)] no-underline hover:underline"
             >
               {sitemap.pages[page.key]}
