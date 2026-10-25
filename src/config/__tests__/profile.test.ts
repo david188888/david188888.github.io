@@ -67,6 +67,14 @@ const selectorFixtures = {
     },
     getHomeInternships: [
       {
+        id: "z-potentials-research",
+        time: "Oct 2026 - Present",
+        title: "Z Potentials · Intern",
+        meta: "Remote",
+        description:
+          "Focusing on AI, new consumer, deep tech and finance; leading product research, industry analysis and market research.",
+      },
+      {
         id: "insta360-speech-algorithm",
         time: "Feb 2026 - Jun 2026",
         title: "Insta360 · Speech Algorithm Intern",
@@ -77,7 +85,7 @@ const selectorFixtures = {
       {
         id: "amphion-r-and-d",
         time: "Jun 2025 - Sep 2025",
-        title: "Amphion Technology · R&D Intern",
+        title: "Amphion Technology Co., Ltd · R&D Intern",
         meta: "Shenzhen, China",
         description:
           "Developed core algorithms for a voice-cloning application and supported backend model integration for video translation.",
@@ -85,13 +93,18 @@ const selectorFixtures = {
     ],
     getCvInternships: [
       {
+        id: "z-potentials-research",
+        role: "Z Potentials · Intern",
+        detail: "Remote · Oct 2026 - Present",
+      },
+      {
         id: "insta360-speech-algorithm",
         role: "Insta360 · Speech Algorithm Intern",
         detail: "Shenzhen, China · Feb 2026 - Jun 2026",
       },
       {
         id: "amphion-r-and-d",
-        role: "Amphion Technology · R&D Intern",
+        role: "Amphion Technology Co., Ltd · R&D Intern",
         detail: "Shenzhen, China · Jun 2025 - Sep 2025",
       },
     ],
@@ -268,6 +281,13 @@ const selectorFixtures = {
     },
     getHomeInternships: [
       {
+        id: "z-potentials-research",
+        time: "2026 年 10 月 - 至今",
+        title: "Z Potentials · 实习生",
+        meta: "远程办公",
+        description: "聚焦 AI、新消费、硬科技、财经领域，主体负责产品调研、产业分析、市场研究等行研工作。",
+      },
+      {
         id: "insta360-speech-algorithm",
         time: "2026 年 2 月 - 2026 年 6 月",
         title: "影石Insta360 · 语音算法实习生",
@@ -283,6 +303,11 @@ const selectorFixtures = {
       },
     ],
     getCvInternships: [
+      {
+        id: "z-potentials-research",
+        role: "Z Potentials · 实习生",
+        detail: "远程办公 · 2026 年 10 月 - 至今",
+      },
       {
         id: "insta360-speech-algorithm",
         role: "影石Insta360 · 语音算法实习生",

@@ -93,6 +93,17 @@ export const educationRecords: readonly EducationRecord[] = [
 
 export const internshipRecords: readonly InternshipRecord[] = [
   {
+    id: "z-potentials-research",
+    period: { en: "Oct 2026 - Present", zh: "2026 年 10 月 - 至今" },
+    company: { en: "Z Potentials", zh: "Z Potentials" },
+    role: { en: "Intern", zh: "实习生" },
+    location: { en: "Remote", zh: "远程办公" },
+    description: {
+      en: "Focusing on AI, new consumer, deep tech and finance; leading product research, industry analysis and market research.",
+      zh: "聚焦 AI、新消费、硬科技、财经领域，主体负责产品调研、产业分析、市场研究等行研工作。",
+    },
+  },
+  {
     id: "insta360-speech-algorithm",
     period: { en: "Feb 2026 - Jun 2026", zh: "2026 年 2 月 - 2026 年 6 月" },
     company: { en: "Insta360", zh: "影石Insta360" },
@@ -106,7 +117,7 @@ export const internshipRecords: readonly InternshipRecord[] = [
   {
     id: "amphion-r-and-d",
     period: { en: "Jun 2025 - Sep 2025", zh: "2025 年 6 月 - 2025 年 9 月" },
-    company: { en: "Amphion Technology", zh: "安菲翁科技有限公司" },
+    company: { en: "Amphion Technology Co., Ltd", zh: "安菲翁科技有限公司" },
     role: { en: "R&D Intern", zh: "研发实习生" },
     location: { en: "Shenzhen, China", zh: "中国深圳" },
     description: {
