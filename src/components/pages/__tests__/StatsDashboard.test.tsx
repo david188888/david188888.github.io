@@ -16,8 +16,8 @@ describe("inline statistics display", () => {
     expect(html).toContain("2026-10-15"); expect(html).toContain("<table"); expect(html).toContain("<svg");
     expect(html).toContain(">25<"); expect(html).toContain(">4<"); expect(html).toContain(">0<");
     expect(html).toContain(locale === "en" ? "Results may be incomplete" : "结果可能不完整");
-    // World map replaced city/country text lists, check for map elements instead
-    expect(html).toContain("viewBox=\"0 0 1000 500\""); expect(html).toContain("github.com / referral");
+    // Countries render on the world map; visited ones carry their user count.
+    expect(html).toContain(locale === "en" ? "China: 4 users" : "China: 4 用户"); expect(html).toContain("github.com / referral");
     expect(html).toContain(locale === "en" ? "mobile" : "手机");
   });
   it("does not turn missing or loading counts into zero", () => {

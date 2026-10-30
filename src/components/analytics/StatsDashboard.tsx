@@ -6,7 +6,6 @@ import { analyticsConfig } from "@/config/analytics";
 import type { Locale } from "@/i18n/locales";
 import { getMessages } from "@/i18n/messages";
 import type { AnalyticsError, DailyViews, RankedValue } from "@/lib/analytics/dashboard-data";
-import { parseGeoLocations } from "@/lib/analytics/dashboard-data";
 import { DashboardSession } from "@/lib/analytics/dashboard-session";
 import { WorldMap } from "./WorldMap";
 import { UserPaths } from "./UserPaths";
@@ -126,7 +125,7 @@ export function StatsDashboard({ locale }: { locale: Locale }) {
           {audience.limited && <p className={styles.notice}>{text.limited}</p>}
 
           {/* World map visualization */}
-          <WorldMap locations={parseGeoLocations(audience)} locale={locale === "en" ? "en" : "zh"} />
+          <WorldMap countries={audience.countries} cities={audience.cities} locale={locale === "en" ? "en" : "zh"} />
 
           {/* Other audience metrics (devices, browsers, referrals) */}
           <div className={styles.rankings}>
