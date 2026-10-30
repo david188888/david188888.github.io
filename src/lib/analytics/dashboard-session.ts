@@ -12,7 +12,7 @@ export interface DashboardState {
   audience: Remote<AudienceAnalytics>;
   userPaths: Remote<UserPathAnalytics>;
 }
-const initial: DashboardState = { connection: "disconnected", days: 7, history: { status: "idle" }, realtime: { status: "idle" }, audience: { status: "idle" }, userPaths: { status: "idle" } };
+const initial: DashboardState = { connection: "disconnected", days: 30, history: { status: "idle" }, realtime: { status: "idle" }, audience: { status: "idle" }, userPaths: { status: "idle" } };
 const defaults = { history: fetchHistoricalAnalytics, realtime: fetchRealtimeAnalytics, audience: fetchAudienceAnalytics, userPaths: fetchUserPathAnalytics, authorize: requestGoogleToken, now: Date.now };
 
 // Owns the in-memory token and invalidates both late OAuth callbacks and reports.

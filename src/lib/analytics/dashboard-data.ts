@@ -113,9 +113,12 @@ export function parseAudienceAnalytics(value: unknown): AudienceAnalytics {
   return result;
 }
 
+// GA4 date ranges include both endpoints: 6daysAgo..today is seven days; 0 means today only.
+const startDate = (days: ReportDays) => (days === 0 ? "today" : `${days - 1}daysAgo`);
+
 export function audienceRequest(days: ReportDays) {
   return { requests: audienceReports.map(({ dimensions, metric }) => ({
-    dateRanges: [{ startDate: `${days - 1}daysAgo`, endDate: "today" }],
+    dateRanges: [{ startDate: startDate(days), endDate: "today" }],
     dimensions: dimensions.map((name) => ({ name })), metrics: [{ name: metric }],
     orderBys: [{ metric: { metricName: metric }, desc: true }], limit: "10",
   })) };
@@ -161,8 +164,7 @@ export function parseRealtimeAnalytics(value: unknown): number | null {
 }
 
 export function historicalRequest(days: ReportDays) {
-  // GA4 date ranges include both endpoints: 6daysAgo..today is seven days.
-  const dateRanges = [{ startDate: `${days - 1}daysAgo`, endDate: "today" }];
+  const dateRanges = [{ startDate: startDate(days), endDate: "today" }];
   return { requests: [
     { dateRanges, metrics: [{ name: "screenPageViews" }, { name: "activeUsers" }, { name: "sessions" }] },
     { dateRanges, dimensions: [{ name: "date" }], metrics: [{ name: "screenPageViews" }], orderBys: [{ dimension: { dimensionName: "date" } }] },
