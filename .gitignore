@@ -34,6 +34,14 @@ docs/superpowers/
 .claude/worktrees/
 .codex/config.local.toml
 
+# Personal skills kept on this machine only; .agents/skills itself is still
+# tracked because browser-harness, hy-mt2-translator and friends ship with the repo.
+.agents/skills/brag/
+.agents/skills/homepage-post-sync/
+.agents/skills/human-writing/
+.agents/skills/industry-chain-mining/
+.agents/skills/strategic-investment-writing/
+
 # Local translation diagnostics
 local/translation-diagnostics/
 
