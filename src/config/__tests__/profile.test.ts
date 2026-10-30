@@ -72,7 +72,7 @@ const selectorFixtures = {
         title: "Z Potentials · Intern",
         meta: "Remote",
         description:
-          "Focusing on AI, new consumer, deep tech and finance; leading product research, industry analysis and market research.",
+          "Participated in industry and company research focused on early-stage technology ventures, covering in-depth article synthesis, interviews, and industry and product research.",
       },
       {
         id: "insta360-speech-algorithm",
@@ -285,7 +285,7 @@ const selectorFixtures = {
         time: "2026 年 10 月 - 至今",
         title: "Z Potentials · 实习生",
         meta: "远程办公",
-        description: "聚焦 AI、新消费、硬科技、财经领域，主体负责产品调研、产业分析、市场研究等行研工作。",
+        description: "围绕早期科技创业方向参与行业与公司研究，研究范围涵盖深度文章整理、访谈及行业和产品研究",
       },
       {
         id: "insta360-speech-algorithm",

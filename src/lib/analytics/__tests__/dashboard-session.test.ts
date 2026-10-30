@@ -1,15 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DashboardSession } from "../dashboard-session";
-import { AnalyticsError, type AudienceAnalytics, type HistoricalAnalytics } from "../dashboard-data";
+import { AnalyticsError, type AudienceAnalytics, type HistoricalAnalytics, type UserPathAnalytics } from "../dashboard-data";
 import type { GoogleAccessToken, GoogleOAuth2 } from "../google-auth";
 const data: HistoricalAnalytics = { summary: { views: 8, users: 2, sessions: 3 }, trend: [], pages: [], sources: [], timeZone: "UTC", limited: false };
 const audienceData: AudienceAnalytics = { countries: [{ label: "China", value: 2 }], cities: [], devices: [], browsers: [], referrals: [], limited: false };
+const userPathData: UserPathAnalytics = { paths: [], limited: false };
 function setup() {
   let callback: (token: GoogleAccessToken) => void = () => {};
-  const history = vi.fn().mockResolvedValue(data), realtime = vi.fn().mockResolvedValue(1), audience = vi.fn().mockResolvedValue(audienceData);
-  const session = new DashboardSession({ history, realtime, audience, now: Date.now, authorize: (_api, _id, success) => { callback = success; } });
+  const history = vi.fn().mockResolvedValue(data), realtime = vi.fn().mockResolvedValue(1), audience = vi.fn().mockResolvedValue(audienceData), userPaths = vi.fn().mockResolvedValue(userPathData);
+  const session = new DashboardSession({ history, realtime, audience, userPaths, now: Date.now, authorize: (_api, _id, success) => { callback = success; } });
   const connect = () => { session.connect({} as GoogleOAuth2); callback({ value: "test-only", expiresAt: Date.now() + 3600000 }); };
-  return { session, history, realtime, audience, connect, callback: () => callback };
+  return { session, history, realtime, audience, userPaths, connect, callback: () => callback };
 }
 const settle = async () => { await Promise.resolve(); await Promise.resolve(); };
 afterEach(() => vi.useRealTimers());
@@ -44,7 +45,9 @@ describe("in-memory dashboard lifecycle", () => {
     test.connect(); test.session.setDays(7); await settle();
     resolveOld({ ...audienceData, countries: [{ label: "stale", value: 999 }] }); await settle();
     expect(test.session.getSnapshot().audience.data).toEqual(audienceData);
-    test.session.disconnect(); expect(test.session.getSnapshot().audience).toEqual({ status: "idle" });
+    test.session.disconnect();
+    expect(test.session.getSnapshot().audience).toEqual({ status: "idle" });
+    expect(test.session.getSnapshot().userPaths).toEqual({ status: "idle" });
   });
   it("expires and clears all report groups when audience authorization fails", async () => {
     const test = setup(); test.audience.mockRejectedValue(new AnalyticsError("expired")); test.connect(); await settle();

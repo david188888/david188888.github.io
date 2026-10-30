@@ -6,7 +6,10 @@ import { analyticsConfig } from "@/config/analytics";
 import type { Locale } from "@/i18n/locales";
 import { getMessages } from "@/i18n/messages";
 import type { AnalyticsError, DailyViews, RankedValue } from "@/lib/analytics/dashboard-data";
+import { parseGeoLocations } from "@/lib/analytics/dashboard-data";
 import { DashboardSession } from "@/lib/analytics/dashboard-session";
+import { WorldMap } from "./WorldMap";
+import { UserPaths } from "./UserPaths";
 import styles from "./StatsDashboard.module.css";
 
 const copy = {
@@ -15,7 +18,7 @@ const copy = {
     intro: "连接有权查看此媒体资源的 Google 账号，即可在这里查看真实数据。只申请统计数据的读取权限。",
     privacy: "授权和报表仅保留在当前页面内存中；刷新、关闭页面或授权过期后需要重新连接。断开连接会清除本页数据，不会撤销 Google 账号中已授予的权限。",
     missing: "站内看板正在配置中。现在仍可打开 Google 看板查看统计。", scriptLoading: "正在加载 Google 授权…", scriptError: "Google 授权组件加载失败，请检查网络或拦截设置后重新加载页面。",
-    expired: "Google 授权已过期，请重新连接。", days7: "近 7 天", days30: "近 30 天", loading: "正在读取…", noData: "所选范围暂无数据", ready: "已连接 · 只读访问",
+    expired: "Google 授权已过期，请重新连接。", today: "今天", days7: "近 7 天", days30: "近 30 天", loading: "正在读取…", noData: "所选范围暂无数据", ready: "已连接 · 只读访问",
     views: "浏览次数", users: "活跃用户", sessions: "会话", live: "实时活跃用户", liveRange: "最近 30 分钟", viewsHelp: "所有页面浏览次数之和", usersHelp: "GA4 识别的活跃用户", sessionsHelp: "GA4 统计的访问会话",
     trend: "每日浏览趋势", table: "查看每日数据", date: "日期", pages: "热门页面", sources: "来源渠道", top10: "前 10 项", sourceUnit: "会话", zone: "报表时区", fetched: "获取时间", unknownZone: "未返回", limited: "Google 提示此报表可能受隐私阈值、抽样或数据限制影响，结果可能不完整。",
     delay: "范围包含今天，按 GA4 媒体资源时区计算。常规报表存在处理延迟；图表只展示 API 返回的日期，未返回的日期不补为零。", unavailable: "暂无可展示的数据",
@@ -29,7 +32,7 @@ const copy = {
     intro: "Connect a Google account with access to this property to view real statistics here. Only read access to Analytics is requested.",
     privacy: "Authorization and reports stay in this page’s memory. Reconnect after reloading, closing the page or expiration. Disconnect clears this page without revoking the grant in your Google account.",
     missing: "The inline dashboard is being configured. You can still open Google Analytics to view your reports.", scriptLoading: "Loading Google authorization…", scriptError: "Google authorization failed to load. Check your connection or blockers and reload the page.",
-    expired: "Google authorization expired. Please reconnect.", days7: "Last 7 days", days30: "Last 30 days", loading: "Loading…", noData: "No data for this period", ready: "Connected · Read only",
+    expired: "Google authorization expired. Please reconnect.", today: "Today", days7: "Last 7 days", days30: "Last 30 days", loading: "Loading…", noData: "No data for this period", ready: "Connected · Read only",
     views: "Views", users: "Active users", sessions: "Sessions", live: "Realtime active users", liveRange: "Last 30 minutes", viewsHelp: "Views across all pages", usersHelp: "Active users identified by GA4", sessionsHelp: "Visits measured as GA4 sessions",
     trend: "Daily page views", table: "View daily data", date: "Date", pages: "Top pages", sources: "Traffic channels", top10: "Top 10", sourceUnit: "Sessions", zone: "Report time zone", fetched: "Fetched", unknownZone: "Not provided", limited: "Google indicates privacy thresholds, sampling or data restrictions may affect this report. Results may be incomplete.",
     delay: "Includes today, in the GA4 property’s time zone. Standard reports have processing delays. Only dates returned by the API are plotted; missing dates are not filled with zeros.", unavailable: "No data to display",
@@ -95,7 +98,7 @@ export function StatsDashboard({ locale }: { locale: Locale }) {
     <p>{stats.coverageDescription}</p>
     {!connected && <p>{configured ? text.intro : text.missing}</p>}
     <div className={styles.controls}>
-      {connected ? <><label className={styles.period}><span>{text.ready}</span><select aria-label={locale === "en" ? "Report period" : "统计范围"} value={state.days} onChange={(event) => session.setDays(Number(event.target.value) as 7 | 30)}><option value={7}>{text.days7}</option><option value={30}>{text.days30}</option></select></label><button onClick={session.refresh}>{text.refresh}</button><button onClick={session.disconnect}>{text.disconnect}</button></> : <>
+      {connected ? <><label className={styles.period}><span>{text.ready}</span><select aria-label={locale === "en" ? "Report period" : "统计范围"} value={state.days} onChange={(event) => session.setDays(Number(event.target.value) as 0 | 7 | 30)}><option value={0}>{text.today}</option><option value={7}>{text.days7}</option><option value={30}>{text.days30}</option></select></label><button onClick={session.refresh}>{text.refresh}</button><button onClick={session.disconnect}>{text.disconnect}</button></> : <>
         <button className={styles.primary} disabled={!configured || script !== "ready" || state.connection === "authorizing"} onClick={() => { if (window.google) session.connect(window.google.accounts.oauth2); }}>{state.connection === "authorizing" ? text.connecting : text.connect}</button>
         {state.connection === "authorizing" && <button onClick={session.disconnect}>{text.disconnect}</button>}
       </>}
@@ -121,9 +124,13 @@ export function StatsDashboard({ locale }: { locale: Locale }) {
         <Problem error={state.audience.error} text={text} />
         {audience && <>
           {audience.limited && <p className={styles.notice}>{text.limited}</p>}
+
+          {/* World map visualization */}
+          <WorldMap locations={parseGeoLocations(audience)} locale={locale === "en" ? "en" : "zh"} />
+
+          {/* Other audience metrics (devices, browsers, referrals) */}
           <div className={styles.rankings}>
-            {([ [text.countries, audience.countries, text.users], [text.cities, audience.cities, text.users],
-              [text.devices, audience.devices, text.users], [text.browsers, audience.browsers, text.users],
+            {([ [text.devices, audience.devices, text.users], [text.browsers, audience.browsers, text.users],
               [text.referrals, audience.referrals, text.sourceUnit],
             ] as [string, RankedValue[], string][]).map(([title, rows, unit]) => <section key={title} className={styles.panel}>
               <h3>{title} <small>{text.top10}</small></h3>
@@ -133,6 +140,18 @@ export function StatsDashboard({ locale }: { locale: Locale }) {
           <p className={styles.meta}>{text.fetched}: {state.audience.fetchedAt && new Date(state.audience.fetchedAt).toLocaleString()}</p>
         </>}
       </section>
+
+      {/* User paths section - only shown when viewing "today" */}
+      {state.days === 0 && state.userPaths.status !== "idle" && (
+        <>
+          {state.userPaths.status === "loading" && <p role="status">{text.loading}</p>}
+          <Problem error={state.userPaths.error} text={text} />
+          {state.userPaths.data && (
+            <UserPaths paths={state.userPaths.data.paths} locale={locale === "en" ? "en" : "zh"} />
+          )}
+        </>
+      )}
+
       <p className={styles.meta}>{text.delay}</p>
     </>}
     <p className={styles.meta}>{text.privacy}</p>

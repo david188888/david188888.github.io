@@ -1,6 +1,6 @@
 import { analyticsConfig } from "@/config/analytics";
 
-export type ReportDays = 7 | 30;
+export type ReportDays = 0 | 7 | 30; // 0 = today only
 export type AnalyticsErrorCode = "expired" | "permission" | "apiDisabled" | "quota" | "network" | "invalidResponse" | "authorization" | "popup";
 export class AnalyticsError extends Error {
   constructor(public readonly code: AnalyticsErrorCode) { super(code); }
@@ -23,6 +23,33 @@ export interface AudienceAnalytics {
   browsers: RankedValue[];
   referrals: RankedValue[];
   limited: boolean;
+}
+
+export interface UserPathEvent {
+  timestamp: string; // ISO format
+  pagePath: string;
+}
+
+export interface UserPath {
+  userId: string; // GA4 clientId
+  country: string;
+  city: string;
+  device: string;
+  browser: string;
+  events: UserPathEvent[];
+}
+
+export interface UserPathAnalytics {
+  paths: UserPath[];
+  limited: boolean;
+}
+
+export interface GeoLocation {
+  country: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  users: number;
 }
 
 const audienceReports = [
@@ -189,4 +216,137 @@ export async function fetchRealtimeAnalytics(token: string, signal: AbortSignal)
 }
 export async function fetchAudienceAnalytics(token: string, days: ReportDays, signal: AbortSignal) {
   return parseAudienceAnalytics(await postReport("batchRunReports", token, audienceRequest(days), signal));
+}
+
+export function userPathRequest() {
+  // Fetch page-level data grouped by user fingerprint (location + device)
+  return {
+    dateRanges: [{ startDate: "today", endDate: "today" }],
+    dimensions: [
+      { name: "pagePath" },
+      { name: "country" },
+      { name: "city" },
+      { name: "deviceCategory" },
+      { name: "browser" }
+    ],
+    metrics: [{ name: "screenPageViews" }, { name: "activeUsers" }],
+    orderBys: [
+      { dimension: { dimensionName: "country" } },
+      { dimension: { dimensionName: "city" } },
+      { metric: { metricName: "screenPageViews" }, desc: true }
+    ],
+    limit: "200",
+  };
+}
+
+export function parseUserPathAnalytics(value: unknown): UserPathAnalytics {
+  const parsed = report(value,
+    ["pagePath", "country", "city", "deviceCategory", "browser"],
+    ["screenPageViews", "activeUsers"]
+  );
+
+  // Group by location + device to approximate individual users
+  const userMap = new Map<string, UserPath>();
+
+  for (const { labels, values } of parsed.rows) {
+    const [pagePath, country, city, device, browser] = labels;
+    const [views, users] = values;
+
+    // Create a composite key for grouping (location + device fingerprint)
+    const userKey = `${country}|${city}|${device}|${browser}`;
+
+    if (!userMap.has(userKey)) {
+      // Generate a readable user ID from the fingerprint
+      const countryCode = country.substring(0, 2).toUpperCase();
+      const cityCode = city.substring(0, 2).toLowerCase();
+      const deviceCode = device.substring(0, 1).toLowerCase();
+      userMap.set(userKey, {
+        userId: `${countryCode}${cityCode}${deviceCode}`,
+        country: country || "Unknown",
+        city: city || "Unknown",
+        device: device || "Unknown",
+        browser: browser || "Unknown",
+        events: [],
+      });
+    }
+
+    const user = userMap.get(userKey)!;
+    // Add page view event (timestamp will be set to current time as approximation)
+    user.events.push({
+      timestamp: new Date().toISOString(),
+      pagePath: pagePath || "/"
+    });
+  }
+
+  return {
+    paths: Array.from(userMap.values()).filter(u => u.events.length > 0),
+    limited: isLimited(parsed.metadata),
+  };
+}
+
+export async function fetchUserPathAnalytics(token: string, signal: AbortSignal) {
+  return parseUserPathAnalytics(await postReport("runReport", token, userPathRequest(), signal));
+}
+
+// Approximate coordinates for major countries/cities (for map visualization)
+const geoCoordinates: Record<string, { lat: number; lng: number }> = {
+  "China": { lat: 35.86, lng: 104.19 },
+  "United States": { lat: 37.09, lng: -95.71 },
+  "United Kingdom": { lat: 55.38, lng: -3.44 },
+  "Japan": { lat: 36.20, lng: 138.25 },
+  "Germany": { lat: 51.16, lng: 10.45 },
+  "France": { lat: 46.23, lng: 2.21 },
+  "Canada": { lat: 56.13, lng: -106.35 },
+  "Australia": { lat: -25.27, lng: 133.77 },
+  "India": { lat: 20.59, lng: 78.96 },
+  "Brazil": { lat: -14.24, lng: -51.93 },
+  "Russia": { lat: 61.52, lng: 105.32 },
+  "South Korea": { lat: 35.91, lng: 127.77 },
+  "Singapore": { lat: 1.35, lng: 103.82 },
+  "Hong Kong": { lat: 22.40, lng: 114.11 },
+  "Taiwan": { lat: 23.70, lng: 120.96 },
+};
+
+export function parseGeoLocations(audience: AudienceAnalytics): GeoLocation[] {
+  const locations: GeoLocation[] = [];
+
+  // Use cities data for more precise locations when available
+  for (const cityData of audience.cities) {
+    const parts = cityData.label.split(" · ");
+    const country = parts[0] === "(not set)" ? "Unknown" : parts[0];
+    const city = parts[2] || parts[1] || country;
+
+    // Try to get coordinates; fallback to country-level if city unknown
+    const coords = geoCoordinates[city] || geoCoordinates[country] || { lat: 0, lng: 0 };
+
+    if (coords.lat !== 0 || coords.lng !== 0) {
+      locations.push({
+        country,
+        city,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        users: cityData.value,
+      });
+    }
+  }
+
+  // Add country-level data for countries without city details
+  const coveredCountries = new Set(locations.map(loc => loc.country));
+  for (const countryData of audience.countries) {
+    const country = countryData.label === "(not set)" ? "Unknown" : countryData.label;
+    if (!coveredCountries.has(country)) {
+      const coords = geoCoordinates[country];
+      if (coords) {
+        locations.push({
+          country,
+          city: country,
+          latitude: coords.lat,
+          longitude: coords.lng,
+          users: countryData.value,
+        });
+      }
+    }
+  }
+
+  return locations;
 }
