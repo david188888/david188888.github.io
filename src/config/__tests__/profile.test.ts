@@ -73,6 +73,18 @@ const selectorFixtures = {
         meta: "Remote",
         description:
           "Participated in industry and company research focused on early-stage technology ventures, covering in-depth article synthesis, interviews, and industry and product research.",
+        works: [
+          {
+            id: "zp-a16z-openai-computer-use",
+            title: "深度｜a16z对谈OpenAI产品负责人：Astra之后，Computer Use真正的杀招，藏在被忽略的那2%里",
+            url: "https://mp.weixin.qq.com/s/M8SINitZJx-dBl9kQs2kHQ",
+            byline: "Byline",
+            meta: "Z Potentials WeChat · 2026-11-08",
+            summary:
+              "Chinese long-form piece on a16z's conversation with OpenAI's product lead about Computer Use, published on Z Potentials' WeChat account.",
+            reads: { value: "17,000", unit: "reads", asOf: "as of 2026-11-08" },
+          },
+        ],
       },
       {
         id: "insta360-speech-algorithm",
@@ -81,6 +93,7 @@ const selectorFixtures = {
         meta: "Shenzhen, China",
         description:
           "Developing production-grade speech algorithms and optimizing low-latency model inference for voice applications.",
+        works: [],
       },
       {
         id: "amphion-r-and-d",
@@ -89,6 +102,7 @@ const selectorFixtures = {
         meta: "Shenzhen, China",
         description:
           "Developed core algorithms for a voice-cloning application and supported backend model integration for video translation.",
+        works: [],
       },
     ],
     getCvInternships: [
@@ -286,6 +300,17 @@ const selectorFixtures = {
         title: "Z Potentials · 实习生",
         meta: "远程办公",
         description: "围绕早期科技创业方向参与行业与公司研究，研究范围涵盖深度文章整理、访谈及行业和产品研究",
+        works: [
+          {
+            id: "zp-a16z-openai-computer-use",
+            title: "深度｜a16z对谈OpenAI产品负责人：Astra之后，Computer Use真正的杀招，藏在被忽略的那2%里",
+            url: "https://mp.weixin.qq.com/s/M8SINitZJx-dBl9kQs2kHQ",
+            byline: "署名作者",
+            meta: "Z Potentials 公众号 · 2026-11-08",
+            summary: undefined,
+            reads: { value: "1.7 万", unit: "阅读", asOf: "截至 2026-11-08" },
+          },
+        ],
       },
       {
         id: "insta360-speech-algorithm",
@@ -293,6 +318,7 @@ const selectorFixtures = {
         title: "影石Insta360 · 语音算法实习生",
         meta: "中国深圳",
         description: "参与生产级语音算法开发，并针对语音应用优化低时延模型推理能力。",
+        works: [],
       },
       {
         id: "amphion-r-and-d",
@@ -300,6 +326,7 @@ const selectorFixtures = {
         title: "安菲翁科技有限公司 · 研发实习生",
         meta: "中国深圳",
         description: "为语音克隆应用开发核心算法，并支持视频翻译场景中的后端模型集成。",
+        works: [],
       },
     ],
     getCvInternships: [

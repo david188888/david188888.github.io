@@ -23,6 +23,19 @@ export interface EducationRecord {
   incomingSummary?: { label: LocalizedText; value: LocalizedText };
 }
 
+/** 实习期间以本人署名发表的作品；只在首页展示，CV 保持每条两行。 */
+export interface InternshipWork {
+  id: string;
+  /** 原文只有中文标题，两种语言都显示原标题。 */
+  title: string;
+  url: string;
+  publisher: LocalizedText;
+  date: string;
+  /** 英文页在中文标题下补一句说明。 */
+  englishSummary: string;
+  reads?: { count: number; asOf: string };
+}
+
 export interface InternshipRecord {
   id: string;
   period: LocalizedText;
@@ -30,6 +43,7 @@ export interface InternshipRecord {
   role: LocalizedText;
   location: LocalizedText;
   description: LocalizedText;
+  works?: readonly InternshipWork[];
 }
 
 export interface PublicationRecord {
@@ -102,6 +116,18 @@ export const internshipRecords: readonly InternshipRecord[] = [
       en: "Participated in industry and company research focused on early-stage technology ventures, covering in-depth article synthesis, interviews, and industry and product research.",
       zh: "围绕早期科技创业方向参与行业与公司研究，研究范围涵盖深度文章整理、访谈及行业和产品研究",
     },
+    works: [
+      {
+        id: "zp-a16z-openai-computer-use",
+        title: "深度｜a16z对谈OpenAI产品负责人：Astra之后，Computer Use真正的杀招，藏在被忽略的那2%里",
+        url: "https://mp.weixin.qq.com/s/M8SINitZJx-dBl9kQs2kHQ",
+        publisher: { en: "Z Potentials WeChat", zh: "Z Potentials 公众号" },
+        date: "2026-11-08",
+        englishSummary:
+          "Chinese long-form piece on a16z's conversation with OpenAI's product lead about Computer Use, published on Z Potentials' WeChat account.",
+        reads: { count: 17000, asOf: "2026-11-08" },
+      },
+    ],
   },
   {
     id: "insta360-speech-algorithm",
@@ -253,7 +279,29 @@ export function getHomeInternships(locale: Locale) {
     title: `${localized(record.company, locale)} · ${localized(record.role, locale)}`,
     meta: localized(record.location, locale),
     description: localized(record.description, locale),
+    works: (record.works ?? []).map((work) => ({
+      id: work.id,
+      title: work.title,
+      url: work.url,
+      byline: locale === "zh" ? "署名作者" : "Byline",
+      meta: `${localized(work.publisher, locale)} · ${work.date}`,
+      summary: locale === "en" ? work.englishSummary : undefined,
+      reads: work.reads
+        ? {
+            value: formatReadCount(work.reads.count, locale),
+            unit: locale === "zh" ? "阅读" : "reads",
+            asOf: `${locale === "zh" ? "截至" : "as of"} ${work.reads.asOf}`,
+          }
+        : undefined,
+    })),
   }));
+}
+
+function formatReadCount(count: number, locale: Locale) {
+  if (locale === "zh") {
+    return count >= 10000 ? `${Number((count / 10000).toFixed(1))} 万` : `${count}`;
+  }
+  return count.toLocaleString("en-US");
 }
 
 export function getCvInternships(locale: Locale) {

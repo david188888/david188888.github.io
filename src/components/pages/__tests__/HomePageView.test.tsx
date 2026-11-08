@@ -175,6 +175,10 @@ describe("HomePageView", () => {
     internshipRecords.forEach((record) => {
       expect(html).toContain(escapeHtml(record.company[locale]));
       expect(html).toContain(escapeHtml(record.role[locale]));
+      record.works?.forEach((work) => {
+        expect(html).toContain(escapeHtml(work.title));
+        expect(html).toContain(work.url);
+      });
     });
     publicationRecords.forEach((record) => expect(html).toContain(escapeHtml(record.title[locale])));
   });

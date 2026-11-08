@@ -328,6 +328,31 @@ export function HomePageView({ locale = defaultLocale }: HomePageViewProps) {
                     <div>
                       <p className="record-role">{role}</p>
                       <p className="record-description">{item.description}</p>
+                      {item.works.length > 0 ? (
+                        <ul className="record-works">
+                          {item.works.map((work) => (
+                            <li className="record-work" key={work.id}>
+                              {work.reads ? (
+                                <p className="record-work-stat">
+                                  <strong>{work.reads.value}</strong>
+                                  <span>{work.reads.unit}</span>
+                                </p>
+                              ) : null}
+                              <div>
+                                <p className="record-work-meta">
+                                  <span className="record-work-byline">{work.byline}</span>
+                                  <span>{work.meta}</span>
+                                </p>
+                                <a className="record-work-title" href={work.url} target="_blank" rel="noopener noreferrer" lang="zh-CN">
+                                  {work.title}
+                                </a>
+                                {work.summary ? <p className="record-work-summary">{work.summary}</p> : null}
+                                {work.reads ? <p className="record-work-asof">{work.reads.asOf}</p> : null}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
                       <p className="record-location">{item.meta}</p>
                     </div>
                   </article>

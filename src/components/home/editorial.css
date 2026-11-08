@@ -333,6 +333,17 @@ html:has(.ed-root) { scroll-behavior: smooth; scroll-padding-top: 30px; }
 .ed-root .record-role { font-size: 15px; font-weight: 500; line-height: 1.6; }
 .ed-root .record-description { color: var(--ed-muted); font-size: 13px; line-height: 1.9; margin-top: 12px; }
 .ed-root .record-location { color: var(--ed-muted); font-size: 10px; margin-top: 14px; }
+.ed-root .record-works { display: grid; gap: 14px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--ed-line); }
+.ed-root .record-work { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: start; }
+.ed-root .record-work-stat { display: flex; flex-direction: column; gap: 6px; min-width: 76px; padding: 4px 14px 0 0; border-right: 1px solid var(--ed-line); }
+.ed-root .record-work-stat strong { font: 600 28px / 1 Georgia, var(--ed-serif); color: var(--ed-accent-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ed-root .record-work-stat span { color: var(--ed-muted); font-size: 10px; letter-spacing: 0.08em; }
+.ed-root .record-work-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--ed-muted); font-size: 10px; line-height: 1.7; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+.ed-root .record-work-byline { color: var(--ed-accent-text); border: 1px solid var(--ed-accent-text); padding: 1px 7px; font-weight: 600; letter-spacing: 0.06em; }
+.ed-root .record-work-asof { color: var(--ed-muted); font-size: 10px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.ed-root .record-work-title { display: inline; font: 500 14px / 1.7 var(--ed-serif); border-bottom: 1px solid var(--ed-line); overflow-wrap: anywhere; }
+.ed-root .record-work-title:hover { color: var(--ed-accent-text); border-color: var(--ed-accent-text); }
+.ed-root .record-work-summary { color: var(--ed-muted); font-size: 12px; line-height: 1.8; margin-top: 6px; }
 
 /* ── Research ─────────────────────────────────────────────────────────── */
 .ed-root .research-row { padding-block: 27px; border-top: 1px solid var(--ed-line); }
