@@ -283,7 +283,7 @@ export function getHomeInternships(locale: Locale) {
       id: work.id,
       title: work.title,
       url: work.url,
-      byline: locale === "zh" ? "署名作者" : "Byline",
+      byline: locale === "zh" ? "主编" : "Byline",
       meta: `${localized(work.publisher, locale)} · ${work.date}`,
       summary: locale === "en" ? work.englishSummary : undefined,
       reads: work.reads

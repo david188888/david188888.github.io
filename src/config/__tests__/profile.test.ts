@@ -305,7 +305,7 @@ const selectorFixtures = {
             id: "zp-a16z-openai-computer-use",
             title: "深度｜a16z对谈OpenAI产品负责人：Astra之后，Computer Use真正的杀招，藏在被忽略的那2%里",
             url: "https://mp.weixin.qq.com/s/M8SINitZJx-dBl9kQs2kHQ",
-            byline: "署名作者",
+            byline: "主编",
             meta: "Z Potentials 公众号 · 2026-11-08",
             summary: undefined,
             reads: { value: "1.7 万", unit: "阅读", asOf: "截至 2026-11-08" },
