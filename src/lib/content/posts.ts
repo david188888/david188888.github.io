@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import MarkdownIt from "markdown-it";
+import type { StateCore, Token } from "markdown-it";
 import type { Locale } from "@/i18n/locales";
 import { defaultLocale } from "@/i18n/locales";
 import { createAnnotationIdFactory } from "./annotation-ids.mjs";
@@ -51,6 +52,106 @@ inlineMarkdown.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   tokens[idx].attrSet("rel", "noreferrer");
   tokens[idx].attrSet("target", "_blank");
   return defaultLinkOpenRule(tokens, idx, options, env, self);
+};
+
+/**
+ * Citations. A post whose closing section is a sources list (an ordered list
+ * whose every item opens with a link) gets clickable citations: a body `[n]`,
+ * written either as escaped text `\[n\]` or as a link `[n](url)`, becomes a
+ * superscript jump to item n of that list. Posts without such a list keep the
+ * old rendering, so a literal `[1]` there stays text.
+ *
+ * Module state, like `annotationIds`: set for the duration of one render.
+ */
+interface CitationState {
+  sources: string[];
+  /** Card previews drop citations: the sources list is not on the card. */
+  strip: boolean;
+  /** Off while the sources list itself renders, so its text is never lifted. */
+  enabled: boolean;
+}
+
+let citations: CitationState | null = null;
+
+const CITATION_TEXT_PATTERN = /\[(\d+)\]/g;
+
+inlineMarkdown.core.ruler.push("citations", (state) => {
+  if (!citations?.enabled) return;
+  for (const token of state.tokens) {
+    if (token.type === "inline" && token.children) token.children = liftCitations(token.children, state);
+  }
+});
+
+function liftCitations(children: Token[], state: StateCore): Token[] {
+  const lifted: Token[] = [];
+  let linkDepth = 0;
+
+  for (let index = 0; index < children.length; index += 1) {
+    const token = children[index];
+    const text = children[index + 1];
+    const close = children[index + 2];
+
+    // `[n](url)`: the link itself is the citation, so the URL must be source n.
+    if (
+      token.type === "link_open" &&
+      linkDepth === 0 &&
+      text?.type === "text" &&
+      /^\d+$/.test(text.content) &&
+      close?.type === "link_close"
+    ) {
+      lifted.push(citationToken(state, Number(text.content), token.attrGet("href") ?? ""));
+      index += 2;
+      continue;
+    }
+
+    if (token.type === "link_open") linkDepth += 1;
+    if (token.type === "link_close") linkDepth -= 1;
+
+    if (token.type !== "text" || linkDepth > 0 || !/\[\d+\]/.test(token.content)) {
+      lifted.push(token);
+      continue;
+    }
+
+    let cursor = 0;
+    for (const match of token.content.matchAll(CITATION_TEXT_PATTERN)) {
+      const start = match.index ?? 0;
+      if (start > cursor) lifted.push(textToken(state, token.content.slice(cursor, start)));
+      lifted.push(citationToken(state, Number(match[1])));
+      cursor = start + match[0].length;
+    }
+    if (cursor < token.content.length) lifted.push(textToken(state, token.content.slice(cursor)));
+  }
+
+  return lifted;
+}
+
+function citationToken(state: StateCore, number: number, href?: string): Token {
+  const sources = citations?.sources ?? [];
+  if (number < 1 || number > sources.length) {
+    throw new Error(`引用 [${number}] 超出了「关键来源」列表的范围（共 ${sources.length} 条）。`);
+  }
+  if (href !== undefined && href !== sources[number - 1]) {
+    throw new Error(
+      `引用 [${number}] 的链接与「关键来源」第 ${number} 条不一致：${href} ≠ ${sources[number - 1]}`
+    );
+  }
+  const token = new state.Token("citation", "", 0);
+  token.meta = { number };
+  return token;
+}
+
+function textToken(state: StateCore, content: string): Token {
+  const token = new state.Token("text", "", 0);
+  token.content = content;
+  return token;
+}
+
+// Ids are assigned after the whole page renders (`numberCitations`), because
+// marks render their contents out of document order.
+inlineMarkdown.renderer.rules.citation = (tokens, idx) => {
+  if (citations?.strip) return "";
+  const { number } = tokens[idx].meta as { number: number };
+  return `<sup class="cite"><a href="#ref-${number}" data-cite="${number}">[${number}]</a></sup>`;
 };
 
 const POSTS_DIR = "content/posts";
@@ -128,8 +229,19 @@ export function getPublishedPosts(
 
 /** First body paragraph, with author emphasis; headings, diagrams and notes
  * are not the thesis. Cards keep links inert so hidden slides cannot receive
- * focus. Inline HTML stays escaped by the shared Markdown renderer. */
+ * focus, and drop citations because the sources list is not on the card.
+ * Inline HTML stays escaped by the shared Markdown renderer. */
 export function getOpeningParagraphHtml(body: string): string {
+  const sourcesList = findSourcesList(body);
+  citations = sourcesList ? { sources: sourcesList.urls, strip: true, enabled: true } : null;
+  try {
+    return findOpeningParagraphHtml(body);
+  } finally {
+    citations = null;
+  }
+}
+
+function findOpeningParagraphHtml(body: string): string {
   for (const segment of splitMarkdownSegments(body)) {
     if (segment.type !== "markdown") continue;
     const tokens = inlineMarkdown.parse(segment.content, {});
@@ -246,17 +358,98 @@ function createPost({
   };
 }
 
-export function renderMarkdownToHtml(markdown: string): string {
+export function renderMarkdownToHtml(
+  markdown: string,
+  { citationBackLabel = "Back to text" }: { citationBackLabel?: string } = {}
+): string {
   resetAnnotationIds();
+  const sourcesList = findSourcesList(markdown);
+  citations = sourcesList ? { sources: sourcesList.urls, strip: false, enabled: true } : null;
+  sourcesListBlock = sourcesList?.block ?? null;
 
-  return splitMarkdownSegments(markdown)
-    .map((segment) =>
-      segment.type === "html"
-        ? sanitizeEmbeddedHtml(segment.content)
-        : renderMarkdownBlocks(segment.content)
-    )
-    .filter((part) => part.length > 0)
-    .join("\n");
+  try {
+    const html = splitMarkdownSegments(markdown)
+      .map((segment) =>
+        segment.type === "html"
+          ? sanitizeEmbeddedHtml(segment.content)
+          : renderMarkdownBlocks(segment.content)
+      )
+      .filter((part) => part.length > 0)
+      .join("\n");
+    return sourcesList ? numberCitations(html, citationBackLabel) : html;
+  } finally {
+    citations = null;
+    sourcesListBlock = null;
+  }
+}
+
+/** The exact block text of the sources list being rendered, if any. */
+let sourcesListBlock: string | null = null;
+
+/**
+ * Finds the post's sources list: the last ordered list that directly follows a
+ * heading and whose every item opens with a link. Matching on structure rather
+ * than on the heading text keeps it working for 关键来源 and Key Sources alike.
+ */
+function findSourcesList(markdown: string): { block: string; urls: string[] } | null {
+  let found: { block: string; urls: string[] } | null = null;
+
+  for (const segment of splitMarkdownSegments(markdown)) {
+    if (segment.type !== "markdown") continue;
+    const blocks = segment.content.trim().split(/\n{2,}/).map((block) => block.trim());
+
+    for (let index = 1; index < blocks.length; index += 1) {
+      if (!/^#{1,3} /.test(blocks[index - 1])) continue;
+      const lines = blocks[index].split(/\r?\n/);
+      if (!lines.every((line) => /^\d+\.\s/.test(line))) continue;
+
+      const urls = lines.map((line) => {
+        const children = inlineMarkdown.parseInline(line.replace(/^\d+\.\s/, ""), {})[0]?.children ?? [];
+        return children[0]?.type === "link_open" ? children[0].attrGet("href") : null;
+      });
+      if (urls.every((url): url is string => typeof url === "string")) found = { block: blocks[index], urls };
+    }
+  }
+
+  return found;
+}
+
+function renderSourcesList(lines: string[]): string {
+  const enabled = citations?.enabled ?? false;
+  if (citations) citations.enabled = false;
+  try {
+    const items = lines.map(
+      (line, index) =>
+        `<li id="ref-${index + 1}" tabindex="-1">${renderInlineMarkdown(line.replace(/^\d+\.\s/, ""))}` +
+        `<!--cite-back:${index + 1}--></li>`
+    );
+    return `<ol class="cite-sources">${items.join("")}</ol>`;
+  } finally {
+    if (citations) citations.enabled = enabled;
+  }
+}
+
+/**
+ * Gives every citation a document-order id (`cite-<n>-<k>` for the k-th
+ * citation of source n) and every cited source a back-link to its first
+ * citation. The client script returns to the citation actually clicked.
+ */
+function numberCitations(html: string, backLabel: string): string {
+  const counts = new Map<number, number>();
+  const numbered = html.replace(/<a href="#ref-(\d+)" data-cite="\1">/g, (_full, raw: string) => {
+    const number = Number(raw);
+    const occurrence = (counts.get(number) ?? 0) + 1;
+    counts.set(number, occurrence);
+    return `<a href="#ref-${number}" id="cite-${number}-${occurrence}" data-cite="${number}">`;
+  });
+
+  return numbered.replace(/<!--cite-back:(\d+)-->/g, (_full, raw: string) => {
+    const number = Number(raw);
+    if (!counts.has(number)) return "";
+    return ` <a class="cite-back" href="#cite-${number}-1" data-cite-back="${number}" aria-label="${escapeHtml(
+      backLabel
+    )}">↩</a>`;
+  });
 }
 
 function renderMarkdownBlocks(markdown: string): string {
@@ -327,6 +520,7 @@ function renderMarkdownBlock(trimmed: string): string {
     return `<pre><code>${escapeHtml(code)}</code></pre>`;
   }
   if (isThematicBreak(trimmed)) return "<hr />";
+  if (trimmed === sourcesListBlock) return renderSourcesList(trimmed.split(/\r?\n/));
   if (trimmed.startsWith("### ")) return `<h3>${renderInlineMarkdown(trimmed.slice(4))}</h3>`;
   if (trimmed.startsWith("## ")) return `<h2>${renderInlineMarkdown(trimmed.slice(3))}</h2>`;
   if (trimmed.startsWith("# ")) return `<h1>${renderInlineMarkdown(trimmed.slice(2))}</h1>`;

@@ -7,6 +7,7 @@ import { defaultLocale, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/links";
 import { getMessages } from "@/i18n/messages";
 import { AnnotationControls } from "@/components/insights/AnnotationControls";
+import { CitationNavigator } from "@/components/insights/CitationNavigator";
 import { InsightBody } from "@/components/insights/InsightBody";
 import type { LocalizedPost } from "@/lib/content/posts";
 
@@ -60,8 +61,9 @@ export function buildInsightArticleSections(
           />
           <article className="aligned-article-prose prose max-w-none prose-headings:font-serif">
             <h2 className="sr-only">{insights.readingLabel}</h2>
-            <InsightBody body={post.body} />
+            <InsightBody body={post.body} citationBackLabel={insights.backToCitation} />
           </article>
+          <CitationNavigator />
         </>
       ),
     },

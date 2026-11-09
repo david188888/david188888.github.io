@@ -72,6 +72,7 @@ export interface Messages {
         unlock: string;
       };
       backToInsights: string;
+      backToCitation: string;
     };
     cv: {
       title: string;
@@ -226,6 +227,7 @@ export const messages: Record<Locale, Messages> = {
           unlock: "Sign in to annotate",
         },
         backToInsights: "Back to memos",
+        backToCitation: "Back to the citation in the text",
       },
       cv: {
         title: "Curriculum Vitae",
@@ -400,6 +402,7 @@ export const messages: Record<Locale, Messages> = {
           unlock: "登录后启用批注",
         },
         backToInsights: "返回行业思考",
+        backToCitation: "返回正文中的引用位置",
       },
       cv: {
         title: "简历",

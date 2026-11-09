@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { basename } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { LocalizedPost } from "../posts";
-import { getOpeningParagraphHtml, getPostSlugs, renderMarkdownToHtml, selectPublishedPosts } from "../posts";
+import { getLocalizedPost, getOpeningParagraphHtml, getPostSlugs, renderMarkdownToHtml, selectPublishedPosts } from "../posts";
 
 describe("getOpeningParagraphHtml", () => {
   it("uses the complete opening prose, preserving emphasis rather than a later highlight", () => {
@@ -321,5 +321,73 @@ describe("selectPublishedPosts", () => {
     selectPublishedPosts(source, today);
 
     expect(source.map(({ slug }) => slug)).toEqual(["older", "newer"]);
+  });
+});
+
+describe("renderMarkdownToHtml citations", () => {
+  const sources = "## 关键来源\n\n1. [来源一](https://a.example/one)，说明。\n1. [来源二](https://b.example/two)，说明。";
+  const cite = (number: number, occurrence = 1) =>
+    `<sup class="cite"><a href="#ref-${number}" id="cite-${number}-${occurrence}" data-cite="${number}">[${number}]</a></sup>`;
+
+  it("turns escaped [n] and [n](url) into jumps to the sources list", () => {
+    const html = renderMarkdownToHtml(`正文\\[1\\] 与[2](https://b.example/two)[1](https://a.example/one)。\n\n${sources}`);
+
+    expect(html).toContain(`<p>正文${cite(1)} 与${cite(2)}${cite(1, 2)}。</p>`);
+    expect(html).toContain('<ol class="cite-sources"><li id="ref-1" tabindex="-1">');
+    expect(html).toContain(
+      '<a href="https://a.example/one" rel="noreferrer" target="_blank">来源一</a>，说明。' +
+        ' <a class="cite-back" href="#cite-1-1" data-cite-back="1" aria-label="Back to text">↩</a></li>'
+    );
+  });
+
+  it("numbers citations in document order, including those inside marks", () => {
+    const html = renderMarkdownToHtml(`==blue|标记里\\[1\\]== 之后\\[1\\]\n\n${sources}`);
+
+    expect(html.indexOf('id="cite-1-1"')).toBeLessThan(html.indexOf('id="cite-1-2"'));
+    expect(html).toMatch(/<span class="mk mk-blue"[^>]*>标记里<sup class="cite">/);
+  });
+
+  it("gives uncited sources no back-link and uses the given label", () => {
+    const html = renderMarkdownToHtml(`只引用\\[2\\]\n\n${sources}`, { citationBackLabel: "返回正文" });
+
+    expect(html).not.toContain('data-cite-back="1"');
+    expect(html).toContain('href="#cite-2-1" data-cite-back="2" aria-label="返回正文"');
+  });
+
+  it("leaves code spans, link text and the sources list itself alone", () => {
+    const html = renderMarkdownToHtml(`\`a[1]\` 和 [见 \\[1\\]](https://x.example)\n\n${sources}`);
+
+    expect(html).toContain("<code>a[1]</code>");
+    expect(html).toContain('<a href="https://x.example" rel="noreferrer" target="_blank">见 [1]</a>');
+    expect(html).not.toContain('data-cite="1"');
+  });
+
+  it("keeps the old rendering when the post has no sources list", () => {
+    expect(renderMarkdownToHtml("文本\\[1\\] 和 [2](https://e.com)")).toBe(
+      '<p>文本[1] 和 <a href="https://e.com" rel="noreferrer" target="_blank">2</a></p>'
+    );
+  });
+
+  it("fails loudly on a citation outside the sources list", () => {
+    expect(() => renderMarkdownToHtml(`越界\\[3\\]\n\n${sources}`)).toThrow(/超出了「关键来源」列表的范围/);
+  });
+
+  it("fails loudly when a linked citation points somewhere other than its source", () => {
+    expect(() => renderMarkdownToHtml(`错链[1](https://b.example/two)\n\n${sources}`)).toThrow(/不一致/);
+  });
+
+  it("drops citations from card previews", () => {
+    expect(getOpeningParagraphHtml(`开篇判断。[1](https://a.example/one)\\[2\\]\n\n${sources}`)).toBe("开篇判断。");
+  });
+
+  it("links every citation in the published posts", () => {
+    for (const slug of getPostSlugs()) {
+      for (const locale of ["zh", "en"] as const) {
+        const html = renderMarkdownToHtml(getLocalizedPost(slug, locale).body);
+        const plain = html.replace(/<sup class="cite">.*?<\/sup>/g, "").replace(/<code>.*?<\/code>/g, "");
+        expect(plain, `${slug} (${locale})`).not.toMatch(/\[\d+\]/);
+        expect(html, `${slug} (${locale})`).toContain('<ol class="cite-sources">');
+      }
+    }
   });
 });
