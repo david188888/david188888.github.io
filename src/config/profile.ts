@@ -125,7 +125,7 @@ export const internshipRecords: readonly InternshipRecord[] = [
         date: "2026-11-08",
         englishSummary:
           "Chinese long-form piece on a16z's conversation with OpenAI's product lead about Computer Use, published on Z Potentials' WeChat account.",
-        reads: { count: 17000, asOf: "2026-11-08" },
+        reads: { count: 18000, asOf: "2026-11-08" },
       },
     ],
   },

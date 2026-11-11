@@ -82,7 +82,7 @@ const selectorFixtures = {
             meta: "Z Potentials WeChat · 2026-11-08",
             summary:
               "Chinese long-form piece on a16z's conversation with OpenAI's product lead about Computer Use, published on Z Potentials' WeChat account.",
-            reads: { value: "17,000", unit: "reads", asOf: "as of 2026-11-08" },
+            reads: { value: "18,000", unit: "reads", asOf: "as of 2026-11-08" },
           },
         ],
       },
@@ -308,7 +308,7 @@ const selectorFixtures = {
             byline: "主编",
             meta: "Z Potentials 公众号 · 2026-11-08",
             summary: undefined,
-            reads: { value: "1.7 万", unit: "阅读", asOf: "截至 2026-11-08" },
+            reads: { value: "1.8 万", unit: "阅读", asOf: "截至 2026-11-08" },
           },
         ],
       },

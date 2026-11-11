@@ -42,7 +42,7 @@ const AUTO_ADVANCE_MS = 12000;
 
 /**
  * Auto-advances so the latest writing stays in view, pauses while the reader
- * points at or focuses the carousel, and never rotates under
+ * focuses the carousel, and never rotates under
  * prefers-reduced-motion. The slide title is the link to the article — there
  * is no separate read-more row.
  */
@@ -52,13 +52,11 @@ export function LatestInsightCarousel({
   featureLabel,
 }: LatestInsightCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [pointerPaused, setPointerPaused] = useState(false);
   const [focusPaused, setFocusPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const copy = carouselCopy[locale];
   const count = cards.length;
   const hasMultiple = count > 1;
-  const paused = pointerPaused || focusPaused;
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -69,12 +67,12 @@ export function LatestInsightCarousel({
   }, []);
 
   useEffect(() => {
-    if (!hasMultiple || paused || reducedMotion) return;
+    if (!hasMultiple || focusPaused || reducedMotion) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % count);
     }, AUTO_ADVANCE_MS);
     return () => window.clearInterval(timer);
-  }, [count, hasMultiple, paused, reducedMotion]);
+  }, [count, focusPaused, hasMultiple, reducedMotion]);
 
   if (count === 0) return null;
 
@@ -87,8 +85,6 @@ export function LatestInsightCarousel({
       className="latest-insight-carousel"
       aria-label={copy.label}
       aria-roledescription="carousel"
-      onPointerEnter={() => setPointerPaused(true)}
-      onPointerLeave={() => setPointerPaused(false)}
       onFocusCapture={() => setFocusPaused(true)}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusPaused(false);
